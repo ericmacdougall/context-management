@@ -1062,6 +1062,90 @@ class D3Store(unittest.TestCase):
         self.assertEqual(self.put(r2), "WPS41", "an attestation under an inactive key was accepted")
         self.assertEqual(self.put(r), "ok")
 
+    # ------------------------------------------------------------------ N: quarantine after an erasure (review J N1)
+    def erase_to_done(self, t, subject, name):
+        """Declare `subject` with `name`, then its full erasure: mark, rescan, cascade, keys destroyed, completion done."""
+        from wp import erasure
+        j = self.declared_job(t, subject, name)
+        erasure.rescan(self.app, FixedKS(), j)
+        self.cascade(j)
+        self.assertEqual(self.owner_state("update erasure_jobs set state = 'keys_destroyed' where job_id = %s", (j,)), "ok")
+        return j, self.complete(j)
+
+    def complete(self, j):
+        self.ev.execute("set role wp_owner")
+        try:
+            return self.ev.execute("select wp_erasure_complete(%s, '{}'::jsonb, 'test')", (j,)).fetchone()[0]
+        finally:
+            self.ev.execute("reset role")
+
+    def test_n1a_zombie_row_scanned_before_the_identifier_refused_after_erasure(self):
+        """A row sealed at version v, before X's identifier existed; X declared and fully erased; the paused writer's
+        lease was taken over, so its write goes to quarantine. Before: accepted and never rescanned."""
+        t = "d3n1a"
+        self.tenant(t)
+        epoch = self.lease(t, "n1a")
+        r = self.sealed(t, "n1a", "n1a-e", "N1Y", "I met " + NAME + " today", epoch)
+        self.assertEqual(r["mentions"], [], "the identifier did not exist yet")
+        j, done = self.erase_to_done(t, "N1X", NAME)
+        self.assertTrue(done.get("done"), done)
+        self.app.execute("select wp_subjects_ensure(%s::tenant_t, array['N1Y'])", (t,))
+        self.assertEqual(self.insert(self.app, "quarantine", self.qrow(r)), "WPS17",
+                         "a row scanned below the identifier set was quarantined after the erasure")
+
+    def test_n1a2_zombie_row_naming_an_erased_subject_refused(self):
+        """The same with X declared at sealing time (mentions = [X]) and erased before the quarantine insert."""
+        t = "d3n1b"
+        self.tenant(t)
+        self.declare(t, "N2X", NAME)
+        epoch = self.lease(t, "n1b")
+        r = self.sealed(t, "n1b", "n1b-e", "N2Y", "I met " + NAME + " today", epoch)
+        self.assertEqual(r["mentions"], ["N2X"])
+        j = self.job("N2X", t=t)
+        from wp import erasure
+        erasure.rescan(self.app, FixedKS(), j)
+        self.cascade(j)
+        self.app.execute("select wp_subjects_ensure(%s::tenant_t, array['N2Y'])", (t,))
+        self.assertEqual(self.insert(self.app, "quarantine", self.qrow(r)), "WPS18",
+                         "a row naming an erased subject was quarantined")
+
+    def test_n1b_removed_quarantine_row_cannot_come_back(self):
+        """A sealed quarantine row naming X; the cascade removes it; the identical row inserted again (wp_app kept a
+        copy of the seal reply). Before: the unique slot was free and the MAC still verified."""
+        t = "d3n1c"
+        self.tenant(t)
+        self.declare(t, "N3X", NAME)
+        epoch = self.lease(t, "n1c")
+        r = self.sealed(t, "n1c", "n1c-e", "N3Y", "I met " + NAME + " today", epoch)
+        self.app.execute("select wp_subjects_ensure(%s::tenant_t, array['N3Y'])", (t,))
+        self.assertEqual(self.insert(self.app, "quarantine", self.qrow(r)), "ok")
+        j = self.job("N3X", t=t)
+        from wp import erasure
+        erasure.rescan(self.app, FixedKS(), j)
+        self.cascade(j)
+        self.assertEqual(self.one("select count(*) from quarantine where tenant_id=%s and event_id='n1c-e'", (t,)), (0,))
+        self.assertEqual(self.insert(self.app, "quarantine", self.qrow(r)), "WPS42",
+                         "a quarantine row the erasure removed was inserted again")
+
+    def test_n1c_held_unscanned_quarantine_row_blocks_completion(self):
+        """A quarantine row scanned below the job's identifier-set version, kept because its speaker is held: the
+        erasure is not reported done while it remains (residue pg:quarantine_unscanned). Before: done."""
+        t = "d3n1d"
+        self.tenant(t)
+        self.app.execute("select wp_subjects_ensure(%s::tenant_t, array['N4H'])", (t,))
+        base = dict(tenant_id=t, session_id="n1d", presented_epoch=1, reason="stale_epoch", kind="message", content_enc=b"opaque", mentions=[])
+        self.assertEqual(self.owner_quarantine(dict(base, subject_id="N4H", event_id="n1d-held", mention_scan_upto=0)), "ok")
+        lg = self.legal("wp-n1d-legal")
+        try:
+            from wp import erasure
+            erasure.place_hold(lg, t, "N4H", "h-n1d", "test")
+        finally:
+            lg.close()
+        j, done = self.erase_to_done(t, "N4X", NAME)
+        self.assertEqual(self.one("select count(*) from quarantine where tenant_id=%s and event_id='n1d-held'", (t,)), (1,))
+        self.assertFalse(done.get("done"), "the erasure was reported done while an unscanned quarantine row remained")
+        self.assertEqual(done.get("verify", {}).get("pg:quarantine_unscanned"), 1, done)
+
 
 class FixedKS:
     """Fixed test keys: one subject key for every speaker, one tenant HMAC key (opaque test bytes, not a secret)."""

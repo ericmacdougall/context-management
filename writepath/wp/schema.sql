@@ -482,8 +482,15 @@ create table quarantine_quota (
   tenant_id tenant_t not null, session_id text not null, kept bigint not null default 0, dropped bigint not null default 0,
   primary key (tenant_id, session_id)
 );
+-- review J N1: event ids of quarantine rows the erasure cascade removed. quarantine_guard refuses them for good (WPS42),
+-- so a kept copy of a sealed row cannot be put back once the unique (tenant_id, event_id) slot is free again.
+create table quarantine_removed (
+  tenant_id tenant_t not null, event_id text not null, job_id text not null,
+  removed_at timestamptz not null default clock_timestamp(),
+  primary key (tenant_id, event_id)
+);
 create function quarantine_guard() returns trigger language plpgsql security definer set search_path = public, pg_temp as $$
-declare er boolean; q record; cap constant bigint := 1000;
+declare er boolean; q record; cap constant bigint := 1000; mx bigint; mm text;
 begin
   -- A3, A8: a quarantine row carries content and mentions the cascade relies on, so it needs the attestation too
   if NEW.seal_key_id is null and NEW.seal_mac is null then
@@ -495,8 +502,28 @@ begin
        array['session:' || NEW.session_id, NEW.presented_epoch::text, NEW.seal_batch, NEW.seal_index::text, NEW.seal_count::text]) then
     raise exception 'seal_invalid' using errcode = 'WPS41';
   end if;
+  -- review J N1: a row the cascade removed never comes back
+  if exists (select 1 from quarantine_removed where tenant_id = NEW.tenant_id and event_id = NEW.event_id) then
+    raise exception 'quarantine_event_removed' using errcode = 'WPS42';
+  end if;
   select erased into er from subjects where tenant_id = NEW.tenant_id and subject_id = NEW.subject_id for share;
   if er then raise exception 'subject_erased' using errcode = 'WPS03'; end if;
+  -- review J N1: the same freshness and erased-mention rules as events_guard, with the same locks in the same order
+  -- (the rescan never reads quarantine, so a row scanned below the current identifier set could hide a declared name)
+  insert into identifier_epochs(tenant_id) values (NEW.tenant_id) on conflict do nothing;
+  select max_seq, matcher into mx, mm from identifier_epochs where tenant_id = NEW.tenant_id for share;
+  if mm is not null and NEW.mention_matcher is distinct from mm then
+    raise exception 'mention_matcher_mismatch presented=% tenant=%', NEW.mention_matcher, mm using errcode = 'WPS38';
+  end if;
+  if mx > NEW.mention_scan_upto then
+    raise exception 'mention_scan_stale scanned=% current=%', NEW.mention_scan_upto, mx using errcode = 'WPS17';
+  end if;
+  if cardinality(NEW.mentions) > 0 then
+    perform 1 from subjects where tenant_id = NEW.tenant_id and subject_id = any(NEW.mentions) for share;
+    if exists (select 1 from subjects where tenant_id = NEW.tenant_id and subject_id = any(NEW.mentions) and erased) then
+      raise exception 'mentions_erased_subject' using errcode = 'WPS18';
+    end if;
+  end if;
   insert into quarantine_quota(tenant_id, session_id) values (NEW.tenant_id, NEW.session_id) on conflict do nothing;
   select kept into q from quarantine_quota where tenant_id = NEW.tenant_id and session_id = NEW.session_id for update;
   if q.kept >= cap then
@@ -933,9 +960,13 @@ begin
   delete from inbox where tenant_id = j.tenant_id and subject_id = j.subject_id;
   -- A8: the rescan never reads quarantine, so a row scanned below this subject's identifier-set version is treated as
   -- mentioning it (by arithmetic, no decryption), unless its speaker is under an active hold (kept, not retried)
-  delete from quarantine q where q.tenant_id = j.tenant_id and (q.subject_id = j.subject_id or q.mentions @> array[j.subject_id]
-    or (q.mention_scan_upto < (select coalesce(x.ident_xmax, 0) from erasure_jobs x where x.job_id = jid)
-        and not exists (select 1 from legal_holds h where h.tenant_id = q.tenant_id and h.subject_id = q.subject_id and h.released_at is null)));
+  -- review J N1: the removed event ids are recorded, and quarantine_guard refuses them afterwards (WPS42)
+  with d as (
+    delete from quarantine q where q.tenant_id = j.tenant_id and (q.subject_id = j.subject_id or q.mentions @> array[j.subject_id]
+      or (q.mention_scan_upto < (select coalesce(x.ident_xmax, 0) from erasure_jobs x where x.job_id = jid)
+          and not exists (select 1 from legal_holds h where h.tenant_id = q.tenant_id and h.subject_id = q.subject_id and h.released_at is null)))
+    returning q.tenant_id, q.event_id)
+  insert into quarantine_removed(tenant_id, event_id, job_id) select d.tenant_id, d.event_id, jid from d on conflict do nothing;
   -- D3 sealed identifiers: never used for matching, and none can be added after the mark (propose and approve judge
   -- `erased` under the subject lock), so they go at the first final pass, whether or not a rescan ran (a subject with
   -- only a proposal has identifier-set version 0 and no rescan; at 4fe3ac1 its proposal was never deleted)
@@ -975,6 +1006,12 @@ create function wp_erasure_pg_residue(t text, s text) returns jsonb language sql
     'pg:identifiers', (select count(*) from subject_identifiers where tenant_id = t and subject_id = s),
     'pg:identifier_proposals', (select count(*) from identifier_proposals where tenant_id = t and subject_id = s),
     'pg:quarantine_mentions', (select count(*) from quarantine where tenant_id = t and mentions @> array[s]),
+    -- review J N1: quarantine rows scanned below the job's identifier-set version may name the subject (the rescan
+    -- never reads quarantine); the cascade removes them unless their speaker is held, so a held one waits like
+    -- 'withheld_by_hold' does
+    'pg:quarantine_unscanned', (select count(*) from quarantine q where q.tenant_id = t
+                                and q.mention_scan_upto < (select coalesce(jb.ident_xmax, 0) from erasure_jobs jb
+                                                           where jb.tenant_id = t and jb.subject_id = s order by jb.created_at desc limit 1)),
     'pg:facts', (select count(*) from (select fact_id from facts where tenant_id = t and subject_id = s
                    union select f.fact_id from tombstones x
                            cross join lateral (select g.fact_id, g.tenant_id from facts g where g.input_event_ids @> array[x.event_id] offset 0) f
@@ -1109,7 +1146,7 @@ declare t text;
 begin
   foreach t in array array['leases','subjects','chains','decision_heads','tombstones','store_registry','quarantine_quota',
                            'identifier_epochs','subject_identifiers','erasure_mentions','legal_holds','erasure_withheld','erasure_rescanned',
-                           'identifier_proposals'] loop
+                           'identifier_proposals','quarantine_removed'] loop
     execute format('create trigger %I before insert or update or delete on %I for each row execute function wp_owner_only()', t || '_owner_only', t);
   end loop;
   foreach t in array array['inbox','analyst_jobs','facts','cursors','quarantine','erasure_jobs'] loop
@@ -1119,7 +1156,7 @@ begin
   foreach t in array array['leases','subjects','chains','events','decision_heads','quarantine','quarantine_quota','tombstones','inbox',
                            'analyst_jobs','facts','cursors','store_registry','erasure_jobs',
                            'identifier_epochs','subject_identifiers','erasure_mentions','legal_holds','erasure_withheld','erasure_rescanned',
-                           'identifier_proposals'] loop
+                           'identifier_proposals','quarantine_removed'] loop
     execute format('create trigger %I before truncate on %I for each statement execute function wp_no_truncate()', t || '_no_truncate', t);
   end loop;
   for t in select format('alter table %I enable always trigger %I', c.relname, g.tgname) from pg_trigger g join pg_class c on c.oid = g.tgrelid

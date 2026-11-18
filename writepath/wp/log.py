@@ -121,7 +121,7 @@ def append(conn, ks: K.KeyService, lease, events, hook=_noop, sealer=None):
             if st == "WPS09":
                 raise IdempotencyConflict(str(ex).split("\n")[0]) from None
             if is_stale_error(ex):
-                q = dropped = 0
+                q = dropped = stale = 0
                 for p in prepared:
                     try:
                         with conn.transaction():
@@ -133,9 +133,16 @@ def append(conn, ks: K.KeyService, lease, events, hook=_noop, sealer=None):
                         q += n
                         dropped += 1 - n
                     except psycopg.Error as qe:
-                        if getattr(qe, "sqlstate", None) != "WPS03":     # an erased subject's stale write is dropped, not kept
+                        qs = getattr(qe, "sqlstate", None)
+                        if qs in ("WPS17", "WPS18", "WPS42"):
+                            # review J N1: a zombie write scanned below the current identifier set, mentioning an erased
+                            # subject, or removed by an erasure is refused by the store; it is dropped and counted here
+                            # (the writer's lease was taken over, so nothing is resealed for it)
+                            stale += 1
+                        elif qs != "WPS03":     # an erased subject's stale write is dropped, not kept
                             raise
-                return {"accepted": [], "duplicates": [], "quarantined": q, "dropped_over_cap": dropped, "dropped_erased": len(prepared) - q - dropped}
+                return {"accepted": [], "duplicates": [], "quarantined": q, "dropped_over_cap": dropped, "dropped_stale": stale,
+                        "dropped_erased": len(prepared) - q - dropped - stale}
             if st in ("WPS05", "WPS04", "WPS13"):        # stale head, no valid user source, source already used
                 raise StaleDecision(f"{st} " + str(ex).split("\n")[0]) from None
             raise
