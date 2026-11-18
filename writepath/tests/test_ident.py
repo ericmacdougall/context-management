@@ -141,7 +141,7 @@ class Tables(unittest.TestCase):
 
     def test_matcher_id_names_unicode_version_and_tables(self):
         mid = M.matcher_id()
-        self.assertRegex(mid, rf"^m5:ucd{re.escape(UCD)}:di[0-9a-f]{{12}}:cf[0-9a-f]{{12}}:b\d+\.\d+\.\d+\.\d+$")   # b: the budget (m5 b1)
+        self.assertRegex(mid, rf"^m5:ucd{re.escape(UCD)}:di[0-9a-f]{{12}}:cf[0-9a-f]{{12}}:b\d+(\.\d+){{6}}$")   # b: the budget (m5 b1)
         di = hashlib.sha256((pathlib.Path(UCD_DIR) / f"default_ignorable-{UCD}.tsv").read_bytes()).hexdigest()[:12]
         self.assertIn(f":di{di}:", mid)
         self.assertEqual(M.label(), f"ident:{mid}:")
@@ -710,7 +710,7 @@ class F12Budget(unittest.TestCase):
                 self.assertEqual(None if tk is None else len(tk), M._reading_count(tok), repr(tok[0]))
 
     def test_budget_is_named_in_the_matcher_id(self):
-        self.assertTrue(M.matcher_id().endswith(":b%d.%d.%d.%d" % (PER_TOKEN, FLOOR, EVENT_MAX, MAX_BYTES)), M.matcher_id())
+        self.assertIn(":b%d.%d.%d.%d." % (PER_TOKEN, FLOOR, EVENT_MAX, MAX_BYTES), M.matcher_id())
 
     def test_store_bounds_ciphertext_size(self):
         sql = (HERE / "wp" / "schema.sql").read_text()
@@ -751,6 +751,62 @@ class F12StopClass(unittest.TestCase):
                     accepted.append(ident)
         self.assertGreater(checked, 500, "the generator checked too few identifiers to mean anything")
         self.assertEqual(accepted[:10], [], f"{len(accepted)} identifiers matching common-word phrases were accepted")
+
+
+CALL_EVENTS, CALL_BYTES, CALL_KEYS = 1000, 1_048_576, 5_000_000
+FLOOR_SHAPE = " ".join(["IIIa", "IIIb", "IIIc", "IIId"] * 7 + ["IIIe"])     # 144 bytes, 122,344 keys: under the floor
+
+
+class F13CallBudget(unittest.TestCase):
+    """DESIGN-NOTES "Matcher budget (m5 b1)" B10 (main's decision 1): one call (one append, one scan) is bounded too:
+    at most CALL_EVENTS events, CALL_BYTES bytes and CALL_KEYS keys in all, refused with WPM03 before any HMAC."""
+
+    @classmethod
+    def setUpClass(cls):
+        M.key("warm up the tables")
+
+    refused = F12Budget.refused
+
+    def admitted(self, texts):
+        """Admission only (the count, no enumeration): a call at the limits is not refused."""
+        try:
+            M.admit(texts)
+        except Exception as e:                           # noqa: BLE001
+            self.fail(f"refused at the limit: {getattr(e, 'code', None)} {e}")
+
+    def test_call_event_count(self):
+        ks = CountingKS()
+        e = self.refused(lambda: M.scan(FakeConn({}), ks, T, ["x"] * (CALL_EVENTS + 1)), "WPM03")
+        self.assertEqual(ks.total, 0)
+        self.assertIn(str(CALL_EVENTS), str(e))
+        self.admitted([""] * CALL_EVENTS)
+
+    def test_call_bytes(self):
+        ks = CountingKS()
+        e = self.refused(lambda: M.scan(FakeConn({}), ks, T, ["a" * 64000] * 17), "WPM03")      # 1,088,000 bytes
+        self.assertEqual(ks.total, 0)
+        self.assertEqual(getattr(e, "index", None), 16, "the refusal names the event that crossed the limit")
+        self.admitted(["a" * 64000] * 16)
+
+    def test_call_keys_many_floor_shaped_events(self):
+        # each event is under its own budget (the floor); 41 of them are 5,016,104 keys in 5.9 KB: over the call limit
+        self.assertEqual(M.key_count(FLOOR_SHAPE), (29, 122344))
+        import time
+        ks = CountingKS()
+        t0 = time.perf_counter()
+        self.refused(lambda: M.scan(FakeConn({}), ks, T, [FLOOR_SHAPE] * 41), "WPM03")
+        self.assertLess(time.perf_counter() - t0, 2.0)
+        self.assertEqual(ks.total, 0)
+        self.admitted([FLOOR_SHAPE] * 40)                # 4,893,760 keys
+
+    def test_call_limits_named_in_the_matcher_id(self):
+        self.assertTrue(M.matcher_id().endswith(":b%d.%d.%d.%d.%d.%d.%d" % (PER_TOKEN, FLOOR, EVENT_MAX, MAX_BYTES, CALL_EVENTS, CALL_BYTES, CALL_KEYS)),
+                        M.matcher_id())
+
+    def test_store_counts_the_call_code(self):
+        sql = (HERE / "wp" / "schema.sql").read_text()
+        self.assertIsNotNone(re.search(r"code text not null check \(code in \('WPM01', 'WPM02', 'WPM03'\)\)", sql), "write_refusals does not accept WPM03")
+        self.assertIsNotNone(re.search(r"c not in \('WPM01', 'WPM02', 'WPM03'\)", sql), "wp_write_refused does not accept WPM03")
 
 
 if __name__ == "__main__":

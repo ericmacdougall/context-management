@@ -1,0 +1,68 @@
+# tests/test_ident.py (per-call limit tests) run against the 77fb0e7 tree, Mac, Unicode 13: WP_UCD_DIR=<dir> python3 -m unittest tests.test_ident.F13CallBudget tests.test_ident.F12Budget tests.test_ident.Tables
+FFFFF.F..........F...
+======================================================================
+FAIL: test_call_bytes (tests.test_ident.F13CallBudget)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-af5c8cce658ab5a89/red-77fb0e7-175750/writepath/tests/test_ident.py", line 786, in test_call_bytes
+    e = self.refused(lambda: M.scan(FakeConn({}), ks, T, ["a" * 64000] * 17), "WPM03")      # 1,088,000 bytes
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-af5c8cce658ab5a89/red-77fb0e7-175750/writepath/tests/test_ident.py", line 611, in refused
+    self.fail(f"not refused: expected {code}")
+AssertionError: not refused: expected WPM03
+
+======================================================================
+FAIL: test_call_event_count (tests.test_ident.F13CallBudget)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-af5c8cce658ab5a89/red-77fb0e7-175750/writepath/tests/test_ident.py", line 779, in test_call_event_count
+    e = self.refused(lambda: M.scan(FakeConn({}), ks, T, ["x"] * (CALL_EVENTS + 1)), "WPM03")
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-af5c8cce658ab5a89/red-77fb0e7-175750/writepath/tests/test_ident.py", line 611, in refused
+    self.fail(f"not refused: expected {code}")
+AssertionError: not refused: expected WPM03
+
+======================================================================
+FAIL: test_call_keys_many_floor_shaped_events (tests.test_ident.F13CallBudget)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-af5c8cce658ab5a89/red-77fb0e7-175750/writepath/tests/test_ident.py", line 797, in test_call_keys_many_floor_shaped_events
+    self.refused(lambda: M.scan(FakeConn({}), ks, T, [FLOOR_SHAPE] * 41), "WPM03")
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-af5c8cce658ab5a89/red-77fb0e7-175750/writepath/tests/test_ident.py", line 611, in refused
+    self.fail(f"not refused: expected {code}")
+AssertionError: not refused: expected WPM03
+
+======================================================================
+FAIL: test_call_limits_named_in_the_matcher_id (tests.test_ident.F13CallBudget)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-af5c8cce658ab5a89/red-77fb0e7-175750/writepath/tests/test_ident.py", line 803, in test_call_limits_named_in_the_matcher_id
+    self.assertTrue(M.matcher_id().endswith(":b%d.%d.%d.%d.%d.%d.%d" % (PER_TOKEN, FLOOR, EVENT_MAX, MAX_BYTES, CALL_EVENTS, CALL_BYTES, CALL_KEYS)),
+AssertionError: False is not true : m5:ucd13.0.0:di5f861f7bc729:cf93b569e499e5:b512.131072.5000000.65536
+
+======================================================================
+FAIL: test_store_counts_the_call_code (tests.test_ident.F13CallBudget)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-af5c8cce658ab5a89/red-77fb0e7-175750/writepath/tests/test_ident.py", line 808, in test_store_counts_the_call_code
+    self.assertIsNotNone(re.search(r"code text not null check \(code in \('WPM01', 'WPM02', 'WPM03'\)\)", sql), "write_refusals does not accept WPM03")
+AssertionError: unexpectedly None : write_refusals does not accept WPM03
+
+======================================================================
+FAIL: test_budget_is_named_in_the_matcher_id (tests.test_ident.F12Budget)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-af5c8cce658ab5a89/red-77fb0e7-175750/writepath/tests/test_ident.py", line 713, in test_budget_is_named_in_the_matcher_id
+    self.assertIn(":b%d.%d.%d.%d." % (PER_TOKEN, FLOOR, EVENT_MAX, MAX_BYTES), M.matcher_id())
+AssertionError: ':b512.131072.5000000.65536.' not found in 'm5:ucd13.0.0:di5f861f7bc729:cf93b569e499e5:b512.131072.5000000.65536'
+
+======================================================================
+FAIL: test_matcher_id_names_unicode_version_and_tables (tests.test_ident.Tables)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-af5c8cce658ab5a89/red-77fb0e7-175750/writepath/tests/test_ident.py", line 144, in test_matcher_id_names_unicode_version_and_tables
+    self.assertRegex(mid, rf"^m5:ucd{re.escape(UCD)}:di[0-9a-f]{{12}}:cf[0-9a-f]{{12}}:b\d+(\.\d+){{6}}$")   # b: the budget (m5 b1)
+AssertionError: Regex didn't match: '^m5:ucd13\\.0\\.0:di[0-9a-f]{12}:cf[0-9a-f]{12}:b\\d+(\\.\\d+){6}$' not found in 'm5:ucd13.0.0:di5f861f7bc729:cf93b569e499e5:b512.131072.5000000.65536'
+
+----------------------------------------------------------------------
+Ran 21 tests in 25.051s
+
+FAILED (failures=7)

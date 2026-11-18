@@ -21,8 +21,8 @@ re-enabled ALWAYS afterwards; C4's appends go through the guard as the app role.
         removal: a link to an event being removed waits; a hold on any subject the removal judged (speaker, rescan
         link, the subject itself) waits and then reports the event as removed; a hold placed first withholds it
   E6  (review E F12) a repeated mark during a batch does not deadlock (mark takes the subject before the job)
-  B1-B4 (matcher budget m5 b1, DESIGN-NOTES "Matcher budget") a write refused for its matcher budget (WPM02) or size
-        (WPM01) leaves no events, quarantine or key row and is counted in write_refusals; the store bounds ciphertext
+  B1-B4 (matcher budget m5 b1, DESIGN-NOTES "Matcher budget") a write refused for its matcher budget (WPM02), size
+        (WPM01) or the per-call limit (WPM03) leaves no events, quarantine or key row and is counted in write_refusals; the store bounds ciphertext
         size; the erasure rescan finds a mention under the budget and fails closed (WPS24) on an over-budget legacy event
 Runs only with WP_PG_LIVE=1 on the lab host. SCHEMA_UNDER_TEST names another schema.sql (failing-first).
 usage (on t2-dev, from WP_HOME/src): WP_PG_LIVE=1 ../venv/bin/python -m unittest tests.test_d3_pg -v"""
@@ -557,10 +557,11 @@ class D3Store(unittest.TestCase):
         crafted = " ".join("1I1I1I" for _ in range(300))
         self.refused(lambda: self.LG.append(self.app, NoKS(), lease, [ev("fine"), ev(crafted)]), "WPM02")
         self.refused(lambda: self.LG.append(self.app, NoKS(), lease, [ev("a" * 65537)]), "WPM01")
+        self.refused(lambda: self.LG.append(self.app, NoKS(), lease, [ev("x")] * 1001), "WPM03")       # per-call limit (B10)
         self.assertEqual(self.one("select count(*) from events where tenant_id=%s", (TR,)), (0,))
         self.assertEqual(self.one("select count(*) from quarantine where tenant_id=%s", (TR,)), (0,))
         self.assertEqual(self.ev.execute("select code, n from write_refusals where tenant_id=%s order by code", (TR,)).fetchall(),
-                         [("WPM01", 1), ("WPM02", 1)])
+                         [("WPM01", 1), ("WPM02", 1), ("WPM03", 1)])
         self.assertEqual(self.state(self.app, "insert into write_refusals(tenant_id, day, code, n) values (%s, current_date, 'WPM02', 1)", (TR,)),
                          "42501", "the app writes the refusal table directly")
         self.assertNotEqual(self.state(self.app, "select wp_write_refused(%s::tenant_t, 'not-a-code')", (TR,)), "ok")
