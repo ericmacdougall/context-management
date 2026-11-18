@@ -1,0 +1,56 @@
+# failing-first receipt (new module)
+# date: 2026-11-18T22:56:24Z
+# tree: writepath at ffe1092 (git archive); the current tests/ copied into it; run from it
+# module under test: results/failing-first/variants/disk_gate.integ-mutant-new_roles_unchecked.py sha256 898af6a786aa33100c92366fb0b6a325946c9ea03abb402afba80fe33ae32748, copied into the tree
+# its difference from exp/disk_gate.py at HEAD ffe1092:
+# diff: 1270c1270
+# diff: <     for n in sorted((expected | legacy) & set(roles)):
+# diff: ---
+# diff: >     for n in sorted((expected | legacy) & set(roles) - {"wp_sealer", "wp_rev1", "wp_rev2", "wp_reviewer"}):
+# test file: tests/test_disk_gate.py from HEAD ffe1092 blob 56ccc984c8983c51b5418a6218682ae9e547276e
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<tree>/writepath/results/failing-first/variants/disk_gate.integ-mutant-new_roles_unchecked.py python3 -m unittest -v tests.test_disk_gate.Gate.test_integ_sealer_attribute_changed_blocks tests.test_disk_gate.Gate.test_integ_reviewer_with_bypassrls_blocks tests.test_disk_gate.Gate.test_integ_reviewer_group_that_can_log_in_blocks)
+test_integ_sealer_attribute_changed_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_reviewer_with_bypassrls_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_reviewer_group_that_can_log_in_blocks (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+FAIL: test_integ_sealer_attribute_changed_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.tAEBR0j4Gp/writepath/tests/test_disk_gate.py", line 2397, in test_integ_sealer_attribute_changed_blocks
+    self.assertExactly(*self.call("start"), 2, "before the store reset: role wp_sealer has rolcreatedb=True")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.tAEBR0j4Gp/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.tAEBR0j4Gp/writepath/tests/test_disk_gate.py", line 2021, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 2 : expected BLOCKED (exit 2), got 0: disk_gate start run r-2fa502f25f27c1d96c1e308582debf0a
+
+======================================================================
+FAIL: test_integ_reviewer_with_bypassrls_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.tAEBR0j4Gp/writepath/tests/test_disk_gate.py", line 2401, in test_integ_reviewer_with_bypassrls_blocks
+    self.assertExactly(*self.call("start"), 2, "before the store reset: role wp_rev2 has rolbypassrls=True")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.tAEBR0j4Gp/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.tAEBR0j4Gp/writepath/tests/test_disk_gate.py", line 2021, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 2 : expected BLOCKED (exit 2), got 0: disk_gate start run r-ff2c40c4b976d95876e9497292629b31
+
+======================================================================
+FAIL: test_integ_reviewer_group_that_can_log_in_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.tAEBR0j4Gp/writepath/tests/test_disk_gate.py", line 2405, in test_integ_reviewer_group_that_can_log_in_blocks
+    self.assertExactly(*self.call("start"), 2, "before the store reset: role wp_reviewer has rolcanlogin=True")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.tAEBR0j4Gp/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.tAEBR0j4Gp/writepath/tests/test_disk_gate.py", line 2021, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 2 : expected BLOCKED (exit 2), got 0: disk_gate start run r-2a9b859585b33c703dc7441d3131d13c
+
+----------------------------------------------------------------------
+Ran 3 tests in 26.058s
+
+FAILED (failures=3)
+# exit status: 1

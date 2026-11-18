@@ -1,0 +1,30 @@
+# failing-first receipt (new module)
+# date: 2026-11-18T23:00:43Z
+# tree: writepath at ffe1092 (git archive); the current tests/ copied into it; run from it
+# module under test: results/failing-first/variants/disk_gate.integ-mutant-stream_label_ignored.py sha256 7b1cb6778281feeaec99debf3ac7d7cc41e7daa345a15cd67d8da7a8b3570236, copied into the tree
+# its difference from exp/disk_gate.py at HEAD ffe1092:
+# diff: 1514c1514
+# diff: <         if name.startswith(config.OWN_PREFIX) or (isinstance(labels, dict) and labels.get(key) == value):
+# diff: ---
+# diff: >         if name.startswith(config.OWN_PREFIX):
+# test file: tests/test_disk_gate.py from HEAD ffe1092 blob 56ccc984c8983c51b5418a6218682ae9e547276e
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<tree>/writepath/results/failing-first/variants/disk_gate.integ-mutant-stream_label_ignored.py python3 -m unittest -v tests.test_disk_gate.Gate.test_integ_stream_labelled_container_before_the_run_blocks)
+test_integ_stream_labelled_container_before_the_run_blocks (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+FAIL: test_integ_stream_labelled_container_before_the_run_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.8aYeUcdnuV/writepath/tests/test_disk_gate.py", line 2551, in test_integ_stream_labelled_container_before_the_run_blocks
+    self.assertExactly(*self.call("start"), 2, "a container of this stream other than the run's stores before "
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.8aYeUcdnuV/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.8aYeUcdnuV/writepath/tests/test_disk_gate.py", line 2021, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 2 : expected BLOCKED (exit 2), got 0: disk_gate start run r-220d3197ea6d9d139b8af629bf3b3ce3
+
+----------------------------------------------------------------------
+Ran 1 test in 3.912s
+
+FAILED (failures=1)
+# exit status: 1

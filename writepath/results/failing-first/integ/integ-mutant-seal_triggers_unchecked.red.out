@@ -1,0 +1,30 @@
+# failing-first receipt (new module)
+# date: 2026-11-18T22:59:14Z
+# tree: writepath at ffe1092 (git archive); the current tests/ copied into it; run from it
+# module under test: results/failing-first/variants/disk_gate.integ-mutant-seal_triggers_unchecked.py sha256 b75b280dc8617c272f019b870b8aaea6939061597e898d5b29eaa208f1ea1435, copied into the tree
+# its difference from exp/disk_gate.py at HEAD ffe1092:
+# diff: 1397c1397
+# diff: <     for t, name, _typ, en, _fn in ev["seal_triggers"]:
+# diff: ---
+# diff: >     for t, name, _typ, en, _fn in []:
+# test file: tests/test_disk_gate.py from HEAD ffe1092 blob 56ccc984c8983c51b5418a6218682ae9e547276e
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<tree>/writepath/results/failing-first/variants/disk_gate.integ-mutant-seal_triggers_unchecked.py python3 -m unittest -v tests.test_disk_gate.Gate.test_integ_trigger_disabled_on_seal_keys_blocks)
+test_integ_trigger_disabled_on_seal_keys_blocks (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+FAIL: test_integ_trigger_disabled_on_seal_keys_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.POMq3aHrLZ/writepath/tests/test_disk_gate.py", line 2540, in test_integ_trigger_disabled_on_seal_keys_blocks
+    self.assertExactly(*self.call("start"), 2, "G3 trigger wp_seal.seal_keys.seal_keys_x is enabled 'D'")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.POMq3aHrLZ/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.POMq3aHrLZ/writepath/tests/test_disk_gate.py", line 2021, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 2 : expected BLOCKED (exit 2), got 0: disk_gate start run r-26cb9adc9780a786d28c42c5d225d785
+
+----------------------------------------------------------------------
+Ran 1 test in 8.325s
+
+FAILED (failures=1)
+# exit status: 1

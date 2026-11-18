@@ -1,0 +1,41 @@
+# failing-first receipt (new module)
+# date: 2026-11-18T23:00:11Z
+# tree: writepath at ffe1092 (git archive); the current tests/ copied into it; run from it
+# module under test: results/failing-first/variants/disk_gate.integ-mutant-execute_unchecked.py sha256 93801d62293e3dd00dadeb0f46669eb0e2b78f6e5ba4fbe179058481a7d40d11, copied into the tree
+# its difference from exp/disk_gate.py at HEAD ffe1092:
+# diff: 1424c1424
+# diff: <     for f, w in sorted(GP.EXECUTE_ONLY.items()):
+# diff: ---
+# diff: >     for f, w in ():
+# test file: tests/test_disk_gate.py from HEAD ffe1092 blob 56ccc984c8983c51b5418a6218682ae9e547276e
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<tree>/writepath/results/failing-first/variants/disk_gate.integ-mutant-execute_unchecked.py python3 -m unittest -v tests.test_disk_gate.Gate.test_integ_app_may_approve_identifiers_blocks tests.test_disk_gate.Gate.test_integ_seal_function_executable_during_the_run_voids)
+test_integ_app_may_approve_identifiers_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_seal_function_executable_during_the_run_voids (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+FAIL: test_integ_app_may_approve_identifiers_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yLjwtWrh65/writepath/tests/test_disk_gate.py", line 2478, in test_integ_app_may_approve_identifiers_blocks
+    self.assertExactly(*self.call("start"), 2, "role wp_app may execute public.wp_identifier_approve")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yLjwtWrh65/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yLjwtWrh65/writepath/tests/test_disk_gate.py", line 2021, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 2 : expected BLOCKED (exit 2), got 0: disk_gate start run r-9f600ad6765eb47b8c057e8e3313084c
+
+======================================================================
+FAIL: test_integ_seal_function_executable_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yLjwtWrh65/writepath/tests/test_disk_gate.py", line 2483, in test_integ_seal_function_executable_during_the_run_voids
+    self.assertExactly(*self.call("end"), 3, "role wp_verifier may execute wp_seal.verify",
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yLjwtWrh65/writepath/tests/test_disk_gate.py", line 2378, in assertExactly
+    self.assertTrue(any(w in x for x in lines), f"no {kind} reason names {w!r}: {lines}")
+AssertionError: False is not true : no VOID reason names 'role wp_verifier may execute wp_seal.verify': ['catalog wp_events.role_execute changed during the run: 1 row(s) new, 0 gone (e.g. ["wp_seal.verify", "wp_verifier"])']
+
+----------------------------------------------------------------------
+Ran 2 tests in 10.846s
+
+FAILED (failures=2)
+# exit status: 1

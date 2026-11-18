@@ -1,0 +1,56 @@
+# failing-first receipt (new module)
+# date: 2026-11-18T23:00:30Z
+# tree: writepath at ffe1092 (git archive); the current tests/ copied into it; run from it
+# module under test: results/failing-first/variants/disk_gate.integ-mutant-stream_containers_ignored.py sha256 21aa2201e20df4898aeac4683c96b901aaa2db37947e8b6b745b52c28ef0cb17, copied into the tree
+# its difference from exp/disk_gate.py at HEAD ffe1092:
+# diff: 1478c1478
+# diff: <     for n in stream or []:
+# diff: ---
+# diff: >     for n in []:
+# test file: tests/test_disk_gate.py from HEAD ffe1092 blob 56ccc984c8983c51b5418a6218682ae9e547276e
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<tree>/writepath/results/failing-first/variants/disk_gate.integ-mutant-stream_containers_ignored.py python3 -m unittest -v tests.test_disk_gate.Gate.test_integ_key_service_container_before_the_run_blocks tests.test_disk_gate.Gate.test_integ_stream_labelled_container_before_the_run_blocks tests.test_disk_gate.Gate.test_integ_service_container_left_at_the_end_voids)
+test_integ_key_service_container_before_the_run_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_stream_labelled_container_before_the_run_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_service_container_left_at_the_end_voids (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+FAIL: test_integ_key_service_container_before_the_run_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.MUWavQI9jO/writepath/tests/test_disk_gate.py", line 2545, in test_integ_key_service_container_before_the_run_blocks
+    self.assertExactly(*self.call("start"), 2, "a container of this stream other than the run's stores before "
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.MUWavQI9jO/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.MUWavQI9jO/writepath/tests/test_disk_gate.py", line 2021, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 2 : expected BLOCKED (exit 2), got 0: disk_gate start run r-598d460dae4597bb6482870fd8634b28
+
+======================================================================
+FAIL: test_integ_stream_labelled_container_before_the_run_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.MUWavQI9jO/writepath/tests/test_disk_gate.py", line 2551, in test_integ_stream_labelled_container_before_the_run_blocks
+    self.assertExactly(*self.call("start"), 2, "a container of this stream other than the run's stores before "
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.MUWavQI9jO/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.MUWavQI9jO/writepath/tests/test_disk_gate.py", line 2021, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 2 : expected BLOCKED (exit 2), got 0: disk_gate start run r-a111f18f90b4aebc8524a92d39a55ae8
+
+======================================================================
+FAIL: test_integ_service_container_left_at_the_end_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.MUWavQI9jO/writepath/tests/test_disk_gate.py", line 2557, in test_integ_service_container_left_at_the_end_voids
+    self.assertExactly(*self.call("end"), 3, "a container of this stream other than the run's stores at the end "
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.MUWavQI9jO/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.MUWavQI9jO/writepath/tests/test_disk_gate.py", line 2021, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: ot inspected: Elasticsearch indices deleted during the run by a process that does not take the run lock (an older tree's exp.cleanup, a direct DELETE); Elasticsearch users, roles, API keys, ingest pipelines and snapshot repositories; a catalog change made and reverted within the run; the venv's packages, .pth files and sitecustomize (versions recorded, not verified); store content written by a process outside the run. The OOM counter is the gate's whole cgroup: an OOM kill of any process sharing it voids the run. The manifest's commit is named, not judged: tree_manifest.py check recomputes it.
+
+----------------------------------------------------------------------
+Ran 3 tests in 11.671s
+
+FAILED (failures=3)
+# exit status: 1

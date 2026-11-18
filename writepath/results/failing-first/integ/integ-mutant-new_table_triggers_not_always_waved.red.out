@@ -1,0 +1,54 @@
+# failing-first receipt (new module)
+# date: 2026-11-18T22:58:04Z
+# tree: writepath at ffe1092 (git archive); the current tests/ copied into it; run from it
+# module under test: results/failing-first/variants/disk_gate.integ-mutant-new_table_triggers_not_always_waved.py sha256 1522d59722751b53c0ff2a7033909ca9147c913766b265a886e819b523ab673d, copied into the tree
+# its difference from exp/disk_gate.py at HEAD ffe1092:
+# diff: 1337c1337
+# diff: <         if en != "A":
+# diff: ---
+# diff: >         if en != "A" and t not in ("identifier_proposals", "quarantine_removed", "write_refusals"):
+# test file: tests/test_disk_gate.py from HEAD ffe1092 blob 56ccc984c8983c51b5418a6218682ae9e547276e
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<tree>/writepath/results/failing-first/variants/disk_gate.integ-mutant-new_table_triggers_not_always_waved.py python3 -m unittest -v tests.test_disk_gate.Gate.test_integ_trigger_disabled_on_identifier_proposals_during_the_run_voids tests.test_disk_gate.Gate.test_integ_trigger_disabled_on_quarantine_removed_blocks tests.test_disk_gate.Gate.test_integ_trigger_on_write_refusals_not_always_blocks)
+test_integ_trigger_disabled_on_identifier_proposals_during_the_run_voids (tests.test_disk_gate.Gate) ... FAIL
+test_integ_trigger_disabled_on_quarantine_removed_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_trigger_on_write_refusals_not_always_blocks (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+FAIL: test_integ_trigger_disabled_on_identifier_proposals_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.o07bjmplYE/writepath/tests/test_disk_gate.py", line 2511, in test_integ_trigger_disabled_on_identifier_proposals_during_the_run_voids
+    self.assertExactly(*self.call("end"), 3, "G3 trigger identifier_proposals.identifier_proposals_guard is "
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.o07bjmplYE/writepath/tests/test_disk_gate.py", line 2378, in assertExactly
+    self.assertTrue(any(w in x for x in lines), f"no {kind} reason names {w!r}: {lines}")
+AssertionError: False is not true : no VOID reason names "G3 trigger identifier_proposals.identifier_proposals_guard is enabled 'D'": ['catalog wp_events.triggers changed during the run: 1 row(s) new, 1 gone (e.g. ["identifier_proposals", "identifier_proposals_guard", "31", "D", "wp_guard"])']
+
+======================================================================
+FAIL: test_integ_trigger_disabled_on_quarantine_removed_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.o07bjmplYE/writepath/tests/test_disk_gate.py", line 2518, in test_integ_trigger_disabled_on_quarantine_removed_blocks
+    self.assertExactly(*self.call("start"), 2, "G3 trigger quarantine_removed.quarantine_removed_no_truncate is "
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.o07bjmplYE/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.o07bjmplYE/writepath/tests/test_disk_gate.py", line 2021, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 2 : expected BLOCKED (exit 2), got 0: disk_gate start run r-169dba091a7fcd4086b8badc6149310e
+
+======================================================================
+FAIL: test_integ_trigger_on_write_refusals_not_always_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.o07bjmplYE/writepath/tests/test_disk_gate.py", line 2529, in test_integ_trigger_on_write_refusals_not_always_blocks
+    self.assertExactly(*self.call("start"), 2, "G3 trigger write_refusals.write_refusals_x is enabled 'O'")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.o07bjmplYE/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.o07bjmplYE/writepath/tests/test_disk_gate.py", line 2021, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 2 : expected BLOCKED (exit 2), got 0: disk_gate start run r-fee3566392e0d23fc3624d7ce249f7dc
+
+----------------------------------------------------------------------
+Ran 3 tests in 20.202s
+
+FAILED (failures=3)
+# exit status: 1

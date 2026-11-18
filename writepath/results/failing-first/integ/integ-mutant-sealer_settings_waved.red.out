@@ -1,0 +1,28 @@
+# failing-first receipt (new module)
+# date: 2026-11-18T22:57:20Z
+# tree: writepath at ffe1092 (git archive); the current tests/ copied into it; run from it
+# module under test: results/failing-first/variants/disk_gate.integ-mutant-sealer_settings_waved.py sha256 04c9a92fbc1caa446e6c87d84e501f34374a52c7bf99a82916ce791099662f79, copied into the tree
+# its difference from exp/disk_gate.py at HEAD ffe1092:
+# diff: 1286c1286
+# diff: <         elif conf != want:
+# diff: ---
+# diff: >         elif conf != want and r != "wp_sealer":
+# test file: tests/test_disk_gate.py from HEAD ffe1092 blob 56ccc984c8983c51b5418a6218682ae9e547276e
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<tree>/writepath/results/failing-first/variants/disk_gate.integ-mutant-sealer_settings_waved.py python3 -m unittest -v tests.test_disk_gate.Gate.test_integ_sealer_setting_changed_during_the_run_voids)
+test_integ_sealer_setting_changed_during_the_run_voids (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+FAIL: test_integ_sealer_setting_changed_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.nSD9S5HZQh/writepath/tests/test_disk_gate.py", line 2422, in test_integ_sealer_setting_changed_during_the_run_voids
+    self.assertExactly(*self.call("end"), 3, "role wp_sealer has settings lock_timeout=0",
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.nSD9S5HZQh/writepath/tests/test_disk_gate.py", line 2378, in assertExactly
+    self.assertTrue(any(w in x for x in lines), f"no {kind} reason names {w!r}: {lines}")
+AssertionError: False is not true : no VOID reason names 'role wp_sealer has settings lock_timeout=0': ['catalog cluster.settings changed during the run: 1 row(s) new, 1 gone (e.g. ["wp_sealer", "", "lock_timeout=0"])']
+
+----------------------------------------------------------------------
+Ran 1 test in 9.491s
+
+FAILED (failures=1)
+# exit status: 1

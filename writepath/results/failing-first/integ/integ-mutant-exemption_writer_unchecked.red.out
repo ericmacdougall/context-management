@@ -1,0 +1,30 @@
+# failing-first receipt (new module)
+# date: 2026-11-18T22:58:35Z
+# tree: writepath at ffe1092 (git archive); the current tests/ copied into it; run from it
+# module under test: results/failing-first/variants/disk_gate.integ-mutant-exemption_writer_unchecked.py sha256 dc80758aed0c82e2d7670206398e73550d9c6ca971647174a10e0da2154007a6, copied into the tree
+# its difference from exp/disk_gate.py at HEAD ffe1092:
+# diff: 1342c1342
+# diff: <         if t in tables and (f is None or f[2] != GP.EVENTS_OWNER or f[3] != "True"):
+# diff: ---
+# diff: >         if False:
+# test file: tests/test_disk_gate.py from HEAD ffe1092 blob 56ccc984c8983c51b5418a6218682ae9e547276e
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<tree>/writepath/results/failing-first/variants/disk_gate.integ-mutant-exemption_writer_unchecked.py python3 -m unittest -v tests.test_disk_gate.Gate.test_integ_write_refusals_writer_not_security_definer_blocks)
+test_integ_write_refusals_writer_not_security_definer_blocks (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+FAIL: test_integ_write_refusals_writer_not_security_definer_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.tFdoFnXTRV/writepath/tests/test_disk_gate.py", line 2534, in test_integ_write_refusals_writer_not_security_definer_blocks
+    self.assertExactly(*self.call("start"), 2, "G3 table write_refusals has no guard triggers and its writer "
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.tFdoFnXTRV/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.tFdoFnXTRV/writepath/tests/test_disk_gate.py", line 2021, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 2 : expected BLOCKED (exit 2), got 0: disk_gate start run r-f6afda92c899628b296419411879bce0
+
+----------------------------------------------------------------------
+Ran 1 test in 4.597s
+
+FAILED (failures=1)
+# exit status: 1

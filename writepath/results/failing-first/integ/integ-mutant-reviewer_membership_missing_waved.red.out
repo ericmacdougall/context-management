@@ -1,0 +1,30 @@
+# failing-first receipt (new module)
+# date: 2026-11-18T22:57:01Z
+# tree: writepath at ffe1092 (git archive); the current tests/ copied into it; run from it
+# module under test: results/failing-first/variants/disk_gate.integ-mutant-reviewer_membership_missing_waved.py sha256 a3c4681f82499ec655702eb40155da9a8f9ba24b298b57a3d1c82c1a86a88df8, copied into the tree
+# its difference from exp/disk_gate.py at HEAD ffe1092:
+# diff: 1279c1279
+# diff: <     for g, m in sorted(GP.MEMBERSHIPS - members) if strict else ():
+# diff: ---
+# diff: >     for g, m in sorted(GP.MEMBERSHIPS - members - {("wp_reviewer", "wp_rev1"), ("wp_reviewer", "wp_rev2")}) if strict else ():
+# test file: tests/test_disk_gate.py from HEAD ffe1092 blob 56ccc984c8983c51b5418a6218682ae9e547276e
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<tree>/writepath/results/failing-first/variants/disk_gate.integ-mutant-reviewer_membership_missing_waved.py python3 -m unittest -v tests.test_disk_gate.Gate.test_integ_reviewer_membership_missing_blocks)
+test_integ_reviewer_membership_missing_blocks (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+FAIL: test_integ_reviewer_membership_missing_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.uvQK5PMzd7/writepath/tests/test_disk_gate.py", line 2413, in test_integ_reviewer_membership_missing_blocks
+    self.assertExactly(*self.call("start"), 2, "committed membership of wp_rev2 in wp_reviewer is missing")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.uvQK5PMzd7/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.uvQK5PMzd7/writepath/tests/test_disk_gate.py", line 2021, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 2 : expected BLOCKED (exit 2), got 0: disk_gate start run r-6ed28fb8ae8ac58fe2a68f4dc8eb0c02
+
+----------------------------------------------------------------------
+Ran 1 test in 4.476s
+
+FAILED (failures=1)
+# exit status: 1
