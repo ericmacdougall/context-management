@@ -1,0 +1,33 @@
+# failing-first receipt (new module)
+# date: 2026-11-18T21:47:37Z
+# tree: writepath at 5a3373e (git archive); the current tests/ copied into it; run from it
+# module under test: results/failing-first/variants/disk_gate.v6-mutant-catalog_end_diff_skipped.py sha256 a54bf1c9aa699123b7eb3fdbeef0ed0b25f4531df28765e97a3f338946b2f0c3, copied into the tree
+# its difference from exp/disk_gate.py at HEAD 5a3373e:
+# diff: 1603c1603
+# diff: <         why += w if snap is None else _catalog_rules(snap, "end") + _catalog_diff(run["catalog"], snap)
+# diff: ---
+# diff: >         why += w if snap is None else _catalog_rules(snap, "end")
+# test file: tests/test_disk_gate.py from HEAD 5a3373e blob 1cdb3c60c4353d3227d025fad85fa9eeffd2409c
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<tree>/writepath/results/failing-first/variants/disk_gate.v6-mutant-catalog_end_diff_skipped.py python3 -m unittest -v tests.test_disk_gate.Gate.test_v6_f3_delete_grant_during_the_run_voids tests.test_disk_gate.Gate.test_v6_f3_guard_trigger_disabled_during_the_run_voids tests.test_disk_gate.Gate.test_v6_f3_role_setting_changed_during_the_run_voids tests.test_disk_gate.Gate.test_v6_f3_scratch_database_during_the_run_voids tests.test_disk_gate.Gate.test_v6_f3_alter_system_during_the_run_voids tests.test_disk_gate.Gate.test_v6_f3_constraint_dropped_during_the_run_voids)
+test_v6_f3_delete_grant_during_the_run_voids (tests.test_disk_gate.Gate) ... ok
+test_v6_f3_guard_trigger_disabled_during_the_run_voids (tests.test_disk_gate.Gate) ... ok
+test_v6_f3_role_setting_changed_during_the_run_voids (tests.test_disk_gate.Gate) ... ok
+test_v6_f3_scratch_database_during_the_run_voids (tests.test_disk_gate.Gate) ... ok
+test_v6_f3_alter_system_during_the_run_voids (tests.test_disk_gate.Gate) ... ok
+test_v6_f3_constraint_dropped_during_the_run_voids (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+FAIL: test_v6_f3_constraint_dropped_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.LxGdcYzjJE/writepath/tests/test_disk_gate.py", line 2147, in test_v6_f3_constraint_dropped_during_the_run_voids
+    self.assertOnly(*self.call("end"), 3, "catalog wp_events.constraints changed")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.LxGdcYzjJE/writepath/tests/test_disk_gate.py", line 1981, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: ot inspected: Elasticsearch indices deleted during the run by a process that does not take the run lock (an older tree's exp.cleanup, a direct DELETE); Elasticsearch users, roles, API keys, ingest pipelines and snapshot repositories; a catalog change made and reverted within the run; the venv's packages, .pth files and sitecustomize (versions recorded, not verified); store content written by a process outside the run. The OOM counter is the gate's whole cgroup: an OOM kill of any process sharing it voids the run. The manifest's commit is named, not judged: tree_manifest.py check recomputes it.
+
+----------------------------------------------------------------------
+Ran 6 tests in 13.709s
+
+FAILED (failures=1)
+# exit status: 1

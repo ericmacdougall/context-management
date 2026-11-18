@@ -1,0 +1,26 @@
+# failing-first receipt (new module)
+# date: 2026-11-18T21:47:53Z
+# tree: writepath at 5a3373e (git archive); the current tests/ copied into it; run from it
+# module under test: results/failing-first/variants/disk_gate.v6-mutant-verdict_first_end_wins.py sha256 3f95d707ab7c3f102defffe542808d33c0515f5ae5044f3dd5df61c3eceb3cda, copied into the tree
+# its difference from exp/disk_gate.py at HEAD 5a3373e:
+# diff: 1864c1864
+# diff: <     if len(end) > 1:                                # m-H: a run has exactly one end; a second one voids it
+# diff: ---
+# diff: >     if False:                                # m-H: a run has exactly one end; a second one voids it
+# test file: tests/test_disk_gate.py from HEAD 5a3373e blob 1cdb3c60c4353d3227d025fad85fa9eeffd2409c
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<tree>/writepath/results/failing-first/variants/disk_gate.v6-mutant-verdict_first_end_wins.py python3 -m unittest -v tests.test_disk_gate.Gate.test_v6_mh_second_end_record_makes_the_verdict_void)
+test_v6_mh_second_end_record_makes_the_verdict_void (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+FAIL: test_v6_mh_second_end_record_makes_the_verdict_void (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.bfcdoYJveb/writepath/tests/test_disk_gate.py", line 2274, in test_v6_mh_second_end_record_makes_the_verdict_void
+    self.assertEqual(rc, 3, f"verdict took the first of two end records: {out.strip()[-300:]}")
+AssertionError: 0 != 3 : verdict took the first of two end records: ages, .pth files and sitecustomize (versions recorded, not verified); store content written by a process outside the run. The OOM counter is the gate's whole cgroup: an OOM kill of any process sharing it voids the run. The manifest's commit is named, not judged: tree_manifest.py check recomputes it.
+
+----------------------------------------------------------------------
+Ran 1 test in 2.656s
+
+FAILED (failures=1)
+# exit status: 1

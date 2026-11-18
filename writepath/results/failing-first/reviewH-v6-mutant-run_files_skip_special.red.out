@@ -1,0 +1,26 @@
+# failing-first receipt (new module)
+# date: 2026-11-18T21:47:56Z
+# tree: writepath at 5a3373e (git archive); the current tests/ copied into it; run from it
+# module under test: results/failing-first/variants/disk_gate.v6-mutant-run_files_skip_special.py sha256 9fe7dbe08666dc90eb9fbe4eef21af362120103a63a3998a1b6cfee42fa30227, copied into the tree
+# its difference from exp/disk_gate.py at HEAD 5a3373e:
+# diff: 1539d1538
+# diff: <                 why.append(f"a link, special or unreadable file in the run directory: {ascii(rel)[:200]}")
+# test file: tests/test_disk_gate.py from HEAD 5a3373e blob 1cdb3c60c4353d3227d025fad85fa9eeffd2409c
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<tree>/writepath/results/failing-first/variants/disk_gate.v6-mutant-run_files_skip_special.py python3 -m unittest -v tests.test_disk_gate.Gate.test_v6_mb_fifo_in_the_run_directory_voids_without_hanging)
+test_v6_mb_fifo_in_the_run_directory_voids_without_hanging (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+FAIL: test_v6_mb_fifo_in_the_run_directory_voids_without_hanging (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.KWPuli4wiG/writepath/tests/test_disk_gate.py", line 2232, in test_v6_mb_fifo_in_the_run_directory_voids_without_hanging
+    self.assertOnly(rc, out, 3, "special or unreadable file in the run directory")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.KWPuli4wiG/writepath/tests/test_disk_gate.py", line 1981, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: ot inspected: Elasticsearch indices deleted during the run by a process that does not take the run lock (an older tree's exp.cleanup, a direct DELETE); Elasticsearch users, roles, API keys, ingest pipelines and snapshot repositories; a catalog change made and reverted within the run; the venv's packages, .pth files and sitecustomize (versions recorded, not verified); store content written by a process outside the run. The OOM counter is the gate's whole cgroup: an OOM kill of any process sharing it voids the run. The manifest's commit is named, not judged: tree_manifest.py check recomputes it.
+
+----------------------------------------------------------------------
+Ran 1 test in 3.636s
+
+FAILED (failures=1)
+# exit status: 1

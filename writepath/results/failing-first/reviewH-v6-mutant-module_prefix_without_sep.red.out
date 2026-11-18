@@ -1,0 +1,28 @@
+# failing-first receipt (new module)
+# date: 2026-11-18T21:47:27Z
+# tree: writepath at 5a3373e (git archive); the current tests/ copied into it; run from it
+# module under test: results/failing-first/variants/disk_gate.v6-mutant-module_prefix_without_sep.py sha256 5ce79eba67f0f9d1efae0339cbb85e44ad15b4d80203ba60946e3b978b8d0884, copied into the tree
+# its difference from exp/disk_gate.py at HEAD 5a3373e:
+# diff: 1031c1031
+# diff: <             if not where or any(not str(pathlib.Path(x).resolve()).startswith(str(ROOT) + os.sep) for x in where):
+# diff: ---
+# diff: >             if not where or any(not str(pathlib.Path(x).resolve()).startswith(str(ROOT)) for x in where):
+# test file: tests/test_disk_gate.py from HEAD 5a3373e blob 1cdb3c60c4353d3227d025fad85fa9eeffd2409c
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<tree>/writepath/results/failing-first/variants/disk_gate.v6-mutant-module_prefix_without_sep.py python3 -m unittest -v tests.test_disk_gate.Gate.test_v6_mutant_module_from_a_sibling_directory_blocks)
+test_v6_mutant_module_from_a_sibling_directory_blocks (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+FAIL: test_v6_mutant_module_from_a_sibling_directory_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.wg5N2QGhdO/writepath/tests/test_disk_gate.py", line 2311, in test_v6_mutant_module_from_a_sibling_directory_blocks
+    self.assertOnly(*self.call("start"), 2, "loaded from outside the pinned tree")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.wg5N2QGhdO/writepath/tests/test_disk_gate.py", line 1981, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 2 : expected BLOCKED (exit 2), got 0: disk_gate start run r-0820b5a6f63432c513f2fa54fa4aae6e
+
+----------------------------------------------------------------------
+Ran 1 test in 1.756s
+
+FAILED (failures=1)
+# exit status: 1
