@@ -1148,3 +1148,18 @@ What is demonstrable on a Basic licence, and what is not (Elastic documentation 
   any privileges" (same create-API-key page). The H1/H1a PA result ("derived API keys are not demonstrated on
   Basic") is this rule; its attribution to the licence is corrected here; the result itself stands.
 - NOT AVAILABLE on Basic: field- and document-level security (paid; same blog post). The fence does not use it.
+
+## Amendment H6d (2026-11-18, the user's decision; written before the run it governs; owner a5bed869)
+Source: answer:73716864-6b3b-4deb-94ef-8ed2c8432e4a/3335a07a-728a-4abf-99c2-6e0229b92d77 "Lower floor to 10 GB
+(Recommended)". The lab host disk rule becomes: a lab run starts only with >= 10 GB free by df (10485760 KiB, exact)
+and stops itself at 8 GB free (8388608 KiB). This replaces the 20 GB start line (amendment 24) and the 15 GB floor
+and watcher (amendment 17c) for the runs named below.
+- Governs now: the owner's unstamped live chain (results/failing-first/harness/live_chain.sh), which checks the start
+  line before taking the run lock and the stop line before every step and every 15 s while a step runs (a step is
+  stopped and the chain exits 6 under 8388608 KiB), and this stream's Elasticsearch node, whose absolute disk
+  watermarks follow the rule: low 10gb, high 9gb, flood_stage 8gb (were 18gb, 17gb, 15gb; at the old values a node
+  on a host with 13 GB free refuses new primaries, so the rule could not be applied without them).
+- Not changed here: exp/disk_gate.py (START_GB, FLOOR_GB), runkit/launch_one.sh and the earlier one-off check
+  scripts. They belong to the stamped-run gate (fix/writepath-gate, under independent review); its owner applies this
+  rule there. No stamped run is made under this amendment.
+- Unchanged: the run lock, the 2 GB own-usage cap and every VOID rule.
