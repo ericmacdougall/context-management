@@ -1,7 +1,7 @@
 #!/bin/sh
 # One stamped experiment on the lab host, from a PINNED tree (pin_run.sh), made by the gate itself (gate v5,
 # runkit/GATE-DESIGN.md section 8): `exp.disk_gate run` admits the run (pinned tree equal to its commit, registered
-# fixtures, clean stores, every storage rule, 20 GB free measured inside the locked admission), runs the experiment
+# fixtures, clean stores, every storage rule, 10 GB free measured inside the locked admission, amendment GF1), runs the experiment
 # in the foreground with the run lock, ends the run and exits with the verdict: 0 VALID, 3 VOID, 2 BLOCKED.
 # The verdict is the gate's end record in the ledger (`exp.disk_gate verdict <run>`); the experiment's output goes to
 # WP_HOME/results/runs/<run>/experiment.out and never into the gate's own lines (review a108fc3 G-3). No shell string

@@ -61,7 +61,9 @@ LIMITS = ("LIMITS v5 (GATE-DESIGN 8.4, 6.4): not detected, the operator trust bo
           "unpause, an ES disk or allocation setting changed and restored, or an endpoint switched and back, between "
           "two gate steps; pages written into a store's tmpfs from outside its container; anything after window_end; "
           "clock stability. The manifest's commit is named, not judged: tree_manifest.py check recomputes it.")
-START_GB, CAP_GB = 20.0, 2.0                   # start line 20 GB from amendment 24
+# amendment GF1 (the user's ruling of 2026-11-18, answer 3335a07a): a lab run starts with >= 10 GB host free and stops
+# itself under 8 GB (STOP_GB; the gate's in-run poll enforces it); the 2 GB own-usage cap is amendment 17c's
+START_GB, STOP_GB, CAP_GB = 10.0, 8.0, 2.0
 GIB = 1024 ** 3
 MARGIN = 256 * 1024 ** 2                       # headroom over the bound for statfs rounding (inodes: B4, nr_inodes=0)
 HOME = pathlib.Path(os.environ["WP_HOME"])
