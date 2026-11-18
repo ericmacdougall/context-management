@@ -9,7 +9,7 @@ import psycopg
 
 from . import keys as K, mentions as M, secrets as SEC
 from .secrets import SecretDetected  # noqa: F401  (re-exported for callers)
-from .mentions import WriteRefused, ContentTooLarge, MatcherBudgetExceeded  # noqa: F401  (re-exported: m5 b1 refusals)
+from .mentions import WriteRefused, ContentTooLarge, MatcherBudgetExceeded, CallBudgetExceeded  # noqa: F401  (re-exported: m5 b1)
 from .lease import is_stale_error, session_scope
 
 ANALYST_KINDS = ("message",)        # kinds whose append also enqueues an analyst job (same transaction)
@@ -66,8 +66,8 @@ def append(conn, ks: K.KeyService, lease, events, hook=_noop):
     idem_key and, for kind='decision', decision={item, action, based_on_event_id, source_event_id}.
     Returns {'accepted': [event_id], 'duplicates': [event_id], 'quarantined': n, ...}. Never raises on a stale epoch.
     Raises IdempotencyConflict when a key is reused with a different request, StaleDecision on a stale decision, and
-    WriteRefused (ContentTooLarge WPM01, MatcherBudgetExceeded WPM02; m5 b1) before anything else when an event is over
-    the content size bound or its matcher key budget: the whole batch is refused, nothing is stored (no event, no
+    WriteRefused (ContentTooLarge WPM01, MatcherBudgetExceeded WPM02, CallBudgetExceeded WPM03; m5 b1) before anything
+    else when an event is over the content size bound or its matcher key budget, or the call over its limits: the whole batch is refused, nothing is stored (no event, no
     quarantine row, no subject key) and the refusal is counted in write_refusals."""
     t, sid = lease.tenant, lease.scope.split(":", 1)[1]
     prepared = []

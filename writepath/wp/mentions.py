@@ -47,8 +47,9 @@ are found by the erasure-time rescan (wp/erasure.py).
 
 Budget (m5 b1, DESIGN-NOTES "Matcher budget"): event content is at most MAX_CONTENT_BYTES UTF-8 bytes (ContentTooLarge,
 WPM01) and its window keys at most budget(tokens) (MatcherBudgetExceeded, WPM02), both checked before any key is
-enumerated or HMAC'd; keys are then enumerated lazily and matched CHUNK at a time, so work is bounded by the budget and
-memory by one chunk."""
+enumerated or HMAC'd, and one call is bounded too (CallBudgetExceeded, WPM03); keys are then enumerated lazily and
+matched CHUNK at a time, so work is bounded by the budget and memory by one chunk. Worst admitted event about 14.5 s of
+matcher CPU (Mac; store lookups not measured); no per-tenant rate limit."""
 import collections
 import hashlib
 import itertools
@@ -68,8 +69,12 @@ MAX_N = 4
 MAX_READINGS = 4096          # readings per window (DESIGN-NOTES "Decisions after review E" item 5)
 # The key budget, ONE versioned record named in the matcher id (DESIGN-NOTES "Matcher budget (m5 b1)" B1-B3): changing
 # any number changes matcher_id(). ASSUMPTION (main's decision, numbers measured by this stream).
-Budget = collections.namedtuple("Budget", "per_token floor event_max content_bytes")
-BUDGET = Budget(per_token=512, floor=131072, event_max=5_000_000, content_bytes=65536)
+# Per CALL (one append or scan; main's decision, ASSUMPTION): at most call_events events, call_bytes bytes and call_keys
+# keys in all (B10). Worst admitted event about 14.5 s and worst admitted call about 16 s of matcher CPU (Python on the
+# Mac; store lookups not measured); there is no per-tenant rate limit.
+Budget = collections.namedtuple("Budget", "per_token floor event_max content_bytes call_events call_bytes call_keys")
+BUDGET = Budget(per_token=512, floor=131072, event_max=5_000_000, content_bytes=65536,
+                call_events=1000, call_bytes=1_048_576, call_keys=5_000_000)
 MAX_CONTENT_BYTES = BUDGET.content_bytes
 CHUNK = 8192                 # distinct window keys HMAC'd and looked up at a time (memory, not the budget)
 NOT_COVERED = (
@@ -136,6 +141,11 @@ class MatcherBudgetExceeded(WriteRefused):
     code = "WPM02"
 
 
+class CallBudgetExceeded(WriteRefused):
+    """One call over its event count, byte total or key total (B10)."""
+    code = "WPM03"
+
+
 def _table_dir():
     d = os.environ.get("WP_UCD_DIR") or (os.environ.get("WP_HOME") and str(pathlib.Path(os.environ["WP_HOME"]) / "ucd"))
     if not d:
@@ -185,7 +195,7 @@ def matcher_id():
 
 
 def budget_tag():
-    return "b%d.%d.%d.%d" % BUDGET
+    return "b" + ".".join("%d" % x for x in BUDGET)
 
 
 def label():
@@ -628,23 +638,39 @@ def key_count(text):
     return len(t), total
 
 
-def _admitted(text, index=None):
-    """The plan (tokens, counts) of a text within the size bound and its budget; WPM01 or WPM02 otherwise."""
+def _admitted(text, index=None, counted=None):
+    """The plan (tokens, counts) of a text within the size bound and its budget; WPM01 or WPM02 otherwise. With
+    counted=[bytes, keys] (the call's totals so far) they are added to and checked against the call limits (WPM03)."""
     check_size(text, index)
+    if counted is not None:
+        counted[0] += len(text.encode("utf-8", "surrogatepass"))
+        if counted[0] > BUDGET.call_bytes:
+            raise CallBudgetExceeded(f"call: {counted[0]} bytes by event {index}, over the call limit of {BUDGET.call_bytes} "
+                                     f"({budget_tag()})", index)
     t, c, total = _plan(text)
     b = budget(len(t))
     if total > b:
         raise MatcherBudgetExceeded(f"event {index}: {total} matcher keys for {len(t)} tokens, over the budget of {b} "
                                     f"({budget_tag()}: {BUDGET.per_token} per token, at least {BUDGET.floor}, at most "
                                     f"{BUDGET.event_max})", index)
+    if counted is not None:
+        counted[1] += total
+        if counted[1] > BUDGET.call_keys:
+            raise CallBudgetExceeded(f"call: {counted[1]} matcher keys by event {index}, over the call limit of "
+                                     f"{BUDGET.call_keys} ({budget_tag()})", index)
     return t, c
 
 
 def admit(texts):
     """Refuse the batch (WriteRefused, naming the first refused text by index) unless every text is within the size
-    bound and its key budget. Nothing is enumerated or HMAC'd."""
+    bound and its key budget and the call is within its limits (count first, then bytes and keys as they add up).
+    Nothing is enumerated or HMAC'd."""
+    texts = list(texts)
+    if len(texts) > BUDGET.call_events:
+        raise CallBudgetExceeded(f"call: {len(texts)} events, over the call limit of {BUDGET.call_events} ({budget_tag()})")
+    counted = [0, 0]
     for i, x in enumerate(texts):
-        _admitted(x, i)
+        _admitted(x, i, counted)
 
 
 def _iter_windows(t, c):

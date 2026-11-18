@@ -377,10 +377,10 @@ create table quarantine (
 );
 
 -- m5 b1 (DESIGN-NOTES "Matcher budget" B5): writes refused before anything is stored, counted per tenant, day and code
--- (WPM01 content over the size bound, WPM02 over the matcher key budget). A count and a code only: no content, no
--- subject, no event id. Written only by wp_write_refused; an operator reads it.
+-- (WPM01 content over the size bound, WPM02 over the matcher key budget, WPM03 a call over its limits). A count and
+-- a code only: no content, no subject, no event id. Written only by wp_write_refused; an operator reads it.
 create table write_refusals (
-  tenant_id tenant_t not null, day date not null, code text not null check (code in ('WPM01', 'WPM02')),
+  tenant_id tenant_t not null, day date not null, code text not null check (code in ('WPM01', 'WPM02', 'WPM03')),
   n bigint not null, last_at timestamptz not null default clock_timestamp(),
   primary key (tenant_id, day, code)
 );
@@ -388,7 +388,7 @@ create table write_refusals (
 create function wp_write_refused(t tenant_t, c text) returns bigint language plpgsql security definer set search_path = public, pg_temp as $$
 declare k bigint;
 begin
-  if c is null or c not in ('WPM01', 'WPM02') then
+  if c is null or c not in ('WPM01', 'WPM02', 'WPM03') then
     raise exception 'unknown write refusal code' using errcode = '22023';
   end if;
   insert into write_refusals(tenant_id, day, code, n) values (t, current_date, c, 1)
@@ -890,6 +890,13 @@ begin
                       'is read as i and l, a digit 1 inside a word as 1, l and i, a digit 0 inside a word as 0 and o; at most 4096 '
                       'readings per window, identifiers that could need more are refused; Unicode tables pinned by version: '
                       'wp/mentions.py)',
+      'matcher_budget', 'm5 b1 (ASSUMPTION): event content at most 65,536 bytes; window keys per event at most 512 per token, '
+                        'at least 131,072, at most 5,000,000; per call at most 1,000 events, 1,048,576 bytes and 5,000,000 keys; '
+                        'writes over these are refused (WPM01, WPM02, WPM03) and never stored. The erasure rescan runs under the '
+                        'same budget: an event admitted under another matcher that is over it stops the rescan, and such an '
+                        'erasure CANNOT COMPLETE until a matcher migration re-admits that event; no migration exists yet. Worst '
+                        'admitted event about 14.5 s of matcher CPU (measured on a Mac; store lookups not measured); there is no '
+                        'per-tenant rate limit.',
       'other_speakers_removed', (select coalesce(jsonb_agg(tb.event_id order by tb.event_id), '[]') from tombstones tb
                                  join events e on e.tenant_id = tb.tenant_id and e.event_id = tb.event_id
                                  where tb.job_id = jid and e.subject_id <> j.subject_id),

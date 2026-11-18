@@ -652,8 +652,12 @@ B2. THE BUDGET, one versioned record (BUDGET in wp/mentions.py), named in the ma
    - EVENT_KEYS_MAX = 5,000,000: the most any event may use: 11.2 times the worst realistic text at the size bound
      (6.82 keys per byte times 65,536 bytes is 447,000); prose at the size bound is about 106,000 keys (47 times
      under);
-   - budget(event) = min(EVENT_KEYS_MAX, max(KEYS_FLOOR, KEYS_PER_TOKEN times the event's token count)).
+   - budget(event) = min(EVENT_KEYS_MAX, max(KEYS_FLOOR, KEYS_PER_TOKEN times the event's token count));
+   - per CALL (B10): at most 1,000 events, 1,048,576 bytes and 5,000,000 keys in all.
    A window with more than P readings is not counted and not enumerated (unchanged from m5 item 5).
+   COST STATED WHEREVER THE BUDGET IS (main's decision 3): the worst admitted event costs about 14.5 s of matcher CPU
+   (Mac, Python; store lookups not measured) and the worst admitted call about 16 s (B10); there is NO per-tenant rate
+   limit, so a writer may repeat such calls.
 B3. THE SIZE BOUND: MAX_CONTENT_BYTES = 65,536 UTF-8 bytes of event content. Why this number: it bounds the matcher's
    worst admitted work per event (EVENT_KEYS_MAX is derived from it), the tokenizer's work and the ciphertext the
    store keeps; it admits a long document (about 10,000 English words; the 39 KB sample) in one event. ASSUMPTION: the
@@ -698,10 +702,9 @@ B6. RETRIES: append rescans after WPS17 (identifiers declared meanwhile), up to 
    marks and zero-width space), windows() at 819258c and under b1 are identical; the keys enumerated equal key_count()
    and each token's reading count equals its number of distinct keys (tests/test_ident.py checks 500 such strings), so
    the cap skips exactly the windows it skipped before.
-   OPEN (for main): the number of events in one append is NOT bounded (each event is), so the work of one call is
-   bounded only per event. scan() admits the whole batch first and then rebuilds each event's plan as it streams (no
-   plan is kept), so memory is one event's tokens plus one chunk, but work grows with the batch. Options: a per-call
-   event count or byte total (refused with its own code), or leave it to the API layer.
+   DECIDED (main, decision 1; was OPEN here at 77fb0e7): the call is bounded in the store path, B10. scan() admits the
+   whole batch first and then rebuilds each event's plan as it streams (no plan is kept), so memory is one event's
+   tokens plus one chunk.
    ADMISSION DOES NOT DEPEND ON IDENTIFIERS: every event is counted, also in a tenant with no identifiers (819258c did
    no matcher work there), because the erasure rescan later reads those events under the budget (B7).
    NORMAL-PATH COST, MEASURED after the code (agent-af5c8cce658ab5a89/budget_normal.py, Mac, fake lookup; old is
@@ -721,10 +724,13 @@ B7. THE ERASURE RESCAN runs under the same budget by construction: it counts eac
    job records error_type MatcherBudgetExceeded (fail closed). CONSEQUENCE: one such event blocks that subject's
    erasure until an operator acts, indefinitely. Raising the budget strands nothing; lowering it can. Because the
    budget is in the matcher id, WPS38 already stops a tenant WITH identifiers from moving to a new budget (there is no
-   migration; m5 item 10). OPTIONS for main: (i) stay fail closed (built; visible in error_type); (ii) treat an
+   migration; m5 item 10). OPTIONS were: (i) stay fail closed (built; visible in error_type); (ii) treat an
    over-budget event as a mention, removed whole with the subject (it cannot be checked; over-erasure of another
    speaker's event, irreversible); (iii) re-admit at migration: a matcher migration refuses to finish while
-   over-budget events exist and quarantines them for review. Recommendation: (i) now, (iii) with the migration.
+   over-budget events exist and quarantines them for review.
+   DECIDED (main, decision 2; ASSUMPTION under the user's delegation, source: main): (i) now, (iii) at migration. SUCH
+   AN ERASURE CANNOT COMPLETE UNTIL A MATCHER MIGRATION RE-ADMITS THE EVENT, AND NO MIGRATION EXISTS YET. Stated in the
+   erasure receipt (matcher_budget) and results/README.md.
 B8. STATED LIMITATIONS: an all-caps text in which most words carry several I's, longer than about 85 such tokens, is
    refused (the measured 200-token sample is 309,286 keys, over max(131,072, 512 times 200)); lower-casing it or
    splitting it into short events admits it. A code-dense text above 512 keys per token beyond the floor is refused.
@@ -740,3 +746,21 @@ B9. TESTS FIRST (red on 819258c by assertion, never by a missing name: the tests
    stop-word class test of item 11. Live (tests/test_d3_pg.py, needs the stores): a refused write leaves no events,
    quarantine or subject key row and adds one write_refusals row with its code; the rescan of an over-budget legacy
    event fails closed. The live tests wait for t2-dev space (the run floor and lock rule stand).
+B10. PER-CALL LIMIT (main's decision 1, 2026-11-18; ASSUMPTION under the user's delegation, source: main): the design
+   aim is that worst-case matcher work is bounded by something the store path enforces, so one call (one append, one
+   scan) is bounded, not left to an API layer that does not exist here. In the versioned record (so a change is a
+   matcher version change): CALL_EVENTS = 1,000 (the experiments append at most 1,000 events per call:
+   exp/erasure_cost.py), CALL_BYTES = 1,048,576 (16 events at the size bound), CALL_KEYS = 5,000,000 (the event
+   maximum: a call may do no more matcher work than one worst event). Why a key total and not only counts: one 144-byte
+   event under the floor has 122,344 keys, so 1,000 of them (144 KB) would be 122 million keys. Refused with
+   CallBudgetExceeded, code WPM03 (count first; then bytes and keys as they add up, naming the event that crossed),
+   before any key is HMAC'd, counted in write_refusals like WPM01 and WPM02. The erasure rescan is not a write call
+   and has no call limit (it reads a tenant's history page by page, each event under its own budget).
+   WORST ADMITTED CALL, MEASURED (agent-af5c8cce658ab5a89/budget_worst_call.py, Mac, real HMAC-SHA256, fake lookup):
+   16 events, 1,026,413 bytes, 4,999,038 keys (15 events of 64 KiB two-letter words, the most tokenisation per byte,
+   and one crafted event filling the key total): admit() alone 2.8 s, scan() 13.6 s (2.9 million distinct keys HMACed
+   in 355 chunks, peak RSS 33 MB), so an append costs about 16 s of matcher CPU (append admits once more than scan),
+   up to 8 times that with WPS17 retries; store lookups and key-store reads (355 each) not measured. No per-tenant rate
+   limit exists. Tests first (tests/test_ident.py F13CallBudget, red on 77fb0e7 by assertion: 7 failures): 1,001
+   events, 17 times 64,000 bytes and 41 floor-shaped events refused with WPM03 and no HMAC, 1,000, 16 and 40 admitted;
+   the matcher id names the seven numbers; the store accepts WPM03. Live: tests/test_d3_pg.py B1 counts WPM03.

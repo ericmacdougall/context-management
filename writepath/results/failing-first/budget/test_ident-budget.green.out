@@ -1,4 +1,4 @@
-# tests/test_ident.py at the m5 b1 head, Mac, Unicode 13: WP_UCD_DIR=<dir> python3 -m unittest -v tests.test_ident
+# tests/test_ident.py at the m5 b1 head with the per-call limit, Mac, Unicode 13: WP_UCD_DIR=<dir> python3 -m unittest -v tests.test_ident
 test_m5_ascii_letters_and_digits_are_their_own_keys (tests.test_ident.F11M5Readings) ... ok
 test_m5_both_readings_glyphs (tests.test_ident.F11M5Readings)
 Pinned per Unicode version; each reading checked through the text path, and no other reading. ... ok
@@ -29,6 +29,11 @@ test_short_all_caps_heading_admitted_by_the_floor (tests.test_ident.F12Budget) .
 test_store_bounds_ciphertext_size (tests.test_ident.F12Budget) ... ok
 test_worst_shape_at_the_size_bound_refused_by_count (tests.test_ident.F12Budget) ... ok
 test_s1_stop_word_with_both_readings_refused (tests.test_ident.F12StopClass) ... ok
+test_call_bytes (tests.test_ident.F13CallBudget) ... ok
+test_call_event_count (tests.test_ident.F13CallBudget) ... ok
+test_call_keys_many_floor_shaped_events (tests.test_ident.F13CallBudget) ... ok
+test_call_limits_named_in_the_matcher_id (tests.test_ident.F13CallBudget) ... ok
+test_store_counts_the_call_code (tests.test_ident.F13CallBudget) ... ok
 test_s15_no_module_builds_identifier_hmacs_itself (tests.test_ident.LabelInOnePlace)
 A second copy of the label (erasure's rescan had "ident:" + w) silently stops matching when the label ... ok
 test_r1_no_span_redaction_api (tests.test_ident.Matcher)
@@ -58,6 +63,6 @@ test_every_default_ignorable_inside_a_name (tests.test_ident.WholeDefaultIgnorab
 test_f6_khmer_inherent_vowels (tests.test_ident.WholeDefaultIgnorable) ... ok
 
 ----------------------------------------------------------------------
-Ran 52 tests in 11.453s
+Ran 57 tests in 11.465s
 
 OK
