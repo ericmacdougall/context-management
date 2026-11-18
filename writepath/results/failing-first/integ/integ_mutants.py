@@ -105,6 +105,10 @@ M = {
         "START_GB, STOP_GB, CAP_GB = 10.0, 8.0, 2.0",
         "START_GB, STOP_GB, CAP_GB = 10.0, 8.5, 2.0",
         ["test_integ_gf1_lines_equal_h6d"]),
+    "gf1_margin_moved": (         # added at 900e316 (bootstrap 778bc42 sizes the store tmpfs with the gate's MARGIN)
+        "MARGIN = 256 * 1024 ** 2 ",
+        "MARGIN = 512 * 1024 ** 2 ",
+        ["test_integ_gf1_lines_equal_h6d"]),
 }
 d = pathlib.Path("results/failing-first/variants")
 for name, (a, b, tests) in M.items():

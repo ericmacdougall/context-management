@@ -2575,6 +2575,13 @@ class Gate(unittest.TestCase):
         wm = {k: int(v[:-2]) for k, v in re.findall(r'"(\w+)": "(\d+gb)"', wm)}
         self.assertEqual(wm["flood_stage"], int(self.g.STOP_GB), "ES flood stage is not the stop line")
         self.assertEqual(wm["low"], int(self.g.START_GB), "ES low watermark is not the start line")
+        # host/bootstrap.py (778bc42) sizes the store tmpfs with the gate's MARGIN and starts ES with the same lines
+        boot = (self.tree / "host" / "bootstrap.py").read_text()
+        wm_of = lambda src: re.search(r"^WATERMARKS = (\{[^}]+\})", src, re.M).group(1)
+        self.assertEqual(wm_of(boot), wm_of((self.tree / "wp" / "es_security.py").read_text()),
+                         "bootstrap and es_security start ES with different watermarks")
+        self.assertRegex(boot, r"(?m)^MARGIN = GIB // 4\b", "bootstrap's MARGIN is no longer GIB // 4")
+        self.assertEqual(self.g.MARGIN, 1024 ** 3 // 4, "the gate's MARGIN != bootstrap's MARGIN (GIB // 4)")
 
     # ---- C12 (F-4): no container but the run's stores uses this home
     def test_v6_f4_container_using_this_home_blocks(self):

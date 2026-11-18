@@ -1,0 +1,26 @@
+# failing-first receipt (new module)
+# date: 2026-11-18T23:04:37Z
+# tree: writepath at 900e316 (git archive); the current tests/ copied into it; run from it
+# module under test: results/failing-first/variants/disk_gate.integ-mutant-gf1_margin_moved.py sha256 99a514f0742614b011ab96dcefe31b93d9169d9aefd9c29912445f852091daf8, copied into the tree
+# its difference from exp/disk_gate.py at HEAD 900e316:
+# diff: 101c101
+# diff: < MARGIN = 256 * 1024 ** 2                       # headroom over the bound for statfs rounding (inodes: B4, nr_inodes=0)
+# diff: ---
+# diff: > MARGIN = 512 * 1024 ** 2                       # headroom over the bound for statfs rounding (inodes: B4, nr_inodes=0)
+# test file: tests/test_disk_gate.py from HEAD 900e316 blob b3f32e890b07e8d6ae5053cb6574fb4a57080a82
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<tree>/writepath/results/failing-first/variants/disk_gate.integ-mutant-gf1_margin_moved.py python3 -m unittest -v tests.test_disk_gate.Gate.test_integ_gf1_lines_equal_h6d)
+test_integ_gf1_lines_equal_h6d (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+FAIL: test_integ_gf1_lines_equal_h6d (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.HRrHW28Qta/writepath/tests/test_disk_gate.py", line 2584, in test_integ_gf1_lines_equal_h6d
+    self.assertEqual(self.g.MARGIN, 1024 ** 3 // 4, "the gate's MARGIN != bootstrap's MARGIN (GIB // 4)")
+AssertionError: 536870912 != 268435456 : the gate's MARGIN != bootstrap's MARGIN (GIB // 4)
+
+----------------------------------------------------------------------
+Ran 1 test in 0.563s
+
+FAILED (failures=1)
+# exit status: 1
