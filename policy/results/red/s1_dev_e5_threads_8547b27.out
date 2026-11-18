@@ -1,0 +1,18 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), container emlab2-policyfix-pg; home paths shown as ~
+# DEV seeds at 8547b27 (fixer run s1-exp): sh kit/run.sh s1-exp m exp.e5_threads
+RESULT e5_threads verdict=PASS sha256=3d698bf2dabe8fe1387f128c0e6273388c6bf8322395e5ad9f9d63df69ff6fd9 file=~/emlab2-16096/policyfix/runs/s1-exp/src/results/DEV.e5_threads.3d698bf2dabe8fe1.json
+PASS {
+"positive": true,
+"control:A_ctl_derive_join_dropped": true,
+"control:A_ctl_xref_without_decision": true,
+"control:B_ctl_flag_always": true,
+"control:B_ctl_no_read_check": true
+} runtime 172.3
+  A_enforced {'worlds': 1000, 'leak_worlds': 0, 'interference_worlds': 0, 'key_rule_worlds': 0, 'flags_true': 0, 'flag_wrong': 0}
+  A_ctl_derive_join_dropped {'worlds': 1000, 'leak_worlds': 937, 'interference_worlds': 937, 'key_rule_worlds': 0, 'flags_true': 0, 'flag_wrong': 0}
+  A_ctl_xref_without_decision {'worlds': 1000, 'leak_worlds': 1000, 'interference_worlds': 1000, 'key_rule_worlds': 0, 'flags_true': 0, 'flag_wrong': 0}
+  B_notice_none {'worlds': 1000, 'leak_worlds': 0, 'interference_worlds': 0, 'key_rule_worlds': 0, 'flags_true': 0, 'flag_wrong': 0}
+  B_notice_existence_only {'worlds': 1000, 'leak_worlds': 0, 'interference_worlds': 0, 'key_rule_worlds': 0, 'flags_true': 6633, 'flag_wrong': 0}
+  B_ctl_flag_always {'worlds': 1000, 'leak_worlds': 0, 'interference_worlds': 0, 'key_rule_worlds': 1000, 'flags_true': 0, 'flag_wrong': 0}
+  B_ctl_unscoped_value {'worlds': 1000, 'leak_worlds': 0, 'interference_worlds': 0, 'key_rule_worlds': 0, 'flags_true': 0, 'flag_wrong': 0}
+  B_ctl_no_read_check {'worlds': 1000, 'leak_worlds': 1000, 'interference_worlds': 1000, 'key_rule_worlds': 0, 'flags_true': 0, 'flag_wrong': 0}

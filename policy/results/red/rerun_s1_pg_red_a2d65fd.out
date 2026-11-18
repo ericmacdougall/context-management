@@ -1,0 +1,1089 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), container emlab2-policyfix-pg; home paths shown as ~
+# RED rerun (P1 P4 blocking points), tree o-red-a2d6, o_reset first: sh kit/run.sh o-red-a2d6 t -v tests.test_s1_pg
+test_a_wait_after_the_judgment_fails_the_call (tests.test_s1_pg.S1_ApplyNeverWaits.test_a_wait_after_the_judgment_fails_the_call)
+S1 only. Broken variant: the revoke's target pins (dc._lock_target) do nothing, so its authority writes after the ... ERROR
+test_subject_token_unique_index (tests.test_s1_pg.S1_ApplyNeverWaits.test_subject_token_unique_index)
+Raw SQL holding an uncommitted subject token (no API call does: submits take the subject lock first). The insert would ... FAIL
+test_the_callers_lock_timeout_is_restored (tests.test_s1_pg.S1_ApplyNeverWaits.test_the_callers_lock_timeout_is_restored)
+Regression guard: every exit path (applied, refused, read) restores the caller's lock_timeout. ... ok
+test_the_stage_never_waits (tests.test_s1_pg.S1_ApplyNeverWaits.test_the_stage_never_waits)
+S1 only. Broken variant: dc.submit's acquisition without the chain-head lock (L7). The event insert then meets the held ... ERROR
+test_authority_lock (tests.test_s1_pg.S1_BeforeThePins.test_authority_lock)
+S1 only: the caller's authority lock (L1) held exclusively (a revoke or end_session of the caller in flight). ... 
+  test_authority_lock (tests.test_s1_pg.S1_BeforeThePins.test_authority_lock) (mutation='principal')
+S1 only: the caller's authority lock (L1) held exclusively (a revoke or end_session of the caller in flight). ... FAIL
+  test_authority_lock (tests.test_s1_pg.S1_BeforeThePins.test_authority_lock) (mutation='factor')
+S1 only: the caller's authority lock (L1) held exclusively (a revoke or end_session of the caller in flight). ... FAIL
+test_authority_lock (tests.test_s1_pg.S1_BeforeThePins.test_authority_lock)
+S1 only: the caller's authority lock (L1) held exclusively (a revoke or end_session of the caller in flight). ... FAIL
+test_erase_candidates_after_a_table_wait (tests.test_s1_pg.S1_BeforeThePins.test_erase_candidates_after_a_table_wait)
+Regression guard. ... 
+  test_erase_candidates_after_a_table_wait (tests.test_s1_pg.S1_BeforeThePins.test_erase_candidates_after_a_table_wait) (mutation='principal')
+Regression guard. ... FAIL
+  test_erase_candidates_after_a_table_wait (tests.test_s1_pg.S1_BeforeThePins.test_erase_candidates_after_a_table_wait) (mutation='factor')
+Regression guard. ... FAIL
+  test_erase_candidates_after_a_table_wait (tests.test_s1_pg.S1_BeforeThePins.test_erase_candidates_after_a_table_wait) (mutation='end')
+Regression guard. ... FAIL
+test_events_table_lock (tests.test_s1_pg.S1_BeforeThePins.test_events_table_lock)
+Regression guard: a relation lock on dc.events (L0). ... 
+  test_events_table_lock (tests.test_s1_pg.S1_BeforeThePins.test_events_table_lock) (mutation='factor')
+Regression guard: a relation lock on dc.events (L0). ... FAIL
+  test_events_table_lock (tests.test_s1_pg.S1_BeforeThePins.test_events_table_lock) (mutation='end')
+Regression guard: a relation lock on dc.events (L0). ... FAIL
+test_events_table_lock (tests.test_s1_pg.S1_BeforeThePins.test_events_table_lock)
+Regression guard: a relation lock on dc.events (L0). ... FAIL
+test_explain_after_a_table_wait (tests.test_s1_pg.S1_BeforeThePins.test_explain_after_a_table_wait)
+Regression guard: explain waits on a relation lock (L0), then pins. ... 
+  test_explain_after_a_table_wait (tests.test_s1_pg.S1_BeforeThePins.test_explain_after_a_table_wait) (mutation='principal')
+Regression guard: explain waits on a relation lock (L0), then pins. ... FAIL
+  test_explain_after_a_table_wait (tests.test_s1_pg.S1_BeforeThePins.test_explain_after_a_table_wait) (mutation='factor')
+Regression guard: explain waits on a relation lock (L0), then pins. ... FAIL
+  test_explain_after_a_table_wait (tests.test_s1_pg.S1_BeforeThePins.test_explain_after_a_table_wait) (mutation='end')
+Regression guard: explain waits on a relation lock (L0), then pins. ... FAIL
+test_pin_waits_for_a_row_writer (tests.test_s1_pg.S1_BeforeThePins.test_pin_waits_for_a_row_writer)
+S1 only: a pin statement waits for a transaction that holds the row and writes it; it then locks and judges the newest ... 
+  test_pin_waits_for_a_row_writer (tests.test_s1_pg.S1_BeforeThePins.test_pin_waits_for_a_row_writer) (table='sessions')
+S1 only: a pin statement waits for a transaction that holds the row and writes it; it then locks and judges the newest ... FAIL
+  test_pin_waits_for_a_row_writer (tests.test_s1_pg.S1_BeforeThePins.test_pin_waits_for_a_row_writer) (table='factors')
+S1 only: a pin statement waits for a transaction that holds the row and writes it; it then locks and judges the newest ... FAIL
+  test_pin_waits_for_a_row_writer (tests.test_s1_pg.S1_BeforeThePins.test_pin_waits_for_a_row_writer) (table='principal')
+S1 only: a pin statement waits for a transaction that holds the row and writes it; it then locks and judges the newest ... FAIL
+test_read_table_after_a_table_wait (tests.test_s1_pg.S1_BeforeThePins.test_read_table_after_a_table_wait)
+Regression guard. ... 
+  test_read_table_after_a_table_wait (tests.test_s1_pg.S1_BeforeThePins.test_read_table_after_a_table_wait) (mutation='factor')
+Regression guard. ... FAIL
+  test_read_table_after_a_table_wait (tests.test_s1_pg.S1_BeforeThePins.test_read_table_after_a_table_wait) (mutation='end')
+Regression guard. ... FAIL
+test_without_the_pins_a_mutation_lands_during_the_wait (tests.test_s1_pg.S1_Control.test_without_the_pins_a_mutation_lands_during_the_wait)
+Control, for the green run: the pins, not the final judgment after them, make S1_PinnedAuthority pass. With FOR SHARE ... ERROR
+test_authority_lock (tests.test_s1_pg.S1_ExpiryCeiling.test_authority_lock)
+S1 only. ... FAIL
+test_chain_head_row (tests.test_s1_pg.S1_ExpiryCeiling.test_chain_head_row) ... FAIL
+test_erase_value_row (tests.test_s1_pg.S1_ExpiryCeiling.test_erase_value_row) ... FAIL
+test_events_table_lock (tests.test_s1_pg.S1_ExpiryCeiling.test_events_table_lock) ... FAIL
+test_explain_table_lock (tests.test_s1_pg.S1_ExpiryCeiling.test_explain_table_lock) ... FAIL
+test_head_row (tests.test_s1_pg.S1_ExpiryCeiling.test_head_row) ... FAIL
+test_idempotency_lock (tests.test_s1_pg.S1_ExpiryCeiling.test_idempotency_lock) ... FAIL
+test_open_session_twin (tests.test_s1_pg.S1_ExpiryCeiling.test_open_session_twin)
+The proof expires while open_session waits for a concurrent presentation of the same proof (L8). ... FAIL
+test_revoke_target_row (tests.test_s1_pg.S1_ExpiryCeiling.test_revoke_target_row) ... FAIL
+test_tenant_lock (tests.test_s1_pg.S1_ExpiryCeiling.test_tenant_lock)
+S1 only. ... FAIL
+test_the_callers_own_shorter_lock_timeout_still_applies (tests.test_s1_pg.S1_ExpiryCeiling.test_the_callers_own_shorter_lock_timeout_still_applies)
+Regression guard: the budget never lengthens the caller's own lock_timeout; its expiry is re-raised as 55P03. ... ok
+test_an_out_of_order_lock_is_refused (tests.test_s1_pg.S1_LockOrder.test_an_out_of_order_lock_is_refused) ... 
+  test_an_out_of_order_lock_is_refused (tests.test_s1_pg.S1_LockOrder.test_an_out_of_order_lock_is_refused) (first=(3, 0), second=(2, 0)) ... ERROR
+  test_an_out_of_order_lock_is_refused (tests.test_s1_pg.S1_LockOrder.test_an_out_of_order_lock_is_refused) (first=(1, 50), second=(1, 7)) ... ERROR
+test_every_entry_point_follows_the_declared_order (tests.test_s1_pg.S1_LockOrder.test_every_entry_point_follows_the_declared_order) ... 
+  test_every_entry_point_follows_the_declared_order (tests.test_s1_pg.S1_LockOrder.test_every_entry_point_follows_the_declared_order) [submit] ... FAIL
+  test_every_entry_point_follows_the_declared_order (tests.test_s1_pg.S1_LockOrder.test_every_entry_point_follows_the_declared_order) [submit_revoke] ... FAIL
+  test_every_entry_point_follows_the_declared_order (tests.test_s1_pg.S1_LockOrder.test_every_entry_point_follows_the_declared_order) [submit_grant] ... FAIL
+  test_every_entry_point_follows_the_declared_order (tests.test_s1_pg.S1_LockOrder.test_every_entry_point_follows_the_declared_order) [explain] ... FAIL
+  test_every_entry_point_follows_the_declared_order (tests.test_s1_pg.S1_LockOrder.test_every_entry_point_follows_the_declared_order) [read_table] ... FAIL
+  test_every_entry_point_follows_the_declared_order (tests.test_s1_pg.S1_LockOrder.test_every_entry_point_follows_the_declared_order) [erase_candidates] ... FAIL
+  test_every_entry_point_follows_the_declared_order (tests.test_s1_pg.S1_LockOrder.test_every_entry_point_follows_the_declared_order) [erase_values] ... FAIL
+  test_every_entry_point_follows_the_declared_order (tests.test_s1_pg.S1_LockOrder.test_every_entry_point_follows_the_declared_order) [open_session] ... FAIL
+  test_every_entry_point_follows_the_declared_order (tests.test_s1_pg.S1_LockOrder.test_every_entry_point_follows_the_declared_order) [end_session] ... FAIL
+test_grant_state_is_add_only (tests.test_s1_pg.S1_LockOrder.test_grant_state_is_add_only)
+Enumerates every statement of the core that writes dc.role or a principal's kind or admin flag (regression guard). ... ~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py:634: ResourceWarning: unclosed file <_io.TextIOWrapper name='~/emlab2-16096/policyfix/runs/o-red-a2d6/src/pol/_pgcore.sql' mode='r' encoding='utf-8'>
+  src = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "pol", "_pgcore.sql"), encoding="utf-8").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_crossed_revokes (tests.test_s1_pg.S1_MutualWaits.test_crossed_revokes)
+Regression guard: admin revokes admin2 while admin2 revokes admin, eight rounds: exactly one applies, no deadlock. ... ok
+test_crossed_subjects (tests.test_s1_pg.S1_MutualWaits.test_crossed_subjects)
+Regression guard: two principals submit values about the same two new subjects concurrently, ten rounds; no deadlock. ... ok
+test_end_session_waits_for_the_call (tests.test_s1_pg.S1_MutualWaits.test_end_session_waits_for_the_call)
+F1 P1b: an in-flight call (here explain in a transaction held open) has its session pinned; end_session waits for it (L1 ... FAIL
+test_erasure_is_not_starved_by_a_stream_of_submits (tests.test_s1_pg.S1_MutualWaits.test_erasure_is_not_starved_by_a_stream_of_submits)
+The same for erase_values (the write path's known erasure-starvation shape). ... FAIL
+test_grant_waits_for_a_submit (tests.test_s1_pg.S1_MutualWaits.test_grant_waits_for_a_submit)
+Regression guard: a grant (tenant lock exclusive) waits for an in-flight submit and is then applied. ... ok
+test_open_session_vs_revoke (tests.test_s1_pg.S1_MutualWaits.test_open_session_vs_revoke)
+An open_session of bob held open; the revoke of bob waits for it (L1), then revokes the new session too. Red at ... FAIL
+test_revoke_is_not_starved_by_a_stream_of_submits (tests.test_s1_pg.S1_MutualWaits.test_revoke_is_not_starved_by_a_stream_of_submits)
+A revoke (tenant lock exclusive) while three principals keep the tenant busy. Red at ea4677a if the tenant row's share ... FAIL
+test_revoke_waits_for_a_held_call (tests.test_s1_pg.S1_MutualWaits.test_revoke_waits_for_a_held_call)
+Regression guard (ea4677a: the tenant row): alice's submit in a transaction she holds open; the revoke of alice waits ... ok
+test_factor_row_writer (tests.test_s1_pg.S1_OpenSession.test_factor_row_writer)
+Regression guard: a transaction holds the factor row FOR UPDATE, revokes the factor and commits; B's pin waited for it ... FAIL
+test_prune_never_waits (tests.test_s1_pg.S1_OpenSession.test_prune_never_waits)
+A pruned an expired ledger row of the factor and holds its transaction open. B (same factor, another nonce) skips that ... FAIL
+test_twin_commits (tests.test_s1_pg.S1_OpenSession.test_twin_commits)
+Regression guard: A commits; B is refused as a replay and leaves no session. ... ok
+test_twin_rolls_back (tests.test_s1_pg.S1_OpenSession.test_twin_rolls_back)
+B is opened once A rolls back. A factor or principal revocation started while B waited waits for B (red at ea4677a: it ... 
+  test_twin_rolls_back (tests.test_s1_pg.S1_OpenSession.test_twin_rolls_back) (mutation='factor')
+B is opened once A rolls back. A factor or principal revocation started while B waited waits for B (red at ea4677a: it ... FAIL
+  test_twin_rolls_back (tests.test_s1_pg.S1_OpenSession.test_twin_rolls_back) (mutation='principal')
+B is opened once A rolls back. A factor or principal revocation started while B waited waits for B (red at ea4677a: it ... FAIL
+test_chain_head_row (tests.test_s1_pg.S1_PinnedAuthority.test_chain_head_row)
+The tenant's chain-head row (L7), held by any concurrent event of the tenant until it commits. ... 
+  test_chain_head_row (tests.test_s1_pg.S1_PinnedAuthority.test_chain_head_row) (mutation='principal')
+The tenant's chain-head row (L7), held by any concurrent event of the tenant until it commits. ... FAIL
+  test_chain_head_row (tests.test_s1_pg.S1_PinnedAuthority.test_chain_head_row) (mutation='factor')
+The tenant's chain-head row (L7), held by any concurrent event of the tenant until it commits. ... FAIL
+  test_chain_head_row (tests.test_s1_pg.S1_PinnedAuthority.test_chain_head_row) (mutation='end')
+The tenant's chain-head row (L7), held by any concurrent event of the tenant until it commits. ... FAIL
+test_erase_tenant_lock (tests.test_s1_pg.S1_PinnedAuthority.test_erase_tenant_lock)
+S1 only: erase_values waits for the tenant lock (L3) held by a submit in flight. ... 
+  test_erase_tenant_lock (tests.test_s1_pg.S1_PinnedAuthority.test_erase_tenant_lock) (mutation='principal')
+S1 only: erase_values waits for the tenant lock (L3) held by a submit in flight. ... FAIL
+  test_erase_tenant_lock (tests.test_s1_pg.S1_PinnedAuthority.test_erase_tenant_lock) (mutation='factor')
+S1 only: erase_values waits for the tenant lock (L3) held by a submit in flight. ... FAIL
+  test_erase_tenant_lock (tests.test_s1_pg.S1_PinnedAuthority.test_erase_tenant_lock) (mutation='end')
+S1 only: erase_values waits for the tenant lock (L3) held by a submit in flight. ... FAIL
+  test_erase_tenant_lock (tests.test_s1_pg.S1_PinnedAuthority.test_erase_tenant_lock) (mutation='revoke')
+S1 only: erase_values waits for the tenant lock (L3) held by a submit in flight. ... FAIL
+test_erase_token_row (tests.test_s1_pg.S1_PinnedAuthority.test_erase_token_row)
+The subject's token row held FOR UPDATE (L5.3). ... 
+  test_erase_token_row (tests.test_s1_pg.S1_PinnedAuthority.test_erase_token_row) (mutation='principal')
+The subject's token row held FOR UPDATE (L5.3). ... FAIL
+  test_erase_token_row (tests.test_s1_pg.S1_PinnedAuthority.test_erase_token_row) (mutation='factor')
+The subject's token row held FOR UPDATE (L5.3). ... FAIL
+  test_erase_token_row (tests.test_s1_pg.S1_PinnedAuthority.test_erase_token_row) (mutation='end')
+The subject's token row held FOR UPDATE (L5.3). ... FAIL
+test_erase_value_row (tests.test_s1_pg.S1_PinnedAuthority.test_erase_value_row)
+A value row held FOR UPDATE (L5.2). ... 
+  test_erase_value_row (tests.test_s1_pg.S1_PinnedAuthority.test_erase_value_row) (mutation='principal')
+A value row held FOR UPDATE (L5.2). ... FAIL
+  test_erase_value_row (tests.test_s1_pg.S1_PinnedAuthority.test_erase_value_row) (mutation='factor')
+A value row held FOR UPDATE (L5.2). ... FAIL
+  test_erase_value_row (tests.test_s1_pg.S1_PinnedAuthority.test_erase_value_row) (mutation='end')
+A value row held FOR UPDATE (L5.2). ... FAIL
+test_head_row (tests.test_s1_pg.S1_PinnedAuthority.test_head_row)
+The requirement's head row FOR UPDATE (L5): a concurrent submission on the same requirement. ... 
+  test_head_row (tests.test_s1_pg.S1_PinnedAuthority.test_head_row) (mutation='principal')
+The requirement's head row FOR UPDATE (L5): a concurrent submission on the same requirement. ... FAIL
+  test_head_row (tests.test_s1_pg.S1_PinnedAuthority.test_head_row) (mutation='factor')
+The requirement's head row FOR UPDATE (L5): a concurrent submission on the same requirement. ... FAIL
+  test_head_row (tests.test_s1_pg.S1_PinnedAuthority.test_head_row) (mutation='end')
+The requirement's head row FOR UPDATE (L5): a concurrent submission on the same requirement. ... FAIL
+test_idempotency_lock (tests.test_s1_pg.S1_PinnedAuthority.test_idempotency_lock)
+The per-principal advisory lock (L4), which any login role can take. ... 
+  test_idempotency_lock (tests.test_s1_pg.S1_PinnedAuthority.test_idempotency_lock) (mutation='principal')
+The per-principal advisory lock (L4), which any login role can take. ... FAIL
+  test_idempotency_lock (tests.test_s1_pg.S1_PinnedAuthority.test_idempotency_lock) (mutation='factor')
+The per-principal advisory lock (L4), which any login role can take. ... FAIL
+  test_idempotency_lock (tests.test_s1_pg.S1_PinnedAuthority.test_idempotency_lock) (mutation='end')
+The per-principal advisory lock (L4), which any login role can take. ... FAIL
+test_subject_lock (tests.test_s1_pg.S1_PinnedAuthority.test_subject_lock)
+Bob's dc.submit about the same new subject (on r1) still open while alice submits about it on r2 (L6; was the ... 
+  test_subject_lock (tests.test_s1_pg.S1_PinnedAuthority.test_subject_lock) (mutation='principal')
+Bob's dc.submit about the same new subject (on r1) still open while alice submits about it on r2 (L6; was the ... FAIL
+  test_subject_lock (tests.test_s1_pg.S1_PinnedAuthority.test_subject_lock) (mutation='factor')
+Bob's dc.submit about the same new subject (on r1) still open while alice submits about it on r2 (L6; was the ... FAIL
+  test_subject_lock (tests.test_s1_pg.S1_PinnedAuthority.test_subject_lock) (mutation='end')
+Bob's dc.submit about the same new subject (on r1) still open while alice submits about it on r2 (L6; was the ... FAIL
+  test_subject_lock (tests.test_s1_pg.S1_PinnedAuthority.test_subject_lock) (mutation='revoke')
+Bob's dc.submit about the same new subject (on r1) still open while alice submits about it on r2 (L6; was the ... FAIL
+test_tenant_lock (tests.test_s1_pg.S1_PinnedAuthority.test_tenant_lock)
+S1 only: the tenant lock (L3), held exclusively by a revoke, grant or erasure in flight (was the tenant row). ... 
+  test_tenant_lock (tests.test_s1_pg.S1_PinnedAuthority.test_tenant_lock) (mutation='principal')
+S1 only: the tenant lock (L3), held exclusively by a revoke, grant or erasure in flight (was the tenant row). ... FAIL
+  test_tenant_lock (tests.test_s1_pg.S1_PinnedAuthority.test_tenant_lock) (mutation='factor')
+S1 only: the tenant lock (L3), held exclusively by a revoke, grant or erasure in flight (was the tenant row). ... FAIL
+  test_tenant_lock (tests.test_s1_pg.S1_PinnedAuthority.test_tenant_lock) (mutation='end')
+S1 only: the tenant lock (L3), held exclusively by a revoke, grant or erasure in flight (was the tenant row). ... FAIL
+  test_tenant_lock (tests.test_s1_pg.S1_PinnedAuthority.test_tenant_lock) (mutation='revoke')
+S1 only: the tenant lock (L3), held exclusively by a revoke, grant or erasure in flight (was the tenant row). ... FAIL
+test_revoke_gives_up_after_xwait (tests.test_s1_pg.S1_RevokePath.test_revoke_gives_up_after_xwait)
+S1 only: an exclusive wait is capped at XWAIT (2 s). Past it the revoke fails with 55P03, applies nothing, and the ... FAIL
+test_revoke_waits_for_an_open_end_session (tests.test_s1_pg.S1_RevokePath.test_revoke_waits_for_an_open_end_session)
+S1: an open dc.end_session of the target holds the target's authority lock; the revoke waits for it (FIFO) and then ... ok
+test_self_revoke_is_applied (tests.test_s1_pg.S1_RevokePath.test_self_revoke_is_applied)
+Regression guard: an admin revoking itself (A exclusive directly) is applied, and its token is refused afterwards. ... ok
+test_sessions_table_lock (tests.test_s1_pg.S1_RevokePath.test_sessions_table_lock)
+Regression guard: a SHARE lock on dc.sessions is waited for before the pins (L0); the change committed meanwhile refuses. ... 
+  test_sessions_table_lock (tests.test_s1_pg.S1_RevokePath.test_sessions_table_lock) [principal]
+Regression guard: a SHARE lock on dc.sessions is waited for before the pins (L0); the change committed meanwhile refuses. ... FAIL
+  test_sessions_table_lock (tests.test_s1_pg.S1_RevokePath.test_sessions_table_lock) [factor]
+Regression guard: a SHARE lock on dc.sessions is waited for before the pins (L0); the change committed meanwhile refuses. ... FAIL
+test_target_principal_row (tests.test_s1_pg.S1_RevokePath.test_target_principal_row)
+The target's principal row held FOR UPDATE (L2.3). ... 
+  test_target_principal_row (tests.test_s1_pg.S1_RevokePath.test_target_principal_row) (mutation='principal')
+The target's principal row held FOR UPDATE (L2.3). ... FAIL
+  test_target_principal_row (tests.test_s1_pg.S1_RevokePath.test_target_principal_row) (mutation='factor')
+The target's principal row held FOR UPDATE (L2.3). ... FAIL
+  test_target_principal_row (tests.test_s1_pg.S1_RevokePath.test_target_principal_row) (mutation='end')
+The target's principal row held FOR UPDATE (L2.3). ... FAIL
+test_target_props_rows (tests.test_s1_pg.S1_RevokePath.test_target_props_rows)
+The target's open proposal row held FOR UPDATE (L5.1). Each round x proposes afresh (the previous revoke invalidated it). ... 
+  test_target_props_rows (tests.test_s1_pg.S1_RevokePath.test_target_props_rows) (mutation='principal')
+The target's open proposal row held FOR UPDATE (L5.1). Each round x proposes afresh (the previous revoke invalidated it). ... FAIL
+  test_target_props_rows (tests.test_s1_pg.S1_RevokePath.test_target_props_rows) (mutation='factor')
+The target's open proposal row held FOR UPDATE (L5.1). Each round x proposes afresh (the previous revoke invalidated it). ... FAIL
+  test_target_props_rows (tests.test_s1_pg.S1_RevokePath.test_target_props_rows) (mutation='end')
+The target's open proposal row held FOR UPDATE (L5.1). Each round x proposes afresh (the previous revoke invalidated it). ... FAIL
+
+======================================================================
+ERROR: test_a_wait_after_the_judgment_fails_the_call (tests.test_s1_pg.S1_ApplyNeverWaits.test_a_wait_after_the_judgment_fails_the_call)
+S1 only. Broken variant: the revoke's target pins (dc._lock_target) do nothing, so its authority writes after the
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 522, in test_a_wait_after_the_judgment_fails_the_call
+    orig = self.o.execute("select pg_get_functiondef('dc._lock_target(text, text, timestamptz, bigint)'::regprocedure)").fetchone()[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/venv/lib/python3.12/site-packages/psycopg/connection.py", line 251, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedFunction: function "dc._lock_target(text, text, timestamptz, bigint)" does not exist
+LINE 1: select pg_get_functiondef('dc._lock_target(text, text, times...
+                                  ^
+
+======================================================================
+ERROR: test_the_stage_never_waits (tests.test_s1_pg.S1_ApplyNeverWaits.test_the_stage_never_waits)
+S1 only. Broken variant: dc.submit's acquisition without the chain-head lock (L7). The event insert then meets the held
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 539, in test_the_stage_never_waits
+    orig = self._variant("dc._acquire_submit(dc.sessions, jsonb, bigint)",
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 514, in _variant
+    orig = self.o.execute("select pg_get_functiondef(%s::regprocedure)", (fn,)).fetchone()[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/venv/lib/python3.12/site-packages/psycopg/connection.py", line 251, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedFunction: function "dc._acquire_submit(dc.sessions, jsonb, bigint)" does not exist
+CONTEXT:  unnamed portal parameter $1 = '...'
+
+======================================================================
+ERROR: test_without_the_pins_a_mutation_lands_during_the_wait (tests.test_s1_pg.S1_Control.test_without_the_pins_a_mutation_lands_during_the_wait)
+Control, for the green run: the pins, not the final judgment after them, make S1_PinnedAuthority pass. With FOR SHARE
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 244, in test_without_the_pins_a_mutation_lands_during_the_wait
+    orig = self.o.execute("select pg_get_functiondef(%s::regprocedure)", (fn,)).fetchone()[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/venv/lib/python3.12/site-packages/psycopg/connection.py", line 251, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedFunction: function "dc._pin(dc.sessions, bigint, boolean)" does not exist
+CONTEXT:  unnamed portal parameter $1 = '...'
+
+======================================================================
+ERROR: test_an_out_of_order_lock_is_refused (tests.test_s1_pg.S1_LockOrder.test_an_out_of_order_lock_is_refused) (first=(3, 0), second=(2, 0))
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 625, in test_an_out_of_order_lock_is_refused
+    self.o.execute("select dc._at(%s, %s)", first)
+  File "~/emlab2-16096/policyfix/venv/lib/python3.12/site-packages/psycopg/connection.py", line 251, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedFunction: function dc._at(smallint, smallint) does not exist
+LINE 1: select dc._at($1, $2)
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+
+======================================================================
+ERROR: test_an_out_of_order_lock_is_refused (tests.test_s1_pg.S1_LockOrder.test_an_out_of_order_lock_is_refused) (first=(1, 50), second=(1, 7))
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 625, in test_an_out_of_order_lock_is_refused
+    self.o.execute("select dc._at(%s, %s)", first)
+  File "~/emlab2-16096/policyfix/venv/lib/python3.12/site-packages/psycopg/connection.py", line 251, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedFunction: function dc._at(smallint, smallint) does not exist
+LINE 1: select dc._at($1, $2)
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+
+======================================================================
+FAIL: test_subject_token_unique_index (tests.test_s1_pg.S1_ApplyNeverWaits.test_subject_token_unique_index)
+Raw SQL holding an uncommitted subject token (no API call does: submits take the subject lock first). The insert would
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 558, in test_subject_token_unique_index
+    self.assertEqual(r.get("error"), "55P03", "%r" % (r,))
+AssertionError: None != '55P03' : {'id': 'alice/c7b58fffb', 'code': 'proposed', 'original': None, 'value_ref': 'val-cb567088032db8546e430e9866acb2a2d64dccc0'}
+
+======================================================================
+FAIL: test_authority_lock (tests.test_s1_pg.S1_BeforeThePins.test_authority_lock) (mutation='principal')
+S1 only: the caller's authority lock (L1) held exclusively (a revoke or end_session of the caller in flight).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 270, in _before
+    self.assertTrue(waited, "vacuous: the call did not wait")
+AssertionError: False is not true : vacuous: the call did not wait
+
+======================================================================
+FAIL: test_authority_lock (tests.test_s1_pg.S1_BeforeThePins.test_authority_lock) (mutation='factor')
+S1 only: the caller's authority lock (L1) held exclusively (a revoke or end_session of the caller in flight).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 270, in _before
+    self.assertTrue(waited, "vacuous: the call did not wait")
+AssertionError: False is not true : vacuous: the call did not wait
+
+======================================================================
+FAIL: test_authority_lock (tests.test_s1_pg.S1_BeforeThePins.test_authority_lock)
+S1 only: the caller's authority lock (L1) held exclusively (a revoke or end_session of the caller in flight).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 286, in test_authority_lock
+    self._submit(lambda c: adv(c, A_CLS, "auth", T, "alice"), hows=("principal", "factor"))
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 282, in _submit
+    self.assertEqual(sum(self.events("alice", c) for c in seen), 0)
+AssertionError: 2 != 0
+
+======================================================================
+FAIL: test_erase_candidates_after_a_table_wait (tests.test_s1_pg.S1_BeforeThePins.test_erase_candidates_after_a_table_wait) (mutation='principal')
+Regression guard.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 271, in _before
+    self.assertFalse(ok(r), "answered after a change committed while it waited before its pins (%s): %r" % (how, r))
+AssertionError: True is not false : answered after a change committed while it waited before its pins (principal): {'values': [{'ref': 'val-1d27abbccac963d6f5259f0ef3cff3af09f707d7', 'label': {'acl': [], 'holds': [], 'banned': [], 'models': None, 'regions': None, 'tenants': ['tenant-a'], 'subjects': ['dana'], 'local_only': False, 'restricted': False, 'sensitivity': 0}}], 'refused': None}
+
+======================================================================
+FAIL: test_erase_candidates_after_a_table_wait (tests.test_s1_pg.S1_BeforeThePins.test_erase_candidates_after_a_table_wait) (mutation='factor')
+Regression guard.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 271, in _before
+    self.assertFalse(ok(r), "answered after a change committed while it waited before its pins (%s): %r" % (how, r))
+AssertionError: True is not false : answered after a change committed while it waited before its pins (factor): {'values': [{'ref': 'val-1d27abbccac963d6f5259f0ef3cff3af09f707d7', 'label': {'acl': [], 'holds': [], 'banned': [], 'models': None, 'regions': None, 'tenants': ['tenant-a'], 'subjects': ['dana'], 'local_only': False, 'restricted': False, 'sensitivity': 0}}], 'refused': None}
+
+======================================================================
+FAIL: test_erase_candidates_after_a_table_wait (tests.test_s1_pg.S1_BeforeThePins.test_erase_candidates_after_a_table_wait) (mutation='end')
+Regression guard.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 271, in _before
+    self.assertFalse(ok(r), "answered after a change committed while it waited before its pins (%s): %r" % (how, r))
+AssertionError: True is not false : answered after a change committed while it waited before its pins (end): {'values': [{'ref': 'val-1d27abbccac963d6f5259f0ef3cff3af09f707d7', 'label': {'acl': [], 'holds': [], 'banned': [], 'models': None, 'regions': None, 'tenants': ['tenant-a'], 'subjects': ['dana'], 'local_only': False, 'restricted': False, 'sensitivity': 0}}], 'refused': None}
+
+======================================================================
+FAIL: test_events_table_lock (tests.test_s1_pg.S1_BeforeThePins.test_events_table_lock) (mutation='factor')
+Regression guard: a relation lock on dc.events (L0).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 271, in _before
+    self.assertFalse(ok(r), "answered after a change committed while it waited before its pins (%s): %r" % (how, r))
+AssertionError: True is not false : answered after a change committed while it waited before its pins (factor): {'id': 'alice/c7b1d3ea1', 'code': 'proposed', 'original': None, 'value_ref': 'val-4689ba04a78da1ed8617c05d25a3694944137a73'}
+
+======================================================================
+FAIL: test_events_table_lock (tests.test_s1_pg.S1_BeforeThePins.test_events_table_lock) (mutation='end')
+Regression guard: a relation lock on dc.events (L0).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 271, in _before
+    self.assertFalse(ok(r), "answered after a change committed while it waited before its pins (%s): %r" % (how, r))
+AssertionError: True is not false : answered after a change committed while it waited before its pins (end): {'id': 'alice/ca789a9d7', 'code': 'proposed', 'original': None, 'value_ref': 'val-364fbf5a1cf14475a7f4729c1e41eeb4c0c51172'}
+
+======================================================================
+FAIL: test_events_table_lock (tests.test_s1_pg.S1_BeforeThePins.test_events_table_lock)
+Regression guard: a relation lock on dc.events (L0).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 290, in test_events_table_lock
+    self._submit(lambda c: c.execute("lock table dc.events in access exclusive mode"))
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 282, in _submit
+    self.assertEqual(sum(self.events("alice", c) for c in seen), 0)
+AssertionError: 2 != 0
+
+======================================================================
+FAIL: test_explain_after_a_table_wait (tests.test_s1_pg.S1_BeforeThePins.test_explain_after_a_table_wait) (mutation='principal')
+Regression guard: explain waits on a relation lock (L0), then pins.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 271, in _before
+    self.assertFalse(ok(r), "answered after a change committed while it waited before its pins (%s): %r" % (how, r))
+AssertionError: True is not false : answered after a change committed while it waited before its pins (principal): {'req': 'r1', 'head': {'last': None, 'status': 'unset', 'version': 0, 'value_by': None, 'contested': None, 'value_ref': None, 'value_event': None, 'value_label': None, 'value_version': 0}, 'open': [{'id': 'alice/seed', 'base': 0, 'kind': 'proposal', 'label': {'acl': [], 'holds': [], 'banned': [], 'models': None, 'regions': None, 'tenants': ['tenant-a'], 'subjects': ['subj-8275e05f88da41fd922b4c25c8998fed'], 'local_only': False, 'restricted': False, 'sensitivity': 0}, 'author': 'alice', 'status': 'open', 'channel': None, 'closed_by': None, 'value_ref': 'val-5bc96adf15e6df3dd462b9faf92a58f2cf666782', 'author_kind': 'human'}], 'tenant': 'tenant-a', 'values': {'val-5bc96adf15e6df3dd462b9faf92a58f2cf666782': {'text': 'about dana', 'label': {'acl': [], 'holds': [], 'banned': [], 'models': None, 'regions': None, 'tenants': ['tenant-a'], 'subjects': ['dana'], 'local_only': False, 'restricted': False, 'sensitivity': 0}}}, 'principal': 'admin'}
+
+======================================================================
+FAIL: test_explain_after_a_table_wait (tests.test_s1_pg.S1_BeforeThePins.test_explain_after_a_table_wait) (mutation='factor')
+Regression guard: explain waits on a relation lock (L0), then pins.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 271, in _before
+    self.assertFalse(ok(r), "answered after a change committed while it waited before its pins (%s): %r" % (how, r))
+AssertionError: True is not false : answered after a change committed while it waited before its pins (factor): {'req': 'r1', 'head': {'last': None, 'status': 'unset', 'version': 0, 'value_by': None, 'contested': None, 'value_ref': None, 'value_event': None, 'value_label': None, 'value_version': 0}, 'open': [{'id': 'alice/seed', 'base': 0, 'kind': 'proposal', 'label': {'acl': [], 'holds': [], 'banned': [], 'models': None, 'regions': None, 'tenants': ['tenant-a'], 'subjects': ['subj-8275e05f88da41fd922b4c25c8998fed'], 'local_only': False, 'restricted': False, 'sensitivity': 0}, 'author': 'alice', 'status': 'open', 'channel': None, 'closed_by': None, 'value_ref': 'val-5bc96adf15e6df3dd462b9faf92a58f2cf666782', 'author_kind': 'human'}], 'tenant': 'tenant-a', 'values': {'val-5bc96adf15e6df3dd462b9faf92a58f2cf666782': {'text': 'about dana', 'label': {'acl': [], 'holds': [], 'banned': [], 'models': None, 'regions': None, 'tenants': ['tenant-a'], 'subjects': ['dana'], 'local_only': False, 'restricted': False, 'sensitivity': 0}}}, 'principal': 'admin'}
+
+======================================================================
+FAIL: test_explain_after_a_table_wait (tests.test_s1_pg.S1_BeforeThePins.test_explain_after_a_table_wait) (mutation='end')
+Regression guard: explain waits on a relation lock (L0), then pins.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 271, in _before
+    self.assertFalse(ok(r), "answered after a change committed while it waited before its pins (%s): %r" % (how, r))
+AssertionError: True is not false : answered after a change committed while it waited before its pins (end): {'req': 'r1', 'head': {'last': None, 'status': 'unset', 'version': 0, 'value_by': None, 'contested': None, 'value_ref': None, 'value_event': None, 'value_label': None, 'value_version': 0}, 'open': [{'id': 'alice/seed', 'base': 0, 'kind': 'proposal', 'label': {'acl': [], 'holds': [], 'banned': [], 'models': None, 'regions': None, 'tenants': ['tenant-a'], 'subjects': ['subj-8275e05f88da41fd922b4c25c8998fed'], 'local_only': False, 'restricted': False, 'sensitivity': 0}, 'author': 'alice', 'status': 'open', 'channel': None, 'closed_by': None, 'value_ref': 'val-5bc96adf15e6df3dd462b9faf92a58f2cf666782', 'author_kind': 'human'}], 'tenant': 'tenant-a', 'values': {'val-5bc96adf15e6df3dd462b9faf92a58f2cf666782': {'text': 'about dana', 'label': {'acl': [], 'holds': [], 'banned': [], 'models': None, 'regions': None, 'tenants': ['tenant-a'], 'subjects': ['dana'], 'local_only': False, 'restricted': False, 'sensitivity': 0}}}, 'principal': 'admin'}
+
+======================================================================
+FAIL: test_pin_waits_for_a_row_writer (tests.test_s1_pg.S1_BeforeThePins.test_pin_waits_for_a_row_writer) (table='sessions')
+S1 only: a pin statement waits for a transaction that holds the row and writes it; it then locks and judges the newest
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 303, in test_pin_waits_for_a_row_writer
+    self.assertTrue(waited, "vacuous: the pin did not wait for the row's writer")
+AssertionError: False is not true : vacuous: the pin did not wait for the row's writer
+
+======================================================================
+FAIL: test_pin_waits_for_a_row_writer (tests.test_s1_pg.S1_BeforeThePins.test_pin_waits_for_a_row_writer) (table='factors')
+S1 only: a pin statement waits for a transaction that holds the row and writes it; it then locks and judges the newest
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 303, in test_pin_waits_for_a_row_writer
+    self.assertTrue(waited, "vacuous: the pin did not wait for the row's writer")
+AssertionError: False is not true : vacuous: the pin did not wait for the row's writer
+
+======================================================================
+FAIL: test_pin_waits_for_a_row_writer (tests.test_s1_pg.S1_BeforeThePins.test_pin_waits_for_a_row_writer) (table='principal')
+S1 only: a pin statement waits for a transaction that holds the row and writes it; it then locks and judges the newest
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 303, in test_pin_waits_for_a_row_writer
+    self.assertTrue(waited, "vacuous: the pin did not wait for the row's writer")
+AssertionError: False is not true : vacuous: the pin did not wait for the row's writer
+
+======================================================================
+FAIL: test_read_table_after_a_table_wait (tests.test_s1_pg.S1_BeforeThePins.test_read_table_after_a_table_wait) (mutation='factor')
+Regression guard.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 271, in _before
+    self.assertFalse(ok(r), "answered after a change committed while it waited before its pins (%s): %r" % (how, r))
+AssertionError: True is not false : answered after a change committed while it waited before its pins (factor): [{'req': 'r1', 'head': {'last': None, 'status': 'unset', 'version': 0, 'value_by': None, 'contested': None, 'value_ref': None, 'value_event': None, 'value_label': None, 'value_version': 0}, 'open': [{'id': 'alice/seed', 'base': 0, 'kind': 'proposal', 'label': {'acl': [], 'holds': [], 'banned': [], 'models': None, 'regions': None, 'tenants': ['tenant-a'], 'subjects': ['subj-d0161cd281f44fc7bb47d7d41bb10893'], 'local_only': False, 'restricted': False, 'sensitivity': 0}, 'author': 'alice', 'status': 'open', 'channel': None, 'closed_by': None, 'value_ref': 'val-7e237566182432fd8e3f2728fe3217764954f1c9', 'author_kind': 'human'}], 'tenant': 'tenant-a', 'values': {'val-7e237566182432fd8e3f2728fe3217764954f1c9': {'text': 'about dana', 'label': {'acl': [], 'holds': [], 'banned': [], 'models': None, 'regions': None, 'tenants': ['tenant-a'], 'subjects': ['dana'], 'local_only': False, 'restricted': False, 'sensitivity': 0}}}, 'principal': 'admin'}, {'req': 'r2', 'head': {'last': None, 'status': 'unset', 'version': 0, 'value_by': None, 'contested': None, 'value_ref': None, 'value_event': None, 'value_label': None, 'value_version': 0}, 'open': [], 'tenant': 'tenant-a', 'values': {}, 'principal': 'admin'}]
+
+======================================================================
+FAIL: test_read_table_after_a_table_wait (tests.test_s1_pg.S1_BeforeThePins.test_read_table_after_a_table_wait) (mutation='end')
+Regression guard.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 271, in _before
+    self.assertFalse(ok(r), "answered after a change committed while it waited before its pins (%s): %r" % (how, r))
+AssertionError: True is not false : answered after a change committed while it waited before its pins (end): [{'req': 'r1', 'head': {'last': None, 'status': 'unset', 'version': 0, 'value_by': None, 'contested': None, 'value_ref': None, 'value_event': None, 'value_label': None, 'value_version': 0}, 'open': [{'id': 'alice/seed', 'base': 0, 'kind': 'proposal', 'label': {'acl': [], 'holds': [], 'banned': [], 'models': None, 'regions': None, 'tenants': ['tenant-a'], 'subjects': ['subj-d0161cd281f44fc7bb47d7d41bb10893'], 'local_only': False, 'restricted': False, 'sensitivity': 0}, 'author': 'alice', 'status': 'open', 'channel': None, 'closed_by': None, 'value_ref': 'val-7e237566182432fd8e3f2728fe3217764954f1c9', 'author_kind': 'human'}], 'tenant': 'tenant-a', 'values': {'val-7e237566182432fd8e3f2728fe3217764954f1c9': {'text': 'about dana', 'label': {'acl': [], 'holds': [], 'banned': [], 'models': None, 'regions': None, 'tenants': ['tenant-a'], 'subjects': ['dana'], 'local_only': False, 'restricted': False, 'sensitivity': 0}}}, 'principal': 'admin'}, {'req': 'r2', 'head': {'last': None, 'status': 'unset', 'version': 0, 'value_by': None, 'contested': None, 'value_ref': None, 'value_event': None, 'value_label': None, 'value_version': 0}, 'open': [], 'tenant': 'tenant-a', 'values': {}, 'principal': 'admin'}]
+
+======================================================================
+FAIL: test_authority_lock (tests.test_s1_pg.S1_ExpiryCeiling.test_authority_lock)
+S1 only.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 448, in test_authority_lock
+    self._submit(lambda c: adv(c, A_CLS, "auth", T, "alice"))
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 423, in _submit
+    r, held, late = self.ceiling(self.app, lambda: self.submit(self.app, tok, self.body(cid, "w", req=req)), hold, self.expires(tok),
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 147, in ceiling
+    self.assertTrue(self.blocked_by(cp, hp), "vacuous: the call did not wait on the held lock")
+AssertionError: False is not true : vacuous: the call did not wait on the held lock
+
+======================================================================
+FAIL: test_chain_head_row (tests.test_s1_pg.S1_ExpiryCeiling.test_chain_head_row)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 437, in test_chain_head_row
+    self._submit(lambda c: c.execute("select 1 from dc.chainhead where tenant = %s for update", (T,)), req="r2")
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 425, in _submit
+    self.assertTrue(held, "the call was still waiting 1 s after its token expired")
+AssertionError: False is not true : the call was still waiting 1 s after its token expired
+
+======================================================================
+FAIL: test_erase_value_row (tests.test_s1_pg.S1_ExpiryCeiling.test_erase_value_row)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 456, in test_erase_value_row
+    self.assertTrue(held and late < 1.0, "erase_values still waiting after expiry (late %.2f s)" % late)
+AssertionError: False is not true : erase_values still waiting after expiry (late 1.00 s)
+
+======================================================================
+FAIL: test_events_table_lock (tests.test_s1_pg.S1_ExpiryCeiling.test_events_table_lock)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 440, in test_events_table_lock
+    self._submit(lambda c: c.execute("lock table dc.events in access exclusive mode"), req="r2")
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 425, in _submit
+    self.assertTrue(held, "the call was still waiting 1 s after its token expired")
+AssertionError: False is not true : the call was still waiting 1 s after its token expired
+
+======================================================================
+FAIL: test_explain_table_lock (tests.test_s1_pg.S1_ExpiryCeiling.test_explain_table_lock)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 473, in test_explain_table_lock
+    self.assertTrue(held and late < 1.0, "explain still waiting after expiry (late %.2f s)" % late)
+AssertionError: False is not true : explain still waiting after expiry (late 1.00 s)
+
+======================================================================
+FAIL: test_head_row (tests.test_s1_pg.S1_ExpiryCeiling.test_head_row)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 434, in test_head_row
+    self._submit(lambda c: c.execute("select 1 from dc.head where tenant = %s and req = 'r1' for update", (T,)))
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 425, in _submit
+    self.assertTrue(held, "the call was still waiting 1 s after its token expired")
+AssertionError: False is not true : the call was still waiting 1 s after its token expired
+
+======================================================================
+FAIL: test_idempotency_lock (tests.test_s1_pg.S1_ExpiryCeiling.test_idempotency_lock)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 431, in test_idempotency_lock
+    self._submit(lambda c: c.execute(LOCK_KEY, (T, "alice")))
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 425, in _submit
+    self.assertTrue(held, "the call was still waiting 1 s after its token expired")
+AssertionError: False is not true : the call was still waiting 1 s after its token expired
+
+======================================================================
+FAIL: test_open_session_twin (tests.test_s1_pg.S1_ExpiryCeiling.test_open_session_twin)
+The proof expires while open_session waits for a concurrent presentation of the same proof (L8).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 483, in test_open_session_twin
+    self.assertTrue(held and late < 1.0, "open_session still waiting after the proof expired (late %.2f s)" % late)
+AssertionError: False is not true : open_session still waiting after the proof expired (late 1.00 s)
+
+======================================================================
+FAIL: test_revoke_target_row (tests.test_s1_pg.S1_ExpiryCeiling.test_revoke_target_row)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 465, in test_revoke_target_row
+    self.assertTrue(held and late < 1.0, "the revoke still waiting after expiry (late %.2f s)" % late)
+AssertionError: False is not true : the revoke still waiting after expiry (late 1.00 s)
+
+======================================================================
+FAIL: test_tenant_lock (tests.test_s1_pg.S1_ExpiryCeiling.test_tenant_lock)
+S1 only.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 444, in test_tenant_lock
+    self._submit(lambda c: adv(c, T_CLS, "tenant", T))
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 423, in _submit
+    r, held, late = self.ceiling(self.app, lambda: self.submit(self.app, tok, self.body(cid, "w", req=req)), hold, self.expires(tok),
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 147, in ceiling
+    self.assertTrue(self.blocked_by(cp, hp), "vacuous: the call did not wait on the held lock")
+AssertionError: False is not true : vacuous: the call did not wait on the held lock
+
+======================================================================
+FAIL: test_every_entry_point_follows_the_declared_order (tests.test_s1_pg.S1_LockOrder.test_every_entry_point_follows_the_declared_order) [submit]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 615, in test_every_entry_point_follows_the_declared_order
+    tr = self._trace(c, fn)
+         ^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 594, in _trace
+    self.assertTrue(raw, "no lock trace recorded")
+AssertionError: None is not true : no lock trace recorded
+
+======================================================================
+FAIL: test_every_entry_point_follows_the_declared_order (tests.test_s1_pg.S1_LockOrder.test_every_entry_point_follows_the_declared_order) [submit_revoke]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 615, in test_every_entry_point_follows_the_declared_order
+    tr = self._trace(c, fn)
+         ^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 594, in _trace
+    self.assertTrue(raw, "no lock trace recorded")
+AssertionError: None is not true : no lock trace recorded
+
+======================================================================
+FAIL: test_every_entry_point_follows_the_declared_order (tests.test_s1_pg.S1_LockOrder.test_every_entry_point_follows_the_declared_order) [submit_grant]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 615, in test_every_entry_point_follows_the_declared_order
+    tr = self._trace(c, fn)
+         ^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 594, in _trace
+    self.assertTrue(raw, "no lock trace recorded")
+AssertionError: None is not true : no lock trace recorded
+
+======================================================================
+FAIL: test_every_entry_point_follows_the_declared_order (tests.test_s1_pg.S1_LockOrder.test_every_entry_point_follows_the_declared_order) [explain]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 615, in test_every_entry_point_follows_the_declared_order
+    tr = self._trace(c, fn)
+         ^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 594, in _trace
+    self.assertTrue(raw, "no lock trace recorded")
+AssertionError: None is not true : no lock trace recorded
+
+======================================================================
+FAIL: test_every_entry_point_follows_the_declared_order (tests.test_s1_pg.S1_LockOrder.test_every_entry_point_follows_the_declared_order) [read_table]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 615, in test_every_entry_point_follows_the_declared_order
+    tr = self._trace(c, fn)
+         ^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 594, in _trace
+    self.assertTrue(raw, "no lock trace recorded")
+AssertionError: None is not true : no lock trace recorded
+
+======================================================================
+FAIL: test_every_entry_point_follows_the_declared_order (tests.test_s1_pg.S1_LockOrder.test_every_entry_point_follows_the_declared_order) [erase_candidates]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 615, in test_every_entry_point_follows_the_declared_order
+    tr = self._trace(c, fn)
+         ^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 594, in _trace
+    self.assertTrue(raw, "no lock trace recorded")
+AssertionError: None is not true : no lock trace recorded
+
+======================================================================
+FAIL: test_every_entry_point_follows_the_declared_order (tests.test_s1_pg.S1_LockOrder.test_every_entry_point_follows_the_declared_order) [erase_values]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 615, in test_every_entry_point_follows_the_declared_order
+    tr = self._trace(c, fn)
+         ^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 594, in _trace
+    self.assertTrue(raw, "no lock trace recorded")
+AssertionError: None is not true : no lock trace recorded
+
+======================================================================
+FAIL: test_every_entry_point_follows_the_declared_order (tests.test_s1_pg.S1_LockOrder.test_every_entry_point_follows_the_declared_order) [open_session]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 615, in test_every_entry_point_follows_the_declared_order
+    tr = self._trace(c, fn)
+         ^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 594, in _trace
+    self.assertTrue(raw, "no lock trace recorded")
+AssertionError: None is not true : no lock trace recorded
+
+======================================================================
+FAIL: test_every_entry_point_follows_the_declared_order (tests.test_s1_pg.S1_LockOrder.test_every_entry_point_follows_the_declared_order) [end_session]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 615, in test_every_entry_point_follows_the_declared_order
+    tr = self._trace(c, fn)
+         ^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 594, in _trace
+    self.assertTrue(raw, "no lock trace recorded")
+AssertionError: None is not true : no lock trace recorded
+
+======================================================================
+FAIL: test_end_session_waits_for_the_call (tests.test_s1_pg.S1_MutualWaits.test_end_session_waits_for_the_call)
+F1 P1b: an in-flight call (here explain in a transaction held open) has its session pinned; end_session waits for it (L1
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 710, in test_end_session_waits_for_the_call
+    self.assertTrue(waited, "end_session did not wait for the in-flight call")
+AssertionError: False is not true : end_session did not wait for the in-flight call
+
+======================================================================
+FAIL: test_erasure_is_not_starved_by_a_stream_of_submits (tests.test_s1_pg.S1_MutualWaits.test_erasure_is_not_starved_by_a_stream_of_submits)
+The same for erase_values (the write path's known erasure-starvation shape).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 762, in test_erasure_is_not_starved_by_a_stream_of_submits
+    self.assertTrue(done, "erase_values was starved by the stream")
+AssertionError: False is not true : erase_values was starved by the stream
+
+======================================================================
+FAIL: test_open_session_vs_revoke (tests.test_s1_pg.S1_MutualWaits.test_open_session_vs_revoke)
+An open_session of bob held open; the revoke of bob waits for it (L1), then revokes the new session too. Red at
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 775, in test_open_session_vs_revoke
+    self.assertTrue(waited, "the revoke did not wait for the open_session")
+AssertionError: False is not true : the revoke did not wait for the open_session
+
+======================================================================
+FAIL: test_revoke_is_not_starved_by_a_stream_of_submits (tests.test_s1_pg.S1_MutualWaits.test_revoke_is_not_starved_by_a_stream_of_submits)
+A revoke (tenant lock exclusive) while three principals keep the tenant busy. Red at ea4677a if the tenant row's share
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 754, in test_revoke_is_not_starved_by_a_stream_of_submits
+    self.assertTrue(done, "the revoke was starved by the stream")
+AssertionError: False is not true : the revoke was starved by the stream
+
+======================================================================
+FAIL: test_factor_row_writer (tests.test_s1_pg.S1_OpenSession.test_factor_row_writer)
+Regression guard: a transaction holds the factor row FOR UPDATE, revokes the factor and commits; B's pin waited for it
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 922, in test_factor_row_writer
+    self.assertEqual(bo["r"].get("message"), "proof refused: factor revoked")
+AssertionError: None != 'proof refused: factor revoked'
+
+======================================================================
+FAIL: test_prune_never_waits (tests.test_s1_pg.S1_OpenSession.test_prune_never_waits)
+A pruned an expired ledger row of the factor and holds its transaction open. B (same factor, another nonce) skips that
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 907, in test_prune_never_waits
+    self.assertFalse(waited, "B waited for A's prune")
+AssertionError: True is not false : B waited for A's prune
+
+======================================================================
+FAIL: test_twin_rolls_back (tests.test_s1_pg.S1_OpenSession.test_twin_rolls_back) (mutation='factor')
+B is opened once A rolls back. A factor or principal revocation started while B waited waits for B (red at ea4677a: it
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 882, in test_twin_rolls_back
+    r, waited, f = self._twin(how, "rollback")
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 857, in _twin
+    self.assertTrue(self._blocked_by_any(mp, (ap, bp)), "vacuous: the %s revocation did not wait while B waited" % how)
+AssertionError: False is not true : vacuous: the factor revocation did not wait while B waited
+
+======================================================================
+FAIL: test_twin_rolls_back (tests.test_s1_pg.S1_OpenSession.test_twin_rolls_back) (mutation='principal')
+B is opened once A rolls back. A factor or principal revocation started while B waited waits for B (red at ea4677a: it
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 882, in test_twin_rolls_back
+    r, waited, f = self._twin(how, "rollback")
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 857, in _twin
+    self.assertTrue(self._blocked_by_any(mp, (ap, bp)), "vacuous: the %s revocation did not wait while B waited" % how)
+AssertionError: False is not true : vacuous: the principal revocation did not wait while B waited
+
+======================================================================
+FAIL: test_chain_head_row (tests.test_s1_pg.S1_PinnedAuthority.test_chain_head_row) (mutation='principal')
+The tenant's chain-head row (L7), held by any concurrent event of the tenant until it commits.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 179, in _submit_point
+    self.assertTrue(waited, "the mutation (%s) did not wait for the call" % how)
+AssertionError: False is not true : the mutation (principal) did not wait for the call
+
+======================================================================
+FAIL: test_chain_head_row (tests.test_s1_pg.S1_PinnedAuthority.test_chain_head_row) (mutation='factor')
+The tenant's chain-head row (L7), held by any concurrent event of the tenant until it commits.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 179, in _submit_point
+    self.assertTrue(waited, "the mutation (%s) did not wait for the call" % how)
+AssertionError: False is not true : the mutation (factor) did not wait for the call
+
+======================================================================
+FAIL: test_chain_head_row (tests.test_s1_pg.S1_PinnedAuthority.test_chain_head_row) (mutation='end')
+The tenant's chain-head row (L7), held by any concurrent event of the tenant until it commits.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 179, in _submit_point
+    self.assertTrue(waited, "the mutation (%s) did not wait for the call" % how)
+AssertionError: False is not true : the mutation (end) did not wait for the call
+
+======================================================================
+FAIL: test_erase_tenant_lock (tests.test_s1_pg.S1_PinnedAuthority.test_erase_tenant_lock) (mutation='principal')
+S1 only: erase_values waits for the tenant lock (L3) held by a submit in flight.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 217, in _erase_point
+    r, waited, m = self.pinned(self.app, call, hold(ref), how, tok, "admin")
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 120, in pinned
+    self.assertTrue(self.blocked_by(cp, hp), "vacuous: the call did not wait on the held lock")
+AssertionError: False is not true : vacuous: the call did not wait on the held lock
+
+======================================================================
+FAIL: test_erase_tenant_lock (tests.test_s1_pg.S1_PinnedAuthority.test_erase_tenant_lock) (mutation='factor')
+S1 only: erase_values waits for the tenant lock (L3) held by a submit in flight.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 217, in _erase_point
+    r, waited, m = self.pinned(self.app, call, hold(ref), how, tok, "admin")
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 120, in pinned
+    self.assertTrue(self.blocked_by(cp, hp), "vacuous: the call did not wait on the held lock")
+AssertionError: False is not true : vacuous: the call did not wait on the held lock
+
+======================================================================
+FAIL: test_erase_tenant_lock (tests.test_s1_pg.S1_PinnedAuthority.test_erase_tenant_lock) (mutation='end')
+S1 only: erase_values waits for the tenant lock (L3) held by a submit in flight.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 217, in _erase_point
+    r, waited, m = self.pinned(self.app, call, hold(ref), how, tok, "admin")
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 120, in pinned
+    self.assertTrue(self.blocked_by(cp, hp), "vacuous: the call did not wait on the held lock")
+AssertionError: False is not true : vacuous: the call did not wait on the held lock
+
+======================================================================
+FAIL: test_erase_tenant_lock (tests.test_s1_pg.S1_PinnedAuthority.test_erase_tenant_lock) (mutation='revoke')
+S1 only: erase_values waits for the tenant lock (L3) held by a submit in flight.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 217, in _erase_point
+    r, waited, m = self.pinned(self.app, call, hold(ref), how, tok, "admin")
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 120, in pinned
+    self.assertTrue(self.blocked_by(cp, hp), "vacuous: the call did not wait on the held lock")
+AssertionError: False is not true : vacuous: the call did not wait on the held lock
+
+======================================================================
+FAIL: test_erase_token_row (tests.test_s1_pg.S1_PinnedAuthority.test_erase_token_row) (mutation='principal')
+The subject's token row held FOR UPDATE (L5.3).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 218, in _erase_point
+    self.assertTrue(waited, "the mutation (%s) did not wait for erase_values" % how)
+AssertionError: False is not true : the mutation (principal) did not wait for erase_values
+
+======================================================================
+FAIL: test_erase_token_row (tests.test_s1_pg.S1_PinnedAuthority.test_erase_token_row) (mutation='factor')
+The subject's token row held FOR UPDATE (L5.3).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 218, in _erase_point
+    self.assertTrue(waited, "the mutation (%s) did not wait for erase_values" % how)
+AssertionError: False is not true : the mutation (factor) did not wait for erase_values
+
+======================================================================
+FAIL: test_erase_token_row (tests.test_s1_pg.S1_PinnedAuthority.test_erase_token_row) (mutation='end')
+The subject's token row held FOR UPDATE (L5.3).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 218, in _erase_point
+    self.assertTrue(waited, "the mutation (%s) did not wait for erase_values" % how)
+AssertionError: False is not true : the mutation (end) did not wait for erase_values
+
+======================================================================
+FAIL: test_erase_value_row (tests.test_s1_pg.S1_PinnedAuthority.test_erase_value_row) (mutation='principal')
+A value row held FOR UPDATE (L5.2).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 218, in _erase_point
+    self.assertTrue(waited, "the mutation (%s) did not wait for erase_values" % how)
+AssertionError: False is not true : the mutation (principal) did not wait for erase_values
+
+======================================================================
+FAIL: test_erase_value_row (tests.test_s1_pg.S1_PinnedAuthority.test_erase_value_row) (mutation='factor')
+A value row held FOR UPDATE (L5.2).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 218, in _erase_point
+    self.assertTrue(waited, "the mutation (%s) did not wait for erase_values" % how)
+AssertionError: False is not true : the mutation (factor) did not wait for erase_values
+
+======================================================================
+FAIL: test_erase_value_row (tests.test_s1_pg.S1_PinnedAuthority.test_erase_value_row) (mutation='end')
+A value row held FOR UPDATE (L5.2).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 218, in _erase_point
+    self.assertTrue(waited, "the mutation (%s) did not wait for erase_values" % how)
+AssertionError: False is not true : the mutation (end) did not wait for erase_values
+
+======================================================================
+FAIL: test_head_row (tests.test_s1_pg.S1_PinnedAuthority.test_head_row) (mutation='principal')
+The requirement's head row FOR UPDATE (L5): a concurrent submission on the same requirement.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 179, in _submit_point
+    self.assertTrue(waited, "the mutation (%s) did not wait for the call" % how)
+AssertionError: False is not true : the mutation (principal) did not wait for the call
+
+======================================================================
+FAIL: test_head_row (tests.test_s1_pg.S1_PinnedAuthority.test_head_row) (mutation='factor')
+The requirement's head row FOR UPDATE (L5): a concurrent submission on the same requirement.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 179, in _submit_point
+    self.assertTrue(waited, "the mutation (%s) did not wait for the call" % how)
+AssertionError: False is not true : the mutation (factor) did not wait for the call
+
+======================================================================
+FAIL: test_head_row (tests.test_s1_pg.S1_PinnedAuthority.test_head_row) (mutation='end')
+The requirement's head row FOR UPDATE (L5): a concurrent submission on the same requirement.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 179, in _submit_point
+    self.assertTrue(waited, "the mutation (%s) did not wait for the call" % how)
+AssertionError: False is not true : the mutation (end) did not wait for the call
+
+======================================================================
+FAIL: test_idempotency_lock (tests.test_s1_pg.S1_PinnedAuthority.test_idempotency_lock) (mutation='principal')
+The per-principal advisory lock (L4), which any login role can take.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 179, in _submit_point
+    self.assertTrue(waited, "the mutation (%s) did not wait for the call" % how)
+AssertionError: False is not true : the mutation (principal) did not wait for the call
+
+======================================================================
+FAIL: test_idempotency_lock (tests.test_s1_pg.S1_PinnedAuthority.test_idempotency_lock) (mutation='factor')
+The per-principal advisory lock (L4), which any login role can take.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 179, in _submit_point
+    self.assertTrue(waited, "the mutation (%s) did not wait for the call" % how)
+AssertionError: False is not true : the mutation (factor) did not wait for the call
+
+======================================================================
+FAIL: test_idempotency_lock (tests.test_s1_pg.S1_PinnedAuthority.test_idempotency_lock) (mutation='end')
+The per-principal advisory lock (L4), which any login role can take.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 179, in _submit_point
+    self.assertTrue(waited, "the mutation (%s) did not wait for the call" % how)
+AssertionError: False is not true : the mutation (end) did not wait for the call
+
+======================================================================
+FAIL: test_subject_lock (tests.test_s1_pg.S1_PinnedAuthority.test_subject_lock) (mutation='principal')
+Bob's dc.submit about the same new subject (on r1) still open while alice submits about it on r2 (L6; was the
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 179, in _submit_point
+    self.assertTrue(waited, "the mutation (%s) did not wait for the call" % how)
+AssertionError: False is not true : the mutation (principal) did not wait for the call
+
+======================================================================
+FAIL: test_subject_lock (tests.test_s1_pg.S1_PinnedAuthority.test_subject_lock) (mutation='factor')
+Bob's dc.submit about the same new subject (on r1) still open while alice submits about it on r2 (L6; was the
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 179, in _submit_point
+    self.assertTrue(waited, "the mutation (%s) did not wait for the call" % how)
+AssertionError: False is not true : the mutation (factor) did not wait for the call
+
+======================================================================
+FAIL: test_subject_lock (tests.test_s1_pg.S1_PinnedAuthority.test_subject_lock) (mutation='end')
+Bob's dc.submit about the same new subject (on r1) still open while alice submits about it on r2 (L6; was the
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 179, in _submit_point
+    self.assertTrue(waited, "the mutation (%s) did not wait for the call" % how)
+AssertionError: False is not true : the mutation (end) did not wait for the call
+
+======================================================================
+FAIL: test_subject_lock (tests.test_s1_pg.S1_PinnedAuthority.test_subject_lock) (mutation='revoke')
+Bob's dc.submit about the same new subject (on r1) still open while alice submits about it on r2 (L6; was the
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 179, in _submit_point
+    self.assertTrue(waited, "the mutation (%s) did not wait for the call" % how)
+AssertionError: False is not true : the mutation (revoke) did not wait for the call
+
+======================================================================
+FAIL: test_tenant_lock (tests.test_s1_pg.S1_PinnedAuthority.test_tenant_lock) (mutation='principal')
+S1 only: the tenant lock (L3), held exclusively by a revoke, grant or erasure in flight (was the tenant row).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 177, in _submit_point
+    r, waited, m = self.pinned(self.app, lambda: self.submit(self.app, tok, body), lambda c: hold(c, subj), how, tok, "alice",
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 120, in pinned
+    self.assertTrue(self.blocked_by(cp, hp), "vacuous: the call did not wait on the held lock")
+AssertionError: False is not true : vacuous: the call did not wait on the held lock
+
+======================================================================
+FAIL: test_tenant_lock (tests.test_s1_pg.S1_PinnedAuthority.test_tenant_lock) (mutation='factor')
+S1 only: the tenant lock (L3), held exclusively by a revoke, grant or erasure in flight (was the tenant row).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 177, in _submit_point
+    r, waited, m = self.pinned(self.app, lambda: self.submit(self.app, tok, body), lambda c: hold(c, subj), how, tok, "alice",
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 120, in pinned
+    self.assertTrue(self.blocked_by(cp, hp), "vacuous: the call did not wait on the held lock")
+AssertionError: False is not true : vacuous: the call did not wait on the held lock
+
+======================================================================
+FAIL: test_tenant_lock (tests.test_s1_pg.S1_PinnedAuthority.test_tenant_lock) (mutation='end')
+S1 only: the tenant lock (L3), held exclusively by a revoke, grant or erasure in flight (was the tenant row).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 177, in _submit_point
+    r, waited, m = self.pinned(self.app, lambda: self.submit(self.app, tok, body), lambda c: hold(c, subj), how, tok, "alice",
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 120, in pinned
+    self.assertTrue(self.blocked_by(cp, hp), "vacuous: the call did not wait on the held lock")
+AssertionError: False is not true : vacuous: the call did not wait on the held lock
+
+======================================================================
+FAIL: test_tenant_lock (tests.test_s1_pg.S1_PinnedAuthority.test_tenant_lock) (mutation='revoke')
+S1 only: the tenant lock (L3), held exclusively by a revoke, grant or erasure in flight (was the tenant row).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 177, in _submit_point
+    r, waited, m = self.pinned(self.app, lambda: self.submit(self.app, tok, body), lambda c: hold(c, subj), how, tok, "alice",
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 120, in pinned
+    self.assertTrue(self.blocked_by(cp, hp), "vacuous: the call did not wait on the held lock")
+AssertionError: False is not true : vacuous: the call did not wait on the held lock
+
+======================================================================
+FAIL: test_revoke_gives_up_after_xwait (tests.test_s1_pg.S1_RevokePath.test_revoke_gives_up_after_xwait)
+S1 only: an exclusive wait is capped at XWAIT (2 s). Past it the revoke fails with 55P03, applies nothing, and the
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 403, in test_revoke_gives_up_after_xwait
+    self.assertFalse(alive, "the revoke was still waiting after XWAIT")
+AssertionError: True is not false : the revoke was still waiting after XWAIT
+
+======================================================================
+FAIL: test_sessions_table_lock (tests.test_s1_pg.S1_RevokePath.test_sessions_table_lock) [principal]
+Regression guard: a SHARE lock on dc.sessions is waited for before the pins (L0); the change committed meanwhile refuses.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 367, in test_sessions_table_lock
+    self.assertEqual(r.get("code"), want)
+AssertionError: 'revoked' != 'principal_revoked'
+- revoked
++ principal_revoked
+
+
+======================================================================
+FAIL: test_sessions_table_lock (tests.test_s1_pg.S1_RevokePath.test_sessions_table_lock) [factor]
+Regression guard: a SHARE lock on dc.sessions is waited for before the pins (L0); the change committed meanwhile refuses.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 367, in test_sessions_table_lock
+    self.assertEqual(r.get("code"), want)
+AssertionError: 'revoked' != 'unauthenticated:invalid_session'
+- revoked
++ unauthenticated:invalid_session
+
+
+======================================================================
+FAIL: test_target_principal_row (tests.test_s1_pg.S1_RevokePath.test_target_principal_row) (mutation='principal')
+The target's principal row held FOR UPDATE (L2.3).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 339, in _target_point
+    self.assertTrue(waited, "the mutation (%s) did not wait for the revoke" % how)
+AssertionError: False is not true : the mutation (principal) did not wait for the revoke
+
+======================================================================
+FAIL: test_target_principal_row (tests.test_s1_pg.S1_RevokePath.test_target_principal_row) (mutation='factor')
+The target's principal row held FOR UPDATE (L2.3).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 339, in _target_point
+    self.assertTrue(waited, "the mutation (%s) did not wait for the revoke" % how)
+AssertionError: False is not true : the mutation (factor) did not wait for the revoke
+
+======================================================================
+FAIL: test_target_principal_row (tests.test_s1_pg.S1_RevokePath.test_target_principal_row) (mutation='end')
+The target's principal row held FOR UPDATE (L2.3).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 339, in _target_point
+    self.assertTrue(waited, "the mutation (%s) did not wait for the revoke" % how)
+AssertionError: False is not true : the mutation (end) did not wait for the revoke
+
+======================================================================
+FAIL: test_target_props_rows (tests.test_s1_pg.S1_RevokePath.test_target_props_rows) (mutation='principal')
+The target's open proposal row held FOR UPDATE (L5.1). Each round x proposes afresh (the previous revoke invalidated it).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 339, in _target_point
+    self.assertTrue(waited, "the mutation (%s) did not wait for the revoke" % how)
+AssertionError: False is not true : the mutation (principal) did not wait for the revoke
+
+======================================================================
+FAIL: test_target_props_rows (tests.test_s1_pg.S1_RevokePath.test_target_props_rows) (mutation='factor')
+The target's open proposal row held FOR UPDATE (L5.1). Each round x proposes afresh (the previous revoke invalidated it).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 339, in _target_point
+    self.assertTrue(waited, "the mutation (%s) did not wait for the revoke" % how)
+AssertionError: False is not true : the mutation (factor) did not wait for the revoke
+
+======================================================================
+FAIL: test_target_props_rows (tests.test_s1_pg.S1_RevokePath.test_target_props_rows) (mutation='end')
+The target's open proposal row held FOR UPDATE (L5.1). Each round x proposes afresh (the previous revoke invalidated it).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_s1_pg.py", line 339, in _target_point
+    self.assertTrue(waited, "the mutation (%s) did not wait for the revoke" % how)
+AssertionError: False is not true : the mutation (end) did not wait for the revoke
+
+----------------------------------------------------------------------
+Ran 51 tests in 171.144s
+
+FAILED (failures=81, errors=5)

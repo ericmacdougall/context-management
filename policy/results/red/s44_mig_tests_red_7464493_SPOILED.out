@@ -1,0 +1,119 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), container emlab2-policyfix-pg; home paths shown as ~
+# SPOILED RED (not evidence: the forward-without-role test dropped dc_evictor and later setUps errored; see the o5 rerun), tree o-red-mig {"commit": "7464493502962afb48f5c62c7beaf9bc4eea6733", "dirty": true, "thresholds_commit": "d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1", "tree_sha256": "307bab958304d8e4a294b8e82a2a57798974c22305e5effb0c2fc297baf45111", "tests_from": "0046ef6a459e950c0d166ca52a0eedd0d0589210"}: sh kit/run.sh o-red-mig t -v tests.test_review3_pg.Review3Rollback
+test_44_forward_creates_the_evictor_role (tests.test_review3_pg.Review3Rollback.test_44_forward_creates_the_evictor_role)
+FINAL-JUDGMENT.md 4.4: dc._evict is owned by dc_evictor, which pgcore.install creates; a migration on a cluster where ... FAIL
+test_44_rollback_gives_the_old_engine_its_advisory_lock (tests.test_review3_pg.Review3Rollback.test_44_rollback_gives_the_old_engine_its_advisory_lock)
+FINAL-JUDGMENT.md 4.4: the definer core makes the advisory-lock functions non-PUBLIC in its database. The pre-R3-7 engine ... ERROR
+test_n4_failure_mid_rollback_changes_nothing (tests.test_review3_pg.Review3Rollback.test_n4_failure_mid_rollback_changes_nothing)
+Delta review 1 (N4 leftover): a failure injected after rollback has dropped the migrated schema and dc_crypto, at the rename ... ERROR
+test_n4_rollback_after_a_refused_request_is_refused (tests.test_review3_pg.Review3Rollback.test_n4_rollback_after_a_refused_request_is_refused)
+A refused request writes an audit row: audit history is data too (0a20b64 drops it). ... ERROR
+test_n4_rollback_after_a_submit_is_refused (tests.test_review3_pg.Review3Rollback.test_n4_rollback_after_a_submit_is_refused)
+0a20b64: rollback drops the new schema unconditionally; an applied request made after the migration silently disappears. ... ERROR
+test_n4_rollback_after_an_erasure_is_refused (tests.test_review3_pg.Review3Rollback.test_n4_rollback_after_an_erasure_is_refused)
+0a20b64: a value erased after the migration comes back with the old schema (erasure undone). ... ERROR
+test_n4_rollback_without_writes_proceeds (tests.test_review3_pg.Review3Rollback.test_n4_rollback_without_writes_proceeds)
+Logins are not data: a session opened after the migration does not block the rollback; the old schema comes back. ... ERROR
+
+======================================================================
+ERROR: test_44_rollback_gives_the_old_engine_its_advisory_lock (tests.test_review3_pg.Review3Rollback.test_44_rollback_gives_the_old_engine_its_advisory_lock)
+FINAL-JUDGMENT.md 4.4: the definer core makes the advisory-lock functions non-PUBLIC in its database. The pre-R3-7 engine
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-mig/src/tests/test_review3_pg.py", line 286, in setUp
+    MIG.forward(self.o, {T: CFG}, os.environ["POL_PG_IDP_PASSWORD_FILE"])
+  File "~/emlab2-16096/policyfix/runs/o-red-mig/src/ops/migrate_r3_7.py", line 132, in forward
+    c.execute(f.read())
+  File "~/emlab2-16096/policyfix/venv/lib/python3.12/site-packages/psycopg/connection.py", line 251, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedObject: role "dc_evictor" does not exist
+
+======================================================================
+ERROR: test_n4_failure_mid_rollback_changes_nothing (tests.test_review3_pg.Review3Rollback.test_n4_failure_mid_rollback_changes_nothing)
+Delta review 1 (N4 leftover): a failure injected after rollback has dropped the migrated schema and dc_crypto, at the rename
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-mig/src/tests/test_review3_pg.py", line 286, in setUp
+    MIG.forward(self.o, {T: CFG}, os.environ["POL_PG_IDP_PASSWORD_FILE"])
+  File "~/emlab2-16096/policyfix/runs/o-red-mig/src/ops/migrate_r3_7.py", line 132, in forward
+    c.execute(f.read())
+  File "~/emlab2-16096/policyfix/venv/lib/python3.12/site-packages/psycopg/connection.py", line 251, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedObject: role "dc_evictor" does not exist
+
+======================================================================
+ERROR: test_n4_rollback_after_a_refused_request_is_refused (tests.test_review3_pg.Review3Rollback.test_n4_rollback_after_a_refused_request_is_refused)
+A refused request writes an audit row: audit history is data too (0a20b64 drops it).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-mig/src/tests/test_review3_pg.py", line 286, in setUp
+    MIG.forward(self.o, {T: CFG}, os.environ["POL_PG_IDP_PASSWORD_FILE"])
+  File "~/emlab2-16096/policyfix/runs/o-red-mig/src/ops/migrate_r3_7.py", line 132, in forward
+    c.execute(f.read())
+  File "~/emlab2-16096/policyfix/venv/lib/python3.12/site-packages/psycopg/connection.py", line 251, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedObject: role "dc_evictor" does not exist
+
+======================================================================
+ERROR: test_n4_rollback_after_a_submit_is_refused (tests.test_review3_pg.Review3Rollback.test_n4_rollback_after_a_submit_is_refused)
+0a20b64: rollback drops the new schema unconditionally; an applied request made after the migration silently disappears.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-mig/src/tests/test_review3_pg.py", line 286, in setUp
+    MIG.forward(self.o, {T: CFG}, os.environ["POL_PG_IDP_PASSWORD_FILE"])
+  File "~/emlab2-16096/policyfix/runs/o-red-mig/src/ops/migrate_r3_7.py", line 132, in forward
+    c.execute(f.read())
+  File "~/emlab2-16096/policyfix/venv/lib/python3.12/site-packages/psycopg/connection.py", line 251, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedObject: role "dc_evictor" does not exist
+
+======================================================================
+ERROR: test_n4_rollback_after_an_erasure_is_refused (tests.test_review3_pg.Review3Rollback.test_n4_rollback_after_an_erasure_is_refused)
+0a20b64: a value erased after the migration comes back with the old schema (erasure undone).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-mig/src/tests/test_review3_pg.py", line 286, in setUp
+    MIG.forward(self.o, {T: CFG}, os.environ["POL_PG_IDP_PASSWORD_FILE"])
+  File "~/emlab2-16096/policyfix/runs/o-red-mig/src/ops/migrate_r3_7.py", line 132, in forward
+    c.execute(f.read())
+  File "~/emlab2-16096/policyfix/venv/lib/python3.12/site-packages/psycopg/connection.py", line 251, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedObject: role "dc_evictor" does not exist
+
+======================================================================
+ERROR: test_n4_rollback_without_writes_proceeds (tests.test_review3_pg.Review3Rollback.test_n4_rollback_without_writes_proceeds)
+Logins are not data: a session opened after the migration does not block the rollback; the old schema comes back.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-mig/src/tests/test_review3_pg.py", line 286, in setUp
+    MIG.forward(self.o, {T: CFG}, os.environ["POL_PG_IDP_PASSWORD_FILE"])
+  File "~/emlab2-16096/policyfix/runs/o-red-mig/src/ops/migrate_r3_7.py", line 132, in forward
+    c.execute(f.read())
+  File "~/emlab2-16096/policyfix/venv/lib/python3.12/site-packages/psycopg/connection.py", line 251, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedObject: role "dc_evictor" does not exist
+
+======================================================================
+FAIL: test_44_forward_creates_the_evictor_role (tests.test_review3_pg.Review3Rollback.test_44_forward_creates_the_evictor_role)
+FINAL-JUDGMENT.md 4.4: dc._evict is owned by dc_evictor, which pgcore.install creates; a migration on a cluster where
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-mig/src/tests/test_review3_pg.py", line 331, in test_44_forward_creates_the_evictor_role
+    self.MIG.forward(self.o, {T: CFG}, os.environ["POL_PG_IDP_PASSWORD_FILE"])
+  File "~/emlab2-16096/policyfix/runs/o-red-mig/src/ops/migrate_r3_7.py", line 132, in forward
+    c.execute(f.read())
+  File "~/emlab2-16096/policyfix/venv/lib/python3.12/site-packages/psycopg/connection.py", line 251, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedObject: role "dc_evictor" does not exist
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-mig/src/tests/test_review3_pg.py", line 333, in test_44_forward_creates_the_evictor_role
+    self.fail("forward failed on a cluster without dc_evictor: %s %s" % (e.sqlstate, e.diag.message_primary))
+AssertionError: forward failed on a cluster without dc_evictor: 42704 role "dc_evictor" does not exist
+
+----------------------------------------------------------------------
+Ran 7 tests in 1.149s
+
+FAILED (failures=1, errors=6)

@@ -1,0 +1,207 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), container emlab2-policyfix-pg; home paths shown as ~
+# RED rerun (P2), tree o-red-a2d6: sh kit/run.sh o-red-a2d6 t -v tests.test_verify_s2
+test_duplicated_and_unexpected_coverage_fails (tests.test_verify_s2.CoverageIsPinned.test_duplicated_and_unexpected_coverage_fails) ... ok
+test_each_manipulation_fails (tests.test_verify_s2.CoverageIsPinned.test_each_manipulation_fails) ... ok
+test_a_trial_index_must_be_an_integer (tests.test_verify_s2.TrialsAreIndependent.test_a_trial_index_must_be_an_integer) ... 
+  test_a_trial_index_must_be_an_integer (tests.test_verify_s2.TrialsAreIndependent.test_a_trial_index_must_be_an_integer) (bad="'0'") ... FAIL
+  test_a_trial_index_must_be_an_integer (tests.test_verify_s2.TrialsAreIndependent.test_a_trial_index_must_be_an_integer) (bad='0.0') ... FAIL
+  test_a_trial_index_must_be_an_integer (tests.test_verify_s2.TrialsAreIndependent.test_a_trial_index_must_be_an_integer) (bad='True') ... FAIL
+  test_a_trial_index_must_be_an_integer (tests.test_verify_s2.TrialsAreIndependent.test_a_trial_index_must_be_an_integer) (bad='None') ... FAIL
+  test_a_trial_index_must_be_an_integer (tests.test_verify_s2.TrialsAreIndependent.test_a_trial_index_must_be_an_integer) (bad='-1') ... FAIL
+test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent.test_each_duplication_fails) ... 
+  test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent.test_each_duplication_fails) [_p2_copies] ... FAIL
+  test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent.test_each_duplication_fails) [_p2_copies_renumbered] ... FAIL
+  test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent.test_each_duplication_fails) [_p2_one_trial_twice] ... FAIL
+  test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent.test_each_duplication_fails) [_p2_trial_gap] ... FAIL
+  test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent.test_each_duplication_fails) [_p2_seed_copied] ... FAIL
+  test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent.test_each_duplication_fails) [_p2_replay_first_unlinked] ... FAIL
+  test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent.test_each_duplication_fails) [_p2_replay_first_other_factor] ... FAIL
+  test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent.test_each_duplication_fails) [_p2_revoked_principal_copies] ... FAIL
+  test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent.test_each_duplication_fails) [_p2_concurrent_round_copied] ... FAIL
+  test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent.test_each_duplication_fails) [_p2_no_identity] ... FAIL
+  test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent.test_each_duplication_fails) [_p2_nonce_shared_across_classes] ... FAIL
+test_good_set_passes (tests.test_verify_s2.TrialsAreIndependent.test_good_set_passes) ... ok
+test_each_break_fails (tests.test_verify_s2.VerifyS2.test_each_break_fails) ... ok
+test_good_set_passes (tests.test_verify_s2.VerifyS2.test_good_set_passes) ... ok
+test_missing_rows_fail (tests.test_verify_s2.VerifyS2.test_missing_rows_fail) ... ok
+
+======================================================================
+FAIL: test_a_trial_index_must_be_an_integer (tests.test_verify_s2.TrialsAreIndependent.test_a_trial_index_must_be_an_integer) (bad="'0'")
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_verify_s2.py", line 370, in test_a_trial_index_must_be_an_integer
+    self.assertEqual(S2.verify(DOC, rows)["verdict"], "FAIL")
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+
+
+======================================================================
+FAIL: test_a_trial_index_must_be_an_integer (tests.test_verify_s2.TrialsAreIndependent.test_a_trial_index_must_be_an_integer) (bad='0.0')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_verify_s2.py", line 370, in test_a_trial_index_must_be_an_integer
+    self.assertEqual(S2.verify(DOC, rows)["verdict"], "FAIL")
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+
+
+======================================================================
+FAIL: test_a_trial_index_must_be_an_integer (tests.test_verify_s2.TrialsAreIndependent.test_a_trial_index_must_be_an_integer) (bad='True')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_verify_s2.py", line 370, in test_a_trial_index_must_be_an_integer
+    self.assertEqual(S2.verify(DOC, rows)["verdict"], "FAIL")
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+
+
+======================================================================
+FAIL: test_a_trial_index_must_be_an_integer (tests.test_verify_s2.TrialsAreIndependent.test_a_trial_index_must_be_an_integer) (bad='None')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_verify_s2.py", line 370, in test_a_trial_index_must_be_an_integer
+    self.assertEqual(S2.verify(DOC, rows)["verdict"], "FAIL")
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+
+
+======================================================================
+FAIL: test_a_trial_index_must_be_an_integer (tests.test_verify_s2.TrialsAreIndependent.test_a_trial_index_must_be_an_integer) (bad='-1')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_verify_s2.py", line 370, in test_a_trial_index_must_be_an_integer
+    self.assertEqual(S2.verify(DOC, rows)["verdict"], "FAIL")
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+
+
+======================================================================
+FAIL: test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent.test_each_duplication_fails) [_p2_copies]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_verify_s2.py", line 363, in test_each_duplication_fails
+    self.assertEqual(S2.verify(doc, rows)["verdict"], "FAIL", m.__name__)
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+ : _p2_copies
+
+======================================================================
+FAIL: test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent.test_each_duplication_fails) [_p2_copies_renumbered]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_verify_s2.py", line 363, in test_each_duplication_fails
+    self.assertEqual(S2.verify(doc, rows)["verdict"], "FAIL", m.__name__)
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+ : _p2_copies_renumbered
+
+======================================================================
+FAIL: test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent.test_each_duplication_fails) [_p2_one_trial_twice]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_verify_s2.py", line 363, in test_each_duplication_fails
+    self.assertEqual(S2.verify(doc, rows)["verdict"], "FAIL", m.__name__)
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+ : _p2_one_trial_twice
+
+======================================================================
+FAIL: test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent.test_each_duplication_fails) [_p2_trial_gap]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_verify_s2.py", line 363, in test_each_duplication_fails
+    self.assertEqual(S2.verify(doc, rows)["verdict"], "FAIL", m.__name__)
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+ : _p2_trial_gap
+
+======================================================================
+FAIL: test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent.test_each_duplication_fails) [_p2_seed_copied]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_verify_s2.py", line 363, in test_each_duplication_fails
+    self.assertEqual(S2.verify(doc, rows)["verdict"], "FAIL", m.__name__)
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+ : _p2_seed_copied
+
+======================================================================
+FAIL: test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent.test_each_duplication_fails) [_p2_replay_first_unlinked]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_verify_s2.py", line 363, in test_each_duplication_fails
+    self.assertEqual(S2.verify(doc, rows)["verdict"], "FAIL", m.__name__)
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+ : _p2_replay_first_unlinked
+
+======================================================================
+FAIL: test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent.test_each_duplication_fails) [_p2_replay_first_other_factor]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_verify_s2.py", line 363, in test_each_duplication_fails
+    self.assertEqual(S2.verify(doc, rows)["verdict"], "FAIL", m.__name__)
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+ : _p2_replay_first_other_factor
+
+======================================================================
+FAIL: test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent.test_each_duplication_fails) [_p2_revoked_principal_copies]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_verify_s2.py", line 363, in test_each_duplication_fails
+    self.assertEqual(S2.verify(doc, rows)["verdict"], "FAIL", m.__name__)
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+ : _p2_revoked_principal_copies
+
+======================================================================
+FAIL: test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent.test_each_duplication_fails) [_p2_concurrent_round_copied]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_verify_s2.py", line 363, in test_each_duplication_fails
+    self.assertEqual(S2.verify(doc, rows)["verdict"], "FAIL", m.__name__)
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+ : _p2_concurrent_round_copied
+
+======================================================================
+FAIL: test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent.test_each_duplication_fails) [_p2_no_identity]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_verify_s2.py", line 363, in test_each_duplication_fails
+    self.assertEqual(S2.verify(doc, rows)["verdict"], "FAIL", m.__name__)
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+ : _p2_no_identity
+
+======================================================================
+FAIL: test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent.test_each_duplication_fails) [_p2_nonce_shared_across_classes]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_verify_s2.py", line 363, in test_each_duplication_fails
+    self.assertEqual(S2.verify(doc, rows)["verdict"], "FAIL", m.__name__)
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+ : _p2_nonce_shared_across_classes
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.644s
+
+FAILED (failures=16)

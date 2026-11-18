@@ -1,0 +1,4 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), container emlab2-policyfix-pg; home paths shown as ~
+# DEV seeds at 088ab4c, tree o-088a: sh kit/run.sh o-088a m exp.s2_sessions
+RESULT s2_sessions verdict=PASS sha256=dd8fc825681d7f309530e0172413bcbd7f71ab4e7e22038651e40c2839246323 file=~/emlab2-16096/policyfix/runs/o-088a/src/results/DEV.s2_sessions.dd8fc825681d7f30.json
+PASS rows 1860 accepted attacks 0

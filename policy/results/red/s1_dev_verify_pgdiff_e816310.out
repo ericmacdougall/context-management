@@ -1,0 +1,51 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), container emlab2-policyfix-pg; home paths shown as ~
+# DEV seeds at e816310 (fixer run s1-green): sh kit/run.sh s1-green m verify --dev after the complete pg_diff
+e1_lattice         FAIL  exp=FAIL  recomputed=None  agree=None DEV.e1_lattice.802b295cf523f64d.json
+e1_lattice         FAIL  exp=FAIL  recomputed=None  agree=None DEV.e1_lattice.66698da11b15216a.json
+e1_lattice         FAIL  exp=PASS  recomputed=None  agree=None DEV.e1_lattice.c89fa1b329a9c43d.json
+e1_lattice         FAIL  exp=FAIL  recomputed=None  agree=None DEV.e1_lattice.0b35634fb5d378d1.json
+e1_lattice         FAIL  exp=PASS  recomputed=None  agree=None DEV.e1_lattice.5fa5034001241f19.json
+e1_lattice         FAIL  exp=FAIL  recomputed=None  agree=None DEV.e1_lattice.3d3b35d238597ea8.json
+e1_lattice         FAIL  exp=FAIL  recomputed=None  agree=None DEV.e1_lattice.1929e98ebf8cd503.json
+e1_lattice         FAIL  exp=FAIL  recomputed=None  agree=None DEV.e1_lattice.f4ceb6643389c378.json
+e2_egress          FAIL  exp=FAIL  recomputed=FAIL  agree=True DEV.e2_egress.160f43f07ac4284a.json
+e2_egress          FAIL  exp=FAIL  recomputed=None  agree=None DEV.e2_egress.43bac7fc2ce18a98.json
+e2_egress          FAIL  exp=FAIL  recomputed=None  agree=None DEV.e2_egress.f469a049265cd7fc.json
+e2_egress          FAIL  exp=PASS  recomputed=None  agree=None DEV.e2_egress.23f9aa83f49fc9a4.json
+e2_egress          FAIL  exp=FAIL  recomputed=FAIL  agree=True DEV.e2_egress.5f4b6d6893a45bc6.json
+e2_egress          FAIL  exp=FAIL  recomputed=FAIL  agree=True DEV.e2_egress.2974c1b7ae264290.json
+e2_egress          FAIL  exp=PASS  recomputed=None  agree=None DEV.e2_egress.fba6f9ccf603b000.json
+e2_egress          FAIL  exp=FAIL  recomputed=FAIL  agree=True DEV.e2_egress.b38d429c6b62f4b8.json
+e2_egress          FAIL  exp=FAIL  recomputed=None  agree=None DEV.e2_egress.78a554997a949f53.json
+e2_egress          FAIL  exp=FAIL  recomputed=FAIL  agree=True DEV.e2_egress.532f4d7a4aac5eef.json
+e2_egress          FAIL  exp=PASS  recomputed=FAIL  agree=False DEV.e2_egress.81c1636c302fbb8a.json
+e3_clash           FAIL  exp=FAIL  recomputed=None  agree=None DEV.e3_clash.7dad4eaf4ef88367.json
+e3_clash           FAIL  exp=FAIL  recomputed=None  agree=None DEV.e3_clash.24256f5bb9108f72.json
+e3_clash           FAIL  exp=FAIL  recomputed=None  agree=None DEV.e3_clash.46e75feb2bea58ee.json
+e3_clash           FAIL  exp=PASS  recomputed=None  agree=None DEV.e3_clash.067e46a9f0390b02.json
+e3_clash           FAIL  exp=FAIL  recomputed=None  agree=None DEV.e3_clash.3faad8976c3ba3d2.json
+e3_clash           FAIL  exp=PASS  recomputed=None  agree=None DEV.e3_clash.7b1b68e296652092.json
+e4_tighten         FAIL  exp=PASS  recomputed=None  agree=None DEV.e4_tighten.3b763734dbcb041b.json
+e4_tighten         FAIL  exp=PASS  recomputed=None  agree=None DEV.e4_tighten.5f69efabeacfa633.json
+e4_tighten         FAIL  exp=PASS  recomputed=None  agree=None DEV.e4_tighten.b39618735efb2dd5.json
+e4_tighten         FAIL  exp=PASS  recomputed=None  agree=None DEV.e4_tighten.4b7ef8d3cb3ec728.json
+e5_threads         FAIL  exp=PASS  recomputed=None  agree=None DEV.e5_threads.bc2b096483128346.json
+e5_threads         FAIL  exp=PASS  recomputed=None  agree=None DEV.e5_threads.3a8fcf32a175ede7.json
+e5_threads         FAIL  exp=PASS  recomputed=None  agree=None DEV.e5_threads.628e2cdbed085241.json
+e6_policy_format   FAIL  exp=PASS  recomputed=None  agree=None DEV.e6_policy_format.67eaecb5df3ac1c3.json
+e6_policy_format   FAIL  exp=PASS  recomputed=None  agree=None DEV.e6_policy_format.d45c2f508b71cbea.json
+b1_modelcheck      FAIL  exp=FAIL  recomputed=None  agree=None DEV.b1_modelcheck.89488ed75a26465b.json
+b1_modelcheck      FAIL  exp=PASS  recomputed=None  agree=None DEV.b1_modelcheck.4a9d9b49120f054e.json
+b1_modelcheck      FAIL  exp=FAIL  recomputed=None  agree=None DEV.b1_modelcheck.fd1eff5b67b12d12.json
+b1_modelcheck      FAIL  exp=PASS  recomputed=None  agree=None DEV.b1_modelcheck.219ee7e48b3a842a.json
+b1_modelcheck      FAIL  exp=FAIL  recomputed=None  agree=None DEV.b1_modelcheck.00bbc40442831642.json
+b1_modelcheck      FAIL  exp=PASS  recomputed=None  agree=None DEV.b1_modelcheck.ae9ff95ded54e017.json
+b2_rebuild         FAIL  exp=PASS  recomputed=None  agree=None DEV.b2_rebuild.78be0242fa876187.json
+b2_rebuild         FAIL  exp=PASS  recomputed=None  agree=None DEV.b2_rebuild.7b33e40034330d27.json
+b3_pg              FAIL  exp=PASS  recomputed=None  agree=None DEV.b3_pg.25f8b0243081cfb9.json
+b3_pg              FAIL  exp=FAIL  recomputed=None  agree=None DEV.b3_pg.1029444441f14a8a.json
+b3_pg              PASS  exp=PASS  recomputed=PASS  agree=True DEV.b3_pg.f0f4f98fedaabf21.json
+pg_diff            PASS  exp=PASS  recomputed=PASS  agree=True DEV.pg_diff.47a2839d22030593.json
+mig_rehearsal      FAIL  exp=None  recomputed=None  agree=None no result file
+s2_sessions        PASS  exp=PASS  recomputed=PASS  agree=True DEV.s2_sessions.0a11733c79203e98.json
+VERIFY overall=FAIL sha256=b3df73940ac9d0c26f51ca2dd4cbe32023b807380562e6288e42d752768c6af6 file=~/emlab2-16096/policyfix/runs/s1-green/src/results/DEV.VERIFY.b3df73940ac9d0c2.json

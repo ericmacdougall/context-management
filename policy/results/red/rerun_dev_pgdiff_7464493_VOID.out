@@ -1,0 +1,34 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), container emlab2-policyfix-pg; home paths shown as ~
+# VOID: complete DEV pg_diff at 7464493 (no PGDIFF_LOGS, no PGDIFF_SCEN), tree o-7464, stopped after 4 min by my 15 GiB guard (kit/o-guard15.sh; the batch's own 10 GiB floor was a deviation): sh kit/run.sh o-7464 m exp.pg_diff
+b2 {"logs": 300, "events": 45206, "code_mismatches": 0, "view_mismatches": 0, "log_mismatches": 0, "first": null} 127 s
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "~/emlab2-16096/policyfix/runs/o-7464/src/exp/pg_diff.py", line 264, in <module>
+    main()
+  File "~/emlab2-16096/policyfix/runs/o-7464/src/exp/pg_diff.py", line 240, in main
+    out["b1"].append(run_b1(pg, scen, d, path))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/runs/o-7464/src/exp/pg_diff.py", line 217, in run_b1
+    walk(root, 0)
+  File "~/emlab2-16096/policyfix/runs/o-7464/src/exp/pg_diff.py", line 211, in walk
+    walk(child, lvl + 1)
+  File "~/emlab2-16096/policyfix/runs/o-7464/src/exp/pg_diff.py", line 211, in walk
+    walk(child, lvl + 1)
+  File "~/emlab2-16096/policyfix/runs/o-7464/src/exp/pg_diff.py", line 211, in walk
+    walk(child, lvl + 1)
+  [Previous line repeated 2 more times]
+  File "~/emlab2-16096/policyfix/runs/o-7464/src/exp/pg_diff.py", line 197, in walk
+    with conn.transaction():
+  File "/usr/lib/python3.12/contextlib.py", line 137, in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/venv/lib/python3.12/site-packages/psycopg/connection.py", line 313, in transaction
+    with tx:
+  File "~/emlab2-16096/policyfix/venv/lib/python3.12/site-packages/psycopg/transaction.py", line 244, in __enter__
+    self._conn.wait(self._enter_gen())
+  File "~/emlab2-16096/policyfix/venv/lib/python3.12/site-packages/psycopg/connection.py", line 394, in wait
+    return waiting.wait(gen, self.pgconn.socket, interval=interval)
+                             ^^^^^^^^^^^^^^^^^^
+  File "psycopg_binary/pq/pgconn.pyx", line 204, in psycopg_binary.pq.PGconn.socket.__get__
+psycopg.OperationalError: the connection is lost

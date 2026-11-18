@@ -1,0 +1,11 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), container emlab2-policyfix-pg; home paths shown as ~
+# DEV seeds at 8547b27 (fixer run s1-exp): sh kit/run.sh s1-exp m exp.e2_egress
+RESULT e2_egress verdict=PASS sha256=d0615759079a6eb24325829f99f6cec454fa55f098b90610f6f495a7343ebd06 file=~/emlab2-16096/policyfix/runs/s1-exp/src/results/DEV.e2_egress.d0615759079a6eb2.json
+PASS violations 0 forbidden {'eu_only': 5741, 'local_only': 5262, 'model_banned': 2788, 'restricted_channel': 5961, 'other_tenant': 2182, 'plain': 0} permitted {'eu_only': 4396, 'local_only': 3461, 'model_banned': 4681, 'restricted_channel': 4916, 'other_tenant': 0, 'plain': 2956} ['embed', 'export', 'inbox', 'model'] forges 2187 not denied 0 rows 511691
+  ctl_model_port_disabled {'leak_rate': 0.7244, 'violations': 11551, 'id_pattern_blocks': 0, 'meets_floor': True}
+  ctl_embed_disabled {'leak_rate': 0.4322, 'violations': 5525, 'id_pattern_blocks': 0, 'meets_floor': True}
+  ctl_inbox_disabled {'leak_rate': 0.4066, 'violations': 4560, 'id_pattern_blocks': 0, 'meets_floor': True}
+  ctl_export_disabled {'leak_rate': 0.4564, 'violations': 5075, 'id_pattern_blocks': 0, 'meets_floor': True}
+  ctl_derive_join_dropped {'leak_rate': 0.2634, 'violations': 2237, 'id_pattern_blocks': 0, 'meets_floor': True}
+  ctl_id_pattern_guard {'leak_rate': 0.9782, 'violations': 34381, 'id_pattern_blocks': 2513, 'meets_floor': True}
+  inject-only disabled violations: 0 runtime 91.2

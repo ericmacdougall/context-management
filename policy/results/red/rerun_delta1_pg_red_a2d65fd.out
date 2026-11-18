@@ -1,0 +1,36 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), container emlab2-policyfix-pg; home paths shown as ~
+# RED rerun, tree o-red-a2d6: sh kit/run.sh o-red-a2d6 t -v tests.test_delta1_pg
+test_erase_values_judges_the_session_again_after_waiting_for_a_lock (tests.test_delta1_pg.M1_WallClock.test_erase_values_judges_the_session_again_after_waiting_for_a_lock)
+d05d731: dc.erase_values checked the session before taking the tenant row FOR UPDATE; a call that waited there past its ... FAIL
+test_every_isolation_other_than_read_committed_is_refused (tests.test_delta1_pg.M1_WallClock.test_every_isolation_other_than_read_committed_is_refused)
+The caller contract (DESIGN.md): only READ COMMITTED authenticates. READ UNCOMMITTED is refused as well: Postgres runs it as ... ok
+test_proof_that_expires_inside_a_transaction_is_refused (tests.test_delta1_pg.M1_WallClock.test_proof_that_expires_inside_a_transaction_is_refused)
+d05d731: open_session compared the proof's expiry with now(); a dc_idp caller that began its transaction while the proof was ... ok
+test_repeatable_read_snapshot_does_not_outlive_a_factor_revoke (tests.test_delta1_pg.M1_WallClock.test_repeatable_read_snapshot_does_not_outlive_a_factor_revoke)
+d05d731: open_session in a REPEATABLE READ transaction read the factor row from a snapshot taken before the factor was ... ok
+test_repeatable_read_snapshot_does_not_outlive_end_session (tests.test_delta1_pg.M1_WallClock.test_repeatable_read_snapshot_does_not_outlive_end_session)
+d05d731: in a REPEATABLE READ transaction dc._session read the snapshot taken at the transaction's first read, so a token ... ok
+test_submit_judges_the_session_again_after_waiting_for_a_lock (tests.test_delta1_pg.M1_WallClock.test_submit_judges_the_session_again_after_waiting_for_a_lock)
+d05d731: dc.submit checked the session once, before _lock_event; a call that waited on the principal's advisory lock past ... ok
+test_token_that_expires_inside_a_transaction_is_refused_on_every_call (tests.test_delta1_pg.M1_WallClock.test_token_that_expires_inside_a_transaction_is_refused_on_every_call)
+d05d731: dc._session compared expires_at with now(); a dc_app caller that began its transaction while the token was valid ... ok
+test_first_committed_stays_retryable (tests.test_delta1_pg.M3_PgOverlapping.test_first_committed_stays_retryable) ... ok
+test_first_committed_stays_retryable_different_requirements (tests.test_delta1_pg.M3_PgOverlapping.test_first_committed_stays_retryable_different_requirements) ... ok
+test_first_rolled_back_leaves_the_second_retryable (tests.test_delta1_pg.M3_PgOverlapping.test_first_rolled_back_leaves_the_second_retryable) ... ok
+test_first_rolled_back_leaves_the_second_retryable_different_requirements (tests.test_delta1_pg.M3_PgOverlapping.test_first_rolled_back_leaves_the_second_retryable_different_requirements) ... ok
+
+======================================================================
+FAIL: test_erase_values_judges_the_session_again_after_waiting_for_a_lock (tests.test_delta1_pg.M1_WallClock.test_erase_values_judges_the_session_again_after_waiting_for_a_lock)
+d05d731: dc.erase_values checked the session before taking the tenant row FOR UPDATE; a call that waited there past its
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_delta1_pg.py", line 157, in test_erase_values_judges_the_session_again_after_waiting_for_a_lock
+    self.assertEqual(late, {"refused": "unauthorized"}, "erased after the token expired during the lock wait")
+AssertionError: {'erased': 1, 'refused': None, 'remaining': 0} != {'refused': 'unauthorized'}
+- {'erased': 1, 'refused': None, 'remaining': 0}
++ {'refused': 'unauthorized'} : erased after the token expired during the lock wait
+
+----------------------------------------------------------------------
+Ran 11 tests in 17.395s
+
+FAILED (failures=1)

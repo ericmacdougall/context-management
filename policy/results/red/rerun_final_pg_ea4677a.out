@@ -1,0 +1,30 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), container emlab2-policyfix-pg; home paths shown as ~
+# rerun at ea4677a (already had the recheck fixes: expected OK), tree o-red-ea46: sh kit/run.sh o-red-ea46 t -v tests.test_final_pg
+test_explain (tests.test_final_pg.P1_JudgmentNeverWaits.test_explain)
+a2d65fd: explain's principal check WAS a read that waited, inside the STABLE dc._explain_raw called from a simple ... ok
+test_open_session (tests.test_final_pg.P1_JudgmentNeverWaits.test_open_session)
+Regression guard (passed at a2d65fd: the VOLATILE open_session's factor and principal statements read after their own ... ok
+test_submit (tests.test_final_pg.P1_JudgmentNeverWaits.test_submit)
+Regression guard for sessions and principal (a2d65fd judged again after _lock_event, in plain statements). The factors ... ok
+test_erase_decision_changes_during_wait (tests.test_final_pg.P1_PgServiceJudgment.test_erase_decision_changes_during_wait)
+Each value's erase decision (a recorded legal hold queues it; a tenant without the erase grant is denied) is the in-process ... ok
+test_erase_subject (tests.test_final_pg.P1_PgServiceJudgment.test_erase_subject) ... ok
+test_submit (tests.test_final_pg.P1_PgServiceJudgment.test_submit) ... ok
+test_client_connection_dropped_mid_call (tests.test_final_pg.P3_PgFailuresMidCall.test_client_connection_dropped_mid_call)
+The client's socket is shut down while its call waits (a dropped connection; no server process is signalled). The server ... ~/emlab2-16096/policyfix/runs/o-red-ea46/src/tests/test_final_pg.py:354: ResourceWarning: unclosed <socket.socket fd=11, family=2, type=1, proto=6, laddr=('127.0.0.1', 53856), raddr=('127.0.0.1', 25630)>
+  socket.socket(fileno=os.dup(c.fileno())).shutdown(socket.SHUT_RDWR)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_deadlock_victim_mid_call (tests.test_final_pg.P3_PgFailuresMidCall.test_deadlock_victim_mid_call)
+The owner holds the chain head and then asks for alice's advisory lock, which alice's submit holds while it waits for the ... ok
+test_lost_response_after_commit (tests.test_final_pg.P3_PgFailuresMidCall.test_lost_response_after_commit) ... ok
+test_statement_timeout_mid_call (tests.test_final_pg.P3_PgFailuresMidCall.test_statement_timeout_mid_call) ... ok
+test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call)
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just ... ok
+test_end_session_refuses_other_isolation_levels (tests.test_final_pg.P5_EndSessionIsolation.test_end_session_refuses_other_isolation_levels)
+a2d65fd: end_session had no isolation guard. Under REPEATABLE READ its update reads the transaction's snapshot: a session ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 5.880s
+
+OK

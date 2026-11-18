@@ -1,0 +1,15 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), container emlab2-policyfix-pg; home paths shown as ~
+# DEV verify at ae644df, tree o-ae64: the mig_rehearsal and s2_sessions rows count; the b3 row is the VOID run above; pg_diff not run (see dev_pgdiff_ae644df.out); the other experiments were not run in this tree: sh kit/run.sh o-ae64 m verify results --dev
+e1_lattice         FAIL  exp=None  recomputed=None  agree=None no result file
+e2_egress          FAIL  exp=None  recomputed=None  agree=None no result file
+e3_clash           FAIL  exp=None  recomputed=None  agree=None no result file
+e4_tighten         FAIL  exp=None  recomputed=None  agree=None no result file
+e5_threads         FAIL  exp=None  recomputed=None  agree=None no result file
+e6_policy_format   FAIL  exp=None  recomputed=None  agree=None no result file
+b1_modelcheck      FAIL  exp=None  recomputed=None  agree=None no result file
+b2_rebuild         FAIL  exp=None  recomputed=None  agree=None no result file
+b3_pg              FAIL  exp=FAIL  recomputed=FAIL  agree=True DEV.b3_pg.e6280fd623404f23.json
+pg_diff            FAIL  exp=None  recomputed=None  agree=None no result file
+mig_rehearsal      PASS  exp=PASS  recomputed=PASS  agree=True DEV.mig_rehearsal.e20c6dfb5474dd4a.json
+s2_sessions        PASS  exp=PASS  recomputed=PASS  agree=True DEV.s2_sessions.0b02ed2a1977ec98.json
+VERIFY overall=FAIL sha256=28e650b5d6908eb8fe11dfab28c77a912cacb07cf73bbf598fee3e8fe382e844 file=results/DEV.VERIFY.28e650b5d6908eb8.json

@@ -1,0 +1,103 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), container emlab2-policyfix-pg; home paths shown as ~
+# GREEN at 8547b27 (fixer run s1-exp): sh kit/run.sh s1-exp t -v tests.test_s1_pg
+test_a_wait_after_the_judgment_fails_the_call (tests.test_s1_pg.S1_ApplyNeverWaits.test_a_wait_after_the_judgment_fails_the_call)
+S1 only. Broken variant: the revoke's target pins (dc._lock_target) do nothing, so its authority writes after the ... ok
+test_subject_token_unique_index (tests.test_s1_pg.S1_ApplyNeverWaits.test_subject_token_unique_index)
+Raw SQL holding an uncommitted subject token (no API call does: submits take the subject lock first). The insert would ... ok
+test_the_callers_lock_timeout_is_restored (tests.test_s1_pg.S1_ApplyNeverWaits.test_the_callers_lock_timeout_is_restored)
+Regression guard: every exit path (applied, refused, read) restores the caller's lock_timeout. ... ok
+test_the_stage_never_waits (tests.test_s1_pg.S1_ApplyNeverWaits.test_the_stage_never_waits)
+S1 only. Broken variant: dc.submit's acquisition without the chain-head lock (L7). The event insert then meets the held ... ok
+test_authority_lock (tests.test_s1_pg.S1_BeforeThePins.test_authority_lock)
+S1 only: the caller's authority lock (L1) held exclusively (a revoke or end_session of the caller in flight). ... ok
+test_erase_candidates_after_a_table_wait (tests.test_s1_pg.S1_BeforeThePins.test_erase_candidates_after_a_table_wait)
+Regression guard. ... ok
+test_events_table_lock (tests.test_s1_pg.S1_BeforeThePins.test_events_table_lock)
+Regression guard: a relation lock on dc.events (L0). ... ok
+test_explain_after_a_table_wait (tests.test_s1_pg.S1_BeforeThePins.test_explain_after_a_table_wait)
+Regression guard: explain waits on a relation lock (L0), then pins. ... ok
+test_pin_waits_for_a_row_writer (tests.test_s1_pg.S1_BeforeThePins.test_pin_waits_for_a_row_writer)
+S1 only: a pin statement waits for a transaction that holds the row and writes it; it then locks and judges the newest ... ok
+test_read_table_after_a_table_wait (tests.test_s1_pg.S1_BeforeThePins.test_read_table_after_a_table_wait)
+Regression guard. ... ok
+test_without_the_pins_a_mutation_lands_during_the_wait (tests.test_s1_pg.S1_Control.test_without_the_pins_a_mutation_lands_during_the_wait)
+Control, for the green run: the pins, not the final judgment after them, make S1_PinnedAuthority pass. With FOR SHARE ... ok
+test_authority_lock (tests.test_s1_pg.S1_ExpiryCeiling.test_authority_lock)
+S1 only. ... ok
+test_chain_head_row (tests.test_s1_pg.S1_ExpiryCeiling.test_chain_head_row) ... ok
+test_erase_value_row (tests.test_s1_pg.S1_ExpiryCeiling.test_erase_value_row) ... ok
+test_events_table_lock (tests.test_s1_pg.S1_ExpiryCeiling.test_events_table_lock) ... ok
+test_explain_table_lock (tests.test_s1_pg.S1_ExpiryCeiling.test_explain_table_lock) ... ok
+test_head_row (tests.test_s1_pg.S1_ExpiryCeiling.test_head_row) ... ok
+test_idempotency_lock (tests.test_s1_pg.S1_ExpiryCeiling.test_idempotency_lock) ... ok
+test_open_session_twin (tests.test_s1_pg.S1_ExpiryCeiling.test_open_session_twin)
+The proof expires while open_session waits for a concurrent presentation of the same proof (L8). ... ok
+test_revoke_target_row (tests.test_s1_pg.S1_ExpiryCeiling.test_revoke_target_row) ... ok
+test_tenant_lock (tests.test_s1_pg.S1_ExpiryCeiling.test_tenant_lock)
+S1 only. ... ok
+test_the_callers_own_shorter_lock_timeout_still_applies (tests.test_s1_pg.S1_ExpiryCeiling.test_the_callers_own_shorter_lock_timeout_still_applies)
+Regression guard: the budget never lengthens the caller's own lock_timeout; its expiry is re-raised as 55P03. ... ok
+test_an_out_of_order_lock_is_refused (tests.test_s1_pg.S1_LockOrder.test_an_out_of_order_lock_is_refused) ... ok
+test_every_entry_point_follows_the_declared_order (tests.test_s1_pg.S1_LockOrder.test_every_entry_point_follows_the_declared_order) ... ok
+test_grant_state_is_add_only (tests.test_s1_pg.S1_LockOrder.test_grant_state_is_add_only)
+Enumerates every statement of the core that writes dc.role or a principal's kind or admin flag (regression guard). ... ~/emlab2-16096/policyfix/runs/s1-exp/src/tests/test_s1_pg.py:634: ResourceWarning: unclosed file <_io.TextIOWrapper name='~/emlab2-16096/policyfix/runs/s1-exp/src/pol/_pgcore.sql' mode='r' encoding='utf-8'>
+  src = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "pol", "_pgcore.sql"), encoding="utf-8").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_crossed_revokes (tests.test_s1_pg.S1_MutualWaits.test_crossed_revokes)
+Regression guard: admin revokes admin2 while admin2 revokes admin, eight rounds: exactly one applies, no deadlock. ... ok
+test_crossed_subjects (tests.test_s1_pg.S1_MutualWaits.test_crossed_subjects)
+Regression guard: two principals submit values about the same two new subjects concurrently, ten rounds; no deadlock. ... ok
+test_end_session_waits_for_the_call (tests.test_s1_pg.S1_MutualWaits.test_end_session_waits_for_the_call)
+F1 P1b: an in-flight call (here explain in a transaction held open) has its session pinned; end_session waits for it (L1 ... ok
+test_erasure_is_not_starved_by_a_stream_of_submits (tests.test_s1_pg.S1_MutualWaits.test_erasure_is_not_starved_by_a_stream_of_submits)
+The same for erase_values (the write path's known erasure-starvation shape). ... ok
+test_grant_waits_for_a_submit (tests.test_s1_pg.S1_MutualWaits.test_grant_waits_for_a_submit)
+Regression guard: a grant (tenant lock exclusive) waits for an in-flight submit and is then applied. ... ok
+test_open_session_vs_revoke (tests.test_s1_pg.S1_MutualWaits.test_open_session_vs_revoke)
+An open_session of bob held open; the revoke of bob waits for it (L1), then revokes the new session too. Red at ... ok
+test_revoke_is_not_starved_by_a_stream_of_submits (tests.test_s1_pg.S1_MutualWaits.test_revoke_is_not_starved_by_a_stream_of_submits)
+A revoke (tenant lock exclusive) while three principals keep the tenant busy. Red at ea4677a if the tenant row's share ... ok
+test_revoke_waits_for_a_held_call (tests.test_s1_pg.S1_MutualWaits.test_revoke_waits_for_a_held_call)
+Regression guard (ea4677a: the tenant row): alice's submit in a transaction she holds open; the revoke of alice waits ... ok
+test_factor_row_writer (tests.test_s1_pg.S1_OpenSession.test_factor_row_writer)
+Regression guard: a transaction holds the factor row FOR UPDATE, revokes the factor and commits; B's pin waited for it ... ok
+test_prune_never_waits (tests.test_s1_pg.S1_OpenSession.test_prune_never_waits)
+A pruned an expired ledger row of the factor and holds its transaction open. B (same factor, another nonce) skips that ... ok
+test_twin_commits (tests.test_s1_pg.S1_OpenSession.test_twin_commits)
+Regression guard: A commits; B is refused as a replay and leaves no session. ... ok
+test_twin_rolls_back (tests.test_s1_pg.S1_OpenSession.test_twin_rolls_back)
+B is opened once A rolls back. A factor or principal revocation started while B waited waits for B (red at ea4677a: it ... ok
+test_chain_head_row (tests.test_s1_pg.S1_PinnedAuthority.test_chain_head_row)
+The tenant's chain-head row (L7), held by any concurrent event of the tenant until it commits. ... ok
+test_erase_tenant_lock (tests.test_s1_pg.S1_PinnedAuthority.test_erase_tenant_lock)
+S1 only: erase_values waits for the tenant lock (L3) held by a submit in flight. ... ok
+test_erase_token_row (tests.test_s1_pg.S1_PinnedAuthority.test_erase_token_row)
+The subject's token row held FOR UPDATE (L5.3). ... ok
+test_erase_value_row (tests.test_s1_pg.S1_PinnedAuthority.test_erase_value_row)
+A value row held FOR UPDATE (L5.2). ... ok
+test_head_row (tests.test_s1_pg.S1_PinnedAuthority.test_head_row)
+The requirement's head row FOR UPDATE (L5): a concurrent submission on the same requirement. ... ok
+test_idempotency_lock (tests.test_s1_pg.S1_PinnedAuthority.test_idempotency_lock)
+The per-principal advisory lock (L4), which any login role can take. ... ok
+test_subject_lock (tests.test_s1_pg.S1_PinnedAuthority.test_subject_lock)
+Bob's dc.submit about the same new subject (on r1) still open while alice submits about it on r2 (L6; was the ... ok
+test_tenant_lock (tests.test_s1_pg.S1_PinnedAuthority.test_tenant_lock)
+S1 only: the tenant lock (L3), held exclusively by a revoke, grant or erasure in flight (was the tenant row). ... ok
+test_revoke_gives_up_after_xwait (tests.test_s1_pg.S1_RevokePath.test_revoke_gives_up_after_xwait)
+S1 only: an exclusive wait is capped at XWAIT (2 s). Past it the revoke fails with 55P03, applies nothing, and the ... ok
+test_revoke_waits_for_an_open_end_session (tests.test_s1_pg.S1_RevokePath.test_revoke_waits_for_an_open_end_session)
+S1: an open dc.end_session of the target holds the target's authority lock; the revoke waits for it (FIFO) and then ... ok
+test_self_revoke_is_applied (tests.test_s1_pg.S1_RevokePath.test_self_revoke_is_applied)
+Regression guard: an admin revoking itself (A exclusive directly) is applied, and its token is refused afterwards. ... ok
+test_sessions_table_lock (tests.test_s1_pg.S1_RevokePath.test_sessions_table_lock)
+Regression guard: a SHARE lock on dc.sessions is waited for before the pins (L0); the change committed meanwhile refuses. ... ok
+test_target_principal_row (tests.test_s1_pg.S1_RevokePath.test_target_principal_row)
+The target's principal row held FOR UPDATE (L2.3). ... ok
+test_target_props_rows (tests.test_s1_pg.S1_RevokePath.test_target_props_rows)
+The target's open proposal row held FOR UPDATE (L5.1). Each round x proposes afresh (the previous revoke invalidated it). ... ok
+
+----------------------------------------------------------------------
+Ran 51 tests in 59.062s
+
+OK

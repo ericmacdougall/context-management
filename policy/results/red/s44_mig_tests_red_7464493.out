@@ -1,0 +1,50 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), container emlab2-policyfix-pg; home paths shown as ~
+# RED (4.4 migration), tree o-red-mig2 , o_reset first: sh kit/run.sh o-red-mig2 t -v tests.test_review3_pg.Review3Rollback
+test_44_forward_creates_the_evictor_role (tests.test_review3_pg.Review3Rollback.test_44_forward_creates_the_evictor_role)
+FINAL-JUDGMENT.md 4.4: dc._evict is owned by dc_evictor, which pgcore.install creates; a migration on a cluster where ... FAIL
+test_44_rollback_gives_the_old_engine_its_advisory_lock (tests.test_review3_pg.Review3Rollback.test_44_rollback_gives_the_old_engine_its_advisory_lock)
+FINAL-JUDGMENT.md 4.4: the definer core makes the advisory-lock functions non-PUBLIC in its database. The pre-R3-7 engine ... FAIL
+test_n4_failure_mid_rollback_changes_nothing (tests.test_review3_pg.Review3Rollback.test_n4_failure_mid_rollback_changes_nothing)
+Delta review 1 (N4 leftover): a failure injected after rollback has dropped the migrated schema and dc_crypto, at the rename ... ok
+test_n4_rollback_after_a_refused_request_is_refused (tests.test_review3_pg.Review3Rollback.test_n4_rollback_after_a_refused_request_is_refused)
+A refused request writes an audit row: audit history is data too (0a20b64 drops it). ... ok
+test_n4_rollback_after_a_submit_is_refused (tests.test_review3_pg.Review3Rollback.test_n4_rollback_after_a_submit_is_refused)
+0a20b64: rollback drops the new schema unconditionally; an applied request made after the migration silently disappears. ... ok
+test_n4_rollback_after_an_erasure_is_refused (tests.test_review3_pg.Review3Rollback.test_n4_rollback_after_an_erasure_is_refused)
+0a20b64: a value erased after the migration comes back with the old schema (erasure undone). ... ok
+test_n4_rollback_without_writes_proceeds (tests.test_review3_pg.Review3Rollback.test_n4_rollback_without_writes_proceeds)
+Logins are not data: a session opened after the migration does not block the rollback; the old schema comes back. ... ok
+
+======================================================================
+FAIL: test_44_forward_creates_the_evictor_role (tests.test_review3_pg.Review3Rollback.test_44_forward_creates_the_evictor_role)
+FINAL-JUDGMENT.md 4.4: dc._evict is owned by dc_evictor, which pgcore.install creates; a migration on a cluster where
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-mig2/src/tests/test_review3_pg.py", line 337, in test_44_forward_creates_the_evictor_role
+    self.MIG.forward(self.o, {T: CFG}, os.environ["POL_PG_IDP_PASSWORD_FILE"])
+  File "~/emlab2-16096/policyfix/runs/o-red-mig2/src/ops/migrate_r3_7.py", line 132, in forward
+    c.execute(f.read())
+  File "~/emlab2-16096/policyfix/venv/lib/python3.12/site-packages/psycopg/connection.py", line 251, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedObject: role "dc_evictor" does not exist
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-mig2/src/tests/test_review3_pg.py", line 339, in test_44_forward_creates_the_evictor_role
+    self.fail("forward failed on a cluster without dc_evictor: %s %s" % (e.sqlstate, e.diag.message_primary))
+AssertionError: forward failed on a cluster without dc_evictor: 42704 role "dc_evictor" does not exist
+
+======================================================================
+FAIL: test_44_rollback_gives_the_old_engine_its_advisory_lock (tests.test_review3_pg.Review3Rollback.test_44_rollback_gives_the_old_engine_its_advisory_lock)
+FINAL-JUDGMENT.md 4.4: the definer core makes the advisory-lock functions non-PUBLIC in its database. The pre-R3-7 engine
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-mig2/src/tests/test_review3_pg.py", line 319, in test_44_rollback_gives_the_old_engine_its_advisory_lock
+    self.assertTrue(self.o.execute("select has_function_privilege('dc_app', 'pg_advisory_xact_lock(bigint)', 'EXECUTE')").fetchone()[0])
+AssertionError: False is not true
+
+----------------------------------------------------------------------
+Ran 7 tests in 1.678s
+
+FAILED (failures=2)

@@ -1,0 +1,48 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), container emlab2-policyfix-pg; home paths shown as ~
+# RED (4.4 fence), tree o-red-fence {"commit": "8547b270d1a12a972649d7e9378d7b78ef677a7f", "dirty": true, "thresholds_commit": "d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1", "tree_sha256": "a519b54f4d05d5bfa26ac9a1cf9ed8f100739782164a18dd3ea39f286278ac68", "tests_from": "0046ef6a459e950c0d166ca52a0eedd0d0589210"}, o_reset first: sh kit/run.sh o-red-fence t -v tests.test_s44_pg.S44_Fence tests.test_s44_pg.S44_FenceControl
+test_the_authority_fence_refuses_the_target_only (tests.test_s44_pg.S44_Fence.test_the_authority_fence_refuses_the_target_only) ... 
+  test_the_authority_fence_refuses_the_target_only (tests.test_s44_pg.S44_Fence.test_the_authority_fence_refuses_the_target_only) (principal='alice', call='explain') ... FAIL
+  test_the_authority_fence_refuses_the_target_only (tests.test_s44_pg.S44_Fence.test_the_authority_fence_refuses_the_target_only) (principal='alice', call='submit') ... FAIL
+  test_the_authority_fence_refuses_the_target_only (tests.test_s44_pg.S44_Fence.test_the_authority_fence_refuses_the_target_only) (principal='alice', call='open_session') ... FAIL
+test_the_tenant_fence_refuses_submits_only (tests.test_s44_pg.S44_Fence.test_the_tenant_fence_refuses_submits_only) ... FAIL
+test_without_eviction_the_holder_blocks_the_revoke (tests.test_s44_pg.S44_FenceControl.test_without_eviction_the_holder_blocks_the_revoke) ... MEASURE control_no_eviction 2.008
+ok
+test_without_the_fence_check_the_target_is_not_refused (tests.test_s44_pg.S44_FenceControl.test_without_the_fence_check_the_target_is_not_refused)
+Control for S44_Fence: dc._fenced made a no-op; the target's calls answer under a held fence. ... ok
+
+======================================================================
+FAIL: test_the_authority_fence_refuses_the_target_only (tests.test_s44_pg.S44_Fence.test_the_authority_fence_refuses_the_target_only) (principal='alice', call='explain')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-fence/src/tests/test_s44_pg.py", line 411, in test_the_authority_fence_refuses_the_target_only
+    self.assertEqual(self.err(r), "55P03", "%r" % (r,))
+AssertionError: None != '55P03' : {'req': 'r1', 'head': {'last': None, 'status': 'unset', 'version': 0, 'value_by': None, 'contested': None, 'value_ref': None, 'value_event': None, 'value_label': None, 'value_version': 0}, 'open': [], 'tenant': 'tenant-a', 'values': {}, 'principal': 'alice'}
+
+======================================================================
+FAIL: test_the_authority_fence_refuses_the_target_only (tests.test_s44_pg.S44_Fence.test_the_authority_fence_refuses_the_target_only) (principal='alice', call='submit')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-fence/src/tests/test_s44_pg.py", line 411, in test_the_authority_fence_refuses_the_target_only
+    self.assertEqual(self.err(r), "55P03", "%r" % (r,))
+AssertionError: None != '55P03' : {'id': 'alice/c03d08998', 'code': 'proposed', 'original': None, 'value_ref': 'val-d48f0807db4039fb3310fa0bef4fd6c4bba3e2c6'}
+
+======================================================================
+FAIL: test_the_authority_fence_refuses_the_target_only (tests.test_s44_pg.S44_Fence.test_the_authority_fence_refuses_the_target_only) (principal='alice', call='open_session')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-fence/src/tests/test_s44_pg.py", line 411, in test_the_authority_fence_refuses_the_target_only
+    self.assertEqual(self.err(r), "55P03", "%r" % (r,))
+AssertionError: None != '55P03' : {'token': '<lab session token redacted>', 'factor': 'fac-086f04facbce8429d71c3973', 'tenant': 'tenant-a', 'channel': 'owner_ui', 'principal': 'alice'}
+
+======================================================================
+FAIL: test_the_tenant_fence_refuses_submits_only (tests.test_s44_pg.S44_Fence.test_the_tenant_fence_refuses_submits_only)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-fence/src/tests/test_s44_pg.py", line 422, in test_the_tenant_fence_refuses_submits_only
+    self.assertEqual(self.err(a["submit"][0]), "55P03", "%r" % (a["submit"],))
+AssertionError: None != '55P03' : ({'id': 'alice/c909d07b1', 'code': 'proposed', 'original': None, 'value_ref': 'val-9c802f2bd6294ae7d1c6edc3e6b6a4783b00f955'}, 0.013741254806518555)
+
+----------------------------------------------------------------------
+Ran 4 tests in 3.099s
+
+FAILED (failures=4)

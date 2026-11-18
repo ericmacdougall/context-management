@@ -1,0 +1,31 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), container emlab2-policyfix-pg; home paths shown as ~
+# CONTROL (broken variant): tree o-ctl-refused = 088ab4c with dc._xlock_caller's eviction made unconditional (1 -> 0 / 1): sh kit/run.sh o-ctl-refused t -v tests.test_s44_pg.S44_Scope.test_a_refused_revoker_evicts_nobody
+test_a_refused_revoker_evicts_nobody (tests.test_s44_pg.S44_Scope.test_a_refused_revoker_evicts_nobody)
+Regression guard: the admin's own authority changes while its revoke waits for the holder; the revoke is refused and the ... 
+  test_a_refused_revoker_evicts_nobody (tests.test_s44_pg.S44_Scope.test_a_refused_revoker_evicts_nobody) (mutation='factor')
+Regression guard: the admin's own authority changes while its revoke waits for the holder; the revoke is refused and the ... FAIL
+  test_a_refused_revoker_evicts_nobody (tests.test_s44_pg.S44_Scope.test_a_refused_revoker_evicts_nobody) (mutation='principal')
+Regression guard: the admin's own authority changes while its revoke waits for the holder; the revoke is refused and the ... FAIL
+
+======================================================================
+FAIL: test_a_refused_revoker_evicts_nobody (tests.test_s44_pg.S44_Scope.test_a_refused_revoker_evicts_nobody) (mutation='factor')
+Regression guard: the admin's own authority changes while its revoke waits for the holder; the revoke is refused and the
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-ctl-refused/src/tests/test_s44_pg.py", line 264, in test_a_refused_revoker_evicts_nobody
+    self.assertTrue(self.alive(bp), "a refused revoker evicted the holder")
+AssertionError: False is not true : a refused revoker evicted the holder
+
+======================================================================
+FAIL: test_a_refused_revoker_evicts_nobody (tests.test_s44_pg.S44_Scope.test_a_refused_revoker_evicts_nobody) (mutation='principal')
+Regression guard: the admin's own authority changes while its revoke waits for the holder; the revoke is refused and the
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-ctl-refused/src/tests/test_s44_pg.py", line 264, in test_a_refused_revoker_evicts_nobody
+    self.assertTrue(self.alive(bp), "a refused revoker evicted the holder")
+AssertionError: False is not true : a refused revoker evicted the holder
+
+----------------------------------------------------------------------
+Ran 1 test in 6.102s
+
+FAILED (failures=2)

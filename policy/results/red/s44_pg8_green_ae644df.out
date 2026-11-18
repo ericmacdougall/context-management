@@ -1,0 +1,280 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), container emlab2-policyfix-pg; home paths shown as ~
+# GREEN at ae644df, tree o-ae64: sh kit/run.sh o-ae64 t -v tests.test_s44_pg tests.test_s1_pg tests.test_final_pg tests.test_delta1_pg tests.test_pg tests.test_pg_boundary tests.test_review3_pg tests.test_step2_pg
+test_a_reconnecting_adversary (tests.test_s44_pg.S44_Eviction.test_a_reconnecting_adversary)
+Three connections of alice keep re-taking her authority lock: each opens a transaction, makes a call, holds it 1 s with ... MEASURE revoke_reconnecting_adversary 0.533
+ADVERSARY {'evicted': 0, 'calls': 9, 'gated': 0}
+ok
+test_end_session_evicts_a_holder (tests.test_s44_pg.S44_Eviction.test_end_session_evicts_a_holder)
+end_session (A exclusive, by dc_idp) of a token whose principal's connection holds the authority lock. ... MEASURE end_session_holder 2.108
+ok
+test_revoke_evicts_the_target_holder (tests.test_s44_pg.S44_Eviction.test_revoke_evicts_the_target_holder)
+Red at 8547b27: 55P03 after XWAIT and the holder still connected, for every way of holding. ... MEASURE revoke_target_holder_idle_reset 2.124
+MEASURE revoke_target_holder_sleep 2.108
+MEASURE revoke_target_holder_stream 2.108
+MEASURE revoke_target_holder_submit 2.108
+ok
+test_revoke_factor_evicts_a_holder (tests.test_s44_pg.S44_Eviction.test_revoke_factor_evicts_a_holder)
+dc.revoke_factor (owner-only, A exclusive) of the holder's factor. ... MEASURE revoke_factor_holder 2.108
+ok
+test_tenant_lock_holder_is_evicted (tests.test_s44_pg.S44_Eviction.test_tenant_lock_holder_is_evicted)
+Any submitter of the tenant holds the tenant lock (L3) shared until COMMIT; a revoke of ANOTHER principal and an erasure ... MEASURE revoke_tenant_holder 2.121
+MEASURE erase_tenant_holder 2.108
+ok
+test_the_authority_fence_refuses_the_target_only (tests.test_s44_pg.S44_Fence.test_the_authority_fence_refuses_the_target_only) ... ok
+test_the_tenant_fence_refuses_submits_only (tests.test_s44_pg.S44_Fence.test_the_tenant_fence_refuses_submits_only) ... ok
+test_without_eviction_the_holder_blocks_the_revoke (tests.test_s44_pg.S44_FenceControl.test_without_eviction_the_holder_blocks_the_revoke) ... MEASURE control_no_eviction 2.010
+ok
+test_without_the_fence_check_the_target_is_not_refused (tests.test_s44_pg.S44_FenceControl.test_without_the_fence_check_the_target_is_not_refused)
+Control for S44_Fence: dc._fenced made a no-op; the target's calls answer under a held fence. ... ok
+test_the_idle_timeout_bounds_only_a_cooperating_holder (tests.test_s44_pg.S44_Options.test_the_idle_timeout_bounds_only_a_cooperating_holder)
+Option 'timeouts': with the role default lowered to 3 s, a holder that leaves its setting alone is ended by the server ... MEASURE idle_timeout_cooperating_holder_ended_after 2.826
+MEASURE idle_timeout_noncooperating_holder_still_connected_after 8.000
+ok
+test_a_queued_revoker_is_not_evicted (tests.test_s44_pg.S44_Scope.test_a_queued_revoker_is_not_evicted)
+4.4: two admins revoke alice while her holder stalls. The one that evicts must not end the other, which waits for the same ... ok
+test_a_refused_revoker_evicts_nobody (tests.test_s44_pg.S44_Scope.test_a_refused_revoker_evicts_nobody)
+Regression guard: the admin's own authority changes while its revoke waits for the holder; the revoke is refused and the ... ok
+test_an_owner_holder_is_never_evicted (tests.test_s44_pg.S44_Scope.test_an_owner_holder_is_never_evicted)
+Regression guard: a superuser connection holding alice's authority lock is not a dc_app or dc_idp backend. The revoke gives ... MEASURE revoke_owner_holder_gives_up 2.012
+ok
+test_login_roles_cannot_take_advisory_locks (tests.test_s44_pg.S44_Scope.test_login_roles_cannot_take_advisory_locks)
+4.4: a raw advisory call is a way to hold A, T, a fence or an idempotency lock outside any API call, where no judgment or ... ok
+test_no_holder_evicts_nothing (tests.test_s44_pg.S44_Scope.test_no_holder_evicts_nothing)
+Regression guard: a revoke with nothing in its way ends no backend. ... ok
+test_other_principals_and_databases_are_not_evicted (tests.test_s44_pg.S44_Scope.test_other_principals_and_databases_are_not_evicted)
+Revoking alice evicts alice's holder only: bob's connection holding his own authority lock (no tenant lock), an idle dc_idp ... MEASURE revoke_with_bystanders 2.123
+ok
+test_the_evictor_role_is_scoped (tests.test_s44_pg.S44_Scope.test_the_evictor_role_is_scoped)
+4.4 only (no such role at 8547b27): dc_evictor cannot log in, is not a superuser, is a member of pg_signal_backend and of ... ok
+test_a_wait_after_the_judgment_fails_the_call (tests.test_s1_pg.S1_ApplyNeverWaits.test_a_wait_after_the_judgment_fails_the_call)
+S1 only. Broken variant: the revoke's target pins (dc._lock_target) do nothing, so its authority writes after the ... ok
+test_subject_token_unique_index (tests.test_s1_pg.S1_ApplyNeverWaits.test_subject_token_unique_index)
+Raw SQL holding an uncommitted subject token (no API call does: submits take the subject lock first). The insert would ... ok
+test_the_callers_lock_timeout_is_restored (tests.test_s1_pg.S1_ApplyNeverWaits.test_the_callers_lock_timeout_is_restored)
+Regression guard: every exit path (applied, refused, read) restores the caller's lock_timeout. ... ok
+test_the_stage_never_waits (tests.test_s1_pg.S1_ApplyNeverWaits.test_the_stage_never_waits)
+S1 only. Broken variant: dc.submit's acquisition without the chain-head lock (L7). The event insert then meets the held ... ok
+test_authority_lock (tests.test_s1_pg.S1_BeforeThePins.test_authority_lock)
+S1 only: the caller's authority lock (L1) held exclusively (a revoke or end_session of the caller in flight). ... ok
+test_erase_candidates_after_a_table_wait (tests.test_s1_pg.S1_BeforeThePins.test_erase_candidates_after_a_table_wait)
+Regression guard. ... ok
+test_events_table_lock (tests.test_s1_pg.S1_BeforeThePins.test_events_table_lock)
+Regression guard: a relation lock on dc.events (L0). ... ok
+test_explain_after_a_table_wait (tests.test_s1_pg.S1_BeforeThePins.test_explain_after_a_table_wait)
+Regression guard: explain waits on a relation lock (L0), then pins. ... ok
+test_pin_waits_for_a_row_writer (tests.test_s1_pg.S1_BeforeThePins.test_pin_waits_for_a_row_writer)
+S1 only: a pin statement waits for a transaction that holds the row and writes it; it then locks and judges the newest ... ok
+test_read_table_after_a_table_wait (tests.test_s1_pg.S1_BeforeThePins.test_read_table_after_a_table_wait)
+Regression guard. ... ok
+test_without_the_pins_a_mutation_lands_during_the_wait (tests.test_s1_pg.S1_Control.test_without_the_pins_a_mutation_lands_during_the_wait)
+Control, for the green run: the pins, not the final judgment after them, make S1_PinnedAuthority pass. With FOR SHARE ... ok
+test_authority_lock (tests.test_s1_pg.S1_ExpiryCeiling.test_authority_lock)
+S1 only. ... ok
+test_chain_head_row (tests.test_s1_pg.S1_ExpiryCeiling.test_chain_head_row) ... ok
+test_erase_value_row (tests.test_s1_pg.S1_ExpiryCeiling.test_erase_value_row) ... ok
+test_events_table_lock (tests.test_s1_pg.S1_ExpiryCeiling.test_events_table_lock) ... ok
+test_explain_table_lock (tests.test_s1_pg.S1_ExpiryCeiling.test_explain_table_lock) ... ok
+test_head_row (tests.test_s1_pg.S1_ExpiryCeiling.test_head_row) ... ok
+test_idempotency_lock (tests.test_s1_pg.S1_ExpiryCeiling.test_idempotency_lock) ... ok
+test_open_session_twin (tests.test_s1_pg.S1_ExpiryCeiling.test_open_session_twin)
+The proof expires while open_session waits for a concurrent presentation of the same proof (L8). ... ok
+test_revoke_target_row (tests.test_s1_pg.S1_ExpiryCeiling.test_revoke_target_row) ... ok
+test_tenant_lock (tests.test_s1_pg.S1_ExpiryCeiling.test_tenant_lock)
+S1 only. ... ok
+test_the_callers_own_shorter_lock_timeout_still_applies (tests.test_s1_pg.S1_ExpiryCeiling.test_the_callers_own_shorter_lock_timeout_still_applies)
+Regression guard: the budget never lengthens the caller's own lock_timeout; its expiry is re-raised as 55P03. ... ok
+test_an_out_of_order_lock_is_refused (tests.test_s1_pg.S1_LockOrder.test_an_out_of_order_lock_is_refused) ... ok
+test_every_entry_point_follows_the_declared_order (tests.test_s1_pg.S1_LockOrder.test_every_entry_point_follows_the_declared_order) ... ok
+test_grant_state_is_add_only (tests.test_s1_pg.S1_LockOrder.test_grant_state_is_add_only)
+Enumerates every statement of the core that writes dc.role or a principal's kind or admin flag (regression guard). ... ~/emlab2-16096/policyfix/runs/o-ae64/src/tests/test_s1_pg.py:636: ResourceWarning: unclosed file <_io.TextIOWrapper name='~/emlab2-16096/policyfix/runs/o-ae64/src/pol/_pgcore.sql' mode='r' encoding='utf-8'>
+  src = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "pol", "_pgcore.sql"), encoding="utf-8").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_crossed_revokes (tests.test_s1_pg.S1_MutualWaits.test_crossed_revokes)
+Regression guard: admin revokes admin2 while admin2 revokes admin, eight rounds: exactly one applies, no deadlock. ... ok
+test_crossed_subjects (tests.test_s1_pg.S1_MutualWaits.test_crossed_subjects)
+Regression guard: two principals submit values about the same two new subjects concurrently, ten rounds; no deadlock. ... ok
+test_end_session_waits_for_the_call (tests.test_s1_pg.S1_MutualWaits.test_end_session_waits_for_the_call)
+F1 P1b: an in-flight call (here explain in a transaction held open) has its session pinned; end_session waits for it (L1 ... ok
+test_erasure_is_not_starved_by_a_stream_of_submits (tests.test_s1_pg.S1_MutualWaits.test_erasure_is_not_starved_by_a_stream_of_submits)
+The same for erase_values (the write path's known erasure-starvation shape). ... ok
+test_grant_waits_for_a_submit (tests.test_s1_pg.S1_MutualWaits.test_grant_waits_for_a_submit)
+Regression guard: a grant (tenant lock exclusive) waits for an in-flight submit and is then applied. ... ok
+test_open_session_vs_revoke (tests.test_s1_pg.S1_MutualWaits.test_open_session_vs_revoke)
+An open_session of bob held open; the revoke of bob waits for it (L1), then revokes the new session too. Red at ... ok
+test_revoke_is_not_starved_by_a_stream_of_submits (tests.test_s1_pg.S1_MutualWaits.test_revoke_is_not_starved_by_a_stream_of_submits)
+A revoke (tenant lock exclusive) while three principals keep the tenant busy. Red at ea4677a if the tenant row's share ... ok
+test_revoke_waits_for_a_held_call (tests.test_s1_pg.S1_MutualWaits.test_revoke_waits_for_a_held_call)
+Regression guard (ea4677a: the tenant row): alice's submit in a transaction she holds open; the revoke of alice waits ... ok
+test_factor_row_writer (tests.test_s1_pg.S1_OpenSession.test_factor_row_writer)
+Regression guard: a transaction holds the factor row FOR UPDATE, revokes the factor and commits; B's pin waited for it ... ok
+test_prune_never_waits (tests.test_s1_pg.S1_OpenSession.test_prune_never_waits)
+A pruned an expired ledger row of the factor and holds its transaction open. B (same factor, another nonce) skips that ... ok
+test_twin_commits (tests.test_s1_pg.S1_OpenSession.test_twin_commits)
+Regression guard: A commits; B is refused as a replay and leaves no session. ... ok
+test_twin_rolls_back (tests.test_s1_pg.S1_OpenSession.test_twin_rolls_back)
+B is opened once A rolls back. A factor or principal revocation started while B waited waits for B (red at ea4677a: it ... ok
+test_chain_head_row (tests.test_s1_pg.S1_PinnedAuthority.test_chain_head_row)
+The tenant's chain-head row (L7), held by any concurrent event of the tenant until it commits. ... ok
+test_erase_tenant_lock (tests.test_s1_pg.S1_PinnedAuthority.test_erase_tenant_lock)
+S1 only: erase_values waits for the tenant lock (L3) held by a submit in flight. ... ok
+test_erase_token_row (tests.test_s1_pg.S1_PinnedAuthority.test_erase_token_row)
+The subject's token row held FOR UPDATE (L5.3). ... ok
+test_erase_value_row (tests.test_s1_pg.S1_PinnedAuthority.test_erase_value_row)
+A value row held FOR UPDATE (L5.2). ... ok
+test_head_row (tests.test_s1_pg.S1_PinnedAuthority.test_head_row)
+The requirement's head row FOR UPDATE (L5): a concurrent submission on the same requirement. ... ok
+test_idempotency_lock (tests.test_s1_pg.S1_PinnedAuthority.test_idempotency_lock)
+The per-principal advisory lock (L4), which any login role can take. ... ok
+test_subject_lock (tests.test_s1_pg.S1_PinnedAuthority.test_subject_lock)
+Bob's dc.submit about the same new subject (on r1) still open while alice submits about it on r2 (L6; was the ... ok
+test_tenant_lock (tests.test_s1_pg.S1_PinnedAuthority.test_tenant_lock)
+S1 only: the tenant lock (L3), held exclusively by a revoke, grant or erasure in flight (was the tenant row). ... ok
+test_revoke_gives_up_after_xwait (tests.test_s1_pg.S1_RevokePath.test_revoke_gives_up_after_xwait)
+S1 only: an exclusive wait is capped at XWAIT (2 s). Past it the revoke fails with 55P03, applies nothing, and the ... ok
+test_revoke_waits_for_an_open_end_session (tests.test_s1_pg.S1_RevokePath.test_revoke_waits_for_an_open_end_session)
+S1: an open dc.end_session of the target holds the target's authority lock; the revoke waits for it (FIFO) and then ... ok
+test_self_revoke_is_applied (tests.test_s1_pg.S1_RevokePath.test_self_revoke_is_applied)
+Regression guard: an admin revoking itself (A exclusive directly) is applied, and its token is refused afterwards. ... ok
+test_sessions_table_lock (tests.test_s1_pg.S1_RevokePath.test_sessions_table_lock)
+Regression guard: a SHARE lock on dc.sessions is waited for before the pins (L0); the change committed meanwhile refuses. ... ok
+test_target_principal_row (tests.test_s1_pg.S1_RevokePath.test_target_principal_row)
+The target's principal row held FOR UPDATE (L2.3). ... ok
+test_target_props_rows (tests.test_s1_pg.S1_RevokePath.test_target_props_rows)
+The target's open proposal row held FOR UPDATE (L5.1). Each round x proposes afresh (the previous revoke invalidated it). ... ok
+test_explain (tests.test_final_pg.P1_JudgmentNeverWaits.test_explain)
+a2d65fd: explain's principal check WAS a read that waited, inside the STABLE dc._explain_raw called from a simple ... ok
+test_open_session (tests.test_final_pg.P1_JudgmentNeverWaits.test_open_session)
+Regression guard (passed at a2d65fd: the VOLATILE open_session's factor and principal statements read after their own ... ok
+test_submit (tests.test_final_pg.P1_JudgmentNeverWaits.test_submit)
+Regression guard for sessions and principal (a2d65fd judged again after _lock_event, in plain statements). The factors ... ok
+test_erase_decision_changes_during_wait (tests.test_final_pg.P1_PgServiceJudgment.test_erase_decision_changes_during_wait)
+Each value's erase decision (a recorded legal hold queues it; a tenant without the erase grant is denied) is the in-process ... ok
+test_erase_subject (tests.test_final_pg.P1_PgServiceJudgment.test_erase_subject) ... ok
+test_submit (tests.test_final_pg.P1_PgServiceJudgment.test_submit) ... ok
+test_client_connection_dropped_mid_call (tests.test_final_pg.P3_PgFailuresMidCall.test_client_connection_dropped_mid_call)
+The client's socket is shut down while its call waits (a dropped connection; no server process is signalled). The server ... ~/emlab2-16096/policyfix/runs/o-ae64/src/tests/test_final_pg.py:354: ResourceWarning: unclosed <socket.socket fd=11, family=2, type=1, proto=6, laddr=('127.0.0.1', 45112), raddr=('127.0.0.1', 25630)>
+  socket.socket(fileno=os.dup(c.fileno())).shutdown(socket.SHUT_RDWR)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_deadlock_victim_mid_call (tests.test_final_pg.P3_PgFailuresMidCall.test_deadlock_victim_mid_call)
+The owner holds the chain head and then asks for alice's advisory lock, which alice's submit holds while it waits for the ... ok
+test_lost_response_after_commit (tests.test_final_pg.P3_PgFailuresMidCall.test_lost_response_after_commit) ... ok
+test_statement_timeout_mid_call (tests.test_final_pg.P3_PgFailuresMidCall.test_statement_timeout_mid_call) ... ok
+test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call)
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just ... ok
+test_end_session_refuses_other_isolation_levels (tests.test_final_pg.P5_EndSessionIsolation.test_end_session_refuses_other_isolation_levels)
+a2d65fd: end_session had no isolation guard. Under REPEATABLE READ its update reads the transaction's snapshot: a session ... ok
+test_erase_values_judges_the_session_again_after_waiting_for_a_lock (tests.test_delta1_pg.M1_WallClock.test_erase_values_judges_the_session_again_after_waiting_for_a_lock)
+d05d731: dc.erase_values checked the session before taking the tenant row FOR UPDATE; a call that waited there past its ... ok
+test_every_isolation_other_than_read_committed_is_refused (tests.test_delta1_pg.M1_WallClock.test_every_isolation_other_than_read_committed_is_refused)
+The caller contract (DESIGN.md): only READ COMMITTED authenticates. READ UNCOMMITTED is refused as well: Postgres runs it as ... ok
+test_proof_that_expires_inside_a_transaction_is_refused (tests.test_delta1_pg.M1_WallClock.test_proof_that_expires_inside_a_transaction_is_refused)
+d05d731: open_session compared the proof's expiry with now(); a dc_idp caller that began its transaction while the proof was ... ok
+test_repeatable_read_snapshot_does_not_outlive_a_factor_revoke (tests.test_delta1_pg.M1_WallClock.test_repeatable_read_snapshot_does_not_outlive_a_factor_revoke)
+d05d731: open_session in a REPEATABLE READ transaction read the factor row from a snapshot taken before the factor was ... ok
+test_repeatable_read_snapshot_does_not_outlive_end_session (tests.test_delta1_pg.M1_WallClock.test_repeatable_read_snapshot_does_not_outlive_end_session)
+d05d731: in a REPEATABLE READ transaction dc._session read the snapshot taken at the transaction's first read, so a token ... ok
+test_submit_judges_the_session_again_after_waiting_for_a_lock (tests.test_delta1_pg.M1_WallClock.test_submit_judges_the_session_again_after_waiting_for_a_lock)
+d05d731: dc.submit checked the session once, before _lock_event; a call that waited on the principal's advisory lock past ... ok
+test_token_that_expires_inside_a_transaction_is_refused_on_every_call (tests.test_delta1_pg.M1_WallClock.test_token_that_expires_inside_a_transaction_is_refused_on_every_call)
+d05d731: dc._session compared expires_at with now(); a dc_app caller that began its transaction while the token was valid ... ok
+test_first_committed_stays_retryable (tests.test_delta1_pg.M3_PgOverlapping.test_first_committed_stays_retryable) ... ok
+test_first_committed_stays_retryable_different_requirements (tests.test_delta1_pg.M3_PgOverlapping.test_first_committed_stays_retryable_different_requirements) ... ok
+test_first_rolled_back_leaves_the_second_retryable (tests.test_delta1_pg.M3_PgOverlapping.test_first_rolled_back_leaves_the_second_retryable) ... ok
+test_first_rolled_back_leaves_the_second_retryable_different_requirements (tests.test_delta1_pg.M3_PgOverlapping.test_first_rolled_back_leaves_the_second_retryable_different_requirements) ... ok
+test_erase_and_propose_cannot_interleave (tests.test_pg.PgProofs.test_erase_and_propose_cannot_interleave)
+The erase/propose race: a propose about the subject holds the tenant row FOR SHARE from token minting to commit, and erasure ... ok
+test_events_append_only_for_app_and_owner (tests.test_pg.PgProofs.test_events_append_only_for_app_and_owner) ... ok
+test_grant_may_reuse_an_applied_event_id_like_the_oracle (tests.test_pg.PgProofs.test_grant_may_reuse_an_applied_event_id_like_the_oracle)
+CORE-RULES rule 6 precedes rule 8: a grant is not refused duplicate_id. Found by exp/pg_diff (dev, dirty tree): the backstop index ... ok
+test_hash_chain_verifies_and_detects_tampering (tests.test_pg.PgProofs.test_hash_chain_verifies_and_detects_tampering) ... ok
+test_isolation_level_explicit (tests.test_pg.PgProofs.test_isolation_level_explicit) ... ok
+test_no_subject_names_in_log_heads_props_or_audit (tests.test_pg.PgProofs.test_no_subject_names_in_log_heads_props_or_audit)
+(f) After a mixed run, no subject name appears in events, heads, props, chain or audit (tokens only). ... ok
+test_passwordless_connection_refused (tests.test_pg.PgProofs.test_passwordless_connection_refused) ... WARNING: password file "/dev/null" is not a plain file
+WARNING: password file "/dev/null" is not a plain file
+ok
+test_proposal_cost_linear_to_20000 (tests.test_pg.PgProofs.test_proposal_cost_linear_to_20000)
+Pre-registered (THRESHOLDS amendment 3): 20,000 proposals created and closed; the mean time per event of each of the last three ... ok
+test_retry_returns_original_outcome_including_concurrent_twins (tests.test_pg.PgProofs.test_retry_returns_original_outcome_including_concurrent_twins) ... ok
+test_revoke_through_definer_function_invalidates_open_items (tests.test_pg.PgProofs.test_revoke_through_definer_function_invalidates_open_items) ... ok
+test_service_over_postgres (tests.test_pg.PgProofs.test_service_over_postgres)
+The service through the definer API: value refs, retry after a session refresh, forged body, scoped read, erasure with a hold. ... ok
+test_tokens_unconfirmable_after_erasure_in_the_database (tests.test_pg.PgProofs.test_tokens_unconfirmable_after_erasure_in_the_database)
+(g) After erasure no row links the token to the name (the value-ref key never leaves the database and refs are not derived from ... ok
+test_app_cannot_insert_a_forged_authority_event (tests.test_pg_boundary.PgBoundary.test_app_cannot_insert_a_forged_authority_event)
+p10 A: dc_app inserted principal=admin, code=granted and dc.apply_authority applied it (mallory got decide on r1). ... ok
+test_app_cannot_open_a_session (tests.test_pg_boundary.PgBoundary.test_app_cannot_open_a_session)
+R3-1 in the database: only the identity adapter's role opens sessions; dc_app cannot mint one or write the sessions table. ... ok
+test_app_cannot_write_heads_props_or_values (tests.test_pg_boundary.PgBoundary.test_app_cannot_write_heads_props_or_values)
+p10 B: dc_app ran `update dc.head set doc=...` and the head of record diverged from the log. ... ok
+test_every_read_and_erase_call_refuses_a_forged_token (tests.test_pg_boundary.PgBoundary.test_every_read_and_erase_call_refuses_a_forged_token)
+The four non-submit API calls, with a guessed, empty or one-character-altered token, return nothing and change nothing; the ... ok
+test_forged_session_row_and_token_are_refused (tests.test_pg_boundary.PgBoundary.test_forged_session_row_and_token_are_refused)
+A forged token (never issued) is refused by the API; dc_idp cannot write the sessions table either; a real token acts as the ... ok
+test_owner_who_recomputes_the_chain_is_detected_by_the_external_anchor (tests.test_pg_boundary.PgBoundary.test_owner_who_recomputes_the_chain_is_detected_by_the_external_anchor)
+p10 C left this as a hypothesis: an owner who rewrites a row AND recomputes every hash passes dc.verify_chain. The anchor file ... ok
+test_privileges_are_exactly_the_api (tests.test_pg_boundary.PgBoundary.test_privileges_are_exactly_the_api)
+Enumerates every privilege of dc_app and dc_idp from the catalogs (PUBLIC grants included, via has_*_privilege). ... ok
+test_submit_without_a_valid_session_is_refused (tests.test_pg_boundary.PgBoundary.test_submit_without_a_valid_session_is_refused)
+No decision path without a session: a guessed or missing token is refused and writes nothing. ... ok
+test_anchor_check_without_anchors_is_not_ok (tests.test_review3_pg.Review3Pg.test_anchor_check_without_anchors_is_not_ok)
+0a20b64: anchor_check returns ok=True with zero anchors for the tenant (nothing outside the database was ever compared). ... ok
+test_n1_erase_split_across_two_principals_is_refused (tests.test_review3_pg.Review3Pg.test_n1_erase_split_across_two_principals_is_refused)
+0a20b64: PgSession(alice.session, admin.db_token): the database lists and deletes as ADMIN while the in-process policy point ... ok
+test_n1_matching_pair_still_works_and_ended_session_is_refused (tests.test_review3_pg.Review3Pg.test_n1_matching_pair_still_works_and_ended_session_is_refused)
+Control: the bridge's own pair (and an equal PgSession carrying the same two parts) works; after SessionAuthority.end it does not. ... ok
+test_n1_mixed_channel_pair_is_refused_before_any_call (tests.test_review3_pg.Review3Pg.test_n1_mixed_channel_pair_is_refused_before_any_call)
+0a20b64: alice's owner_ui Session with alice's owner_cli token: same principal, so the late id-prefix check passes and the event is ... ok
+test_n1_mixed_principal_pair_is_refused_before_any_call (tests.test_review3_pg.Review3Pg.test_n1_mixed_principal_pair_is_refused_before_any_call)
+0a20b64: PgSession(alice.session, bob.db_token) passes the in-process check; submit commits Bob's event (autocommit) and only ... ok
+test_n1_mixed_tenant_pair_is_refused_before_any_call (tests.test_review3_pg.Review3Pg.test_n1_mixed_tenant_pair_is_refused_before_any_call)
+0a20b64: tenant-a's alice Session with tenant-b's alice token: the id prefix matches, so tenant-b receives a write that the ... ok
+test_n3_memory_and_postgres_agree_on_policy_revocation (tests.test_review3_pg.Review3Pg.test_n3_memory_and_postgres_agree_on_policy_revocation)
+Differential: the same requests through the memory service and the Postgres service, with the policy revoking 'b0b' (a ... ok
+test_n3_policy_revoked_principal_cannot_submit_through_postgres (tests.test_review3_pg.Review3Pg.test_n3_policy_revoked_principal_cannot_submit_through_postgres)
+0a20b64: PgDecisionService.submit never asks the revocation source: bob, revoked by the policy document (not by a core event), ... ok
+test_n5_database_retry_keeps_the_reference (tests.test_review3_pg.Review3Pg.test_n5_database_retry_keeps_the_reference)
+M2 in the database: the same body retried (new session) is a duplicate with the original reference; a changed body is idem_conflict. ... ok
+test_n5_database_value_ref_is_not_recomputable_after_erasure (tests.test_review3_pg.Review3Pg.test_n5_database_value_ref_is_not_recomputable_after_erasure)
+0a20b64: vref = HMAC(dc.vkey, [tenant, principal, idem, text, tokenised label]); after erasure the token and the label are still ... ok
+test_44_forward_creates_the_evictor_role (tests.test_review3_pg.Review3Rollback.test_44_forward_creates_the_evictor_role)
+FINAL-JUDGMENT.md 4.4: dc._evict is owned by dc_evictor, which pgcore.install creates; a migration on a cluster where ... ok
+test_44_rollback_gives_the_old_engine_its_advisory_lock (tests.test_review3_pg.Review3Rollback.test_44_rollback_gives_the_old_engine_its_advisory_lock)
+FINAL-JUDGMENT.md 4.4: the definer core makes the advisory-lock functions non-PUBLIC in its database. The pre-R3-7 engine ... ok
+test_n4_failure_mid_rollback_changes_nothing (tests.test_review3_pg.Review3Rollback.test_n4_failure_mid_rollback_changes_nothing)
+Delta review 1 (N4 leftover): a failure injected after rollback has dropped the migrated schema and dc_crypto, at the rename ... ok
+test_n4_rollback_after_a_refused_request_is_refused (tests.test_review3_pg.Review3Rollback.test_n4_rollback_after_a_refused_request_is_refused)
+A refused request writes an audit row: audit history is data too (0a20b64 drops it). ... ok
+test_n4_rollback_after_a_submit_is_refused (tests.test_review3_pg.Review3Rollback.test_n4_rollback_after_a_submit_is_refused)
+0a20b64: rollback drops the new schema unconditionally; an applied request made after the migration silently disappears. ... ok
+test_n4_rollback_after_an_erasure_is_refused (tests.test_review3_pg.Review3Rollback.test_n4_rollback_after_an_erasure_is_refused)
+0a20b64: a value erased after the migration comes back with the old schema (erasure undone). ... ok
+test_n4_rollback_without_writes_proceeds (tests.test_review3_pg.Review3Rollback.test_n4_rollback_without_writes_proceeds)
+Logins are not data: a session opened after the migration does not block the rollback; the old schema comes back. ... ok
+test_bad_tokens_are_refused_on_every_call (tests.test_step2_pg.Step2Pg.test_bad_tokens_are_refused_on_every_call) ... ok
+test_bare_principal_mint_is_refused_for_every_role (tests.test_step2_pg.Step2Pg.test_bare_principal_mint_is_refused_for_every_role) ... ok
+test_body_naming_identity_or_origin_is_refused (tests.test_step2_pg.Step2Pg.test_body_naming_identity_or_origin_is_refused) ... ok
+test_bridge_ends_the_database_session_when_the_directory_refuses (tests.test_step2_pg.Step2Pg.test_bridge_ends_the_database_session_when_the_directory_refuses)
+The core knows `x` (analyst) but this Directory does not: the database session the proof opened must not stay usable. ... ok
+test_bridge_issue_and_end (tests.test_step2_pg.Step2Pg.test_bridge_issue_and_end) ... ok
+test_bridge_refuses_replay_and_leaves_nothing_live (tests.test_step2_pg.Step2Pg.test_bridge_refuses_replay_and_leaves_nothing_live) ... ok
+test_concurrent_replay_exactly_one_wins (tests.test_step2_pg.Step2Pg.test_concurrent_replay_exactly_one_wins) ... ok
+test_enrolment_refuses_unknown_principal_and_wrong_channel (tests.test_step2_pg.Step2Pg.test_enrolment_refuses_unknown_principal_and_wrong_channel) ... ok
+test_events_carry_actor_and_trust_origin_derived_from_the_session (tests.test_step2_pg.Step2Pg.test_events_carry_actor_and_trust_origin_derived_from_the_session) ... ok
+test_expired_and_far_future_proofs_are_refused (tests.test_step2_pg.Step2Pg.test_expired_and_far_future_proofs_are_refused) ... ok
+test_forged_proofs_are_refused_and_write_no_session (tests.test_step2_pg.Step2Pg.test_forged_proofs_are_refused_and_write_no_session) ... ok
+test_install_refuses_look_alike_principals (tests.test_step2_pg.Step2Pg.test_install_refuses_look_alike_principals) ... ok
+test_other_tenant_token_sees_and_changes_nothing_of_this_tenant (tests.test_step2_pg.Step2Pg.test_other_tenant_token_sees_and_changes_nothing_of_this_tenant) ... ok
+test_proof_replay_is_refused (tests.test_step2_pg.Step2Pg.test_proof_replay_is_refused) ... ok
+test_revoked_principal_and_revoked_factor_are_refused (tests.test_step2_pg.Step2Pg.test_revoked_principal_and_revoked_factor_are_refused) ... ok
+test_roles_cannot_mint_alter_or_read_sessions_and_factors (tests.test_step2_pg.Step2Pg.test_roles_cannot_mint_alter_or_read_sessions_and_factors) ... ok
+test_valid_proof_opens_a_session_stamped_from_the_factor (tests.test_step2_pg.Step2Pg.test_valid_proof_opens_a_session_stamped_from_the_factor) ... ok
+
+----------------------------------------------------------------------
+Ran 145 tests in 238.106s
+
+OK
+
+PG N2 blocks (s per 2000 proposals): 13.63 21.12 7.51 7.74 7.36 7.29 7.46 7.31 7.30 7.55

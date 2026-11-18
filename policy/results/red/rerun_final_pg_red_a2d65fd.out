@@ -1,0 +1,279 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), container emlab2-policyfix-pg; home paths shown as ~
+# RED rerun (P1 P4 P5), tree o-red-a2d6 {"commit": "a2d65fdc3ed997e3d65fa91194aa7c37274611bc", "dirty": true, "thresholds_commit": "d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1", "tree_sha256": "5a778e1cde54951768d61d76b78dbf40e2e3a58a6bd01205b9b6b92716d8c85d", "tests_from": "8547b270d1a12a972649d7e9378d7b78ef677a7f"}, role defaults reset: sh kit/run.sh o-red-a2d6 t -v tests.test_final_pg
+test_explain (tests.test_final_pg.P1_JudgmentNeverWaits.test_explain)
+a2d65fd: explain's principal check WAS a read that waited, inside the STABLE dc._explain_raw called from a simple ... 
+  test_explain (tests.test_final_pg.P1_JudgmentNeverWaits.test_explain) (table='factors')
+a2d65fd: explain's principal check WAS a read that waited, inside the STABLE dc._explain_raw called from a simple ... FAIL
+  test_explain (tests.test_final_pg.P1_JudgmentNeverWaits.test_explain) (table='principal')
+a2d65fd: explain's principal check WAS a read that waited, inside the STABLE dc._explain_raw called from a simple ... FAIL
+test_open_session (tests.test_final_pg.P1_JudgmentNeverWaits.test_open_session)
+Regression guard (passed at a2d65fd: the VOLATILE open_session's factor and principal statements read after their own ... ok
+test_submit (tests.test_final_pg.P1_JudgmentNeverWaits.test_submit)
+Regression guard for sessions and principal (a2d65fd judged again after _lock_event, in plain statements). The factors ... 
+  test_submit (tests.test_final_pg.P1_JudgmentNeverWaits.test_submit) (table='factors')
+Regression guard for sessions and principal (a2d65fd judged again after _lock_event, in plain statements). The factors ... FAIL
+test_erase_decision_changes_during_wait (tests.test_final_pg.P1_PgServiceJudgment.test_erase_decision_changes_during_wait)
+Each value's erase decision (a recorded legal hold queues it; a tenant without the erase grant is denied) is the in-process ... 
+  test_erase_decision_changes_during_wait (tests.test_final_pg.P1_PgServiceJudgment.test_erase_decision_changes_during_wait) (mutation='hold_recorded')
+Each value's erase decision (a recorded legal hold queues it; a tenant without the erase grant is denied) is the in-process ... FAIL
+  test_erase_decision_changes_during_wait (tests.test_final_pg.P1_PgServiceJudgment.test_erase_decision_changes_during_wait) (mutation='erase_grant_withdrawn')
+Each value's erase decision (a recorded legal hold queues it; a tenant without the erase grant is denied) is the in-process ... FAIL
+test_erase_subject (tests.test_final_pg.P1_PgServiceJudgment.test_erase_subject) ... 
+  test_erase_subject (tests.test_final_pg.P1_PgServiceJudgment.test_erase_subject) (mutation='policy_revoked') ... FAIL
+  test_erase_subject (tests.test_final_pg.P1_PgServiceJudgment.test_erase_subject) (mutation='removed') ... FAIL
+  test_erase_subject (tests.test_final_pg.P1_PgServiceJudgment.test_erase_subject) (mutation='session_ended') ... FAIL
+test_submit (tests.test_final_pg.P1_PgServiceJudgment.test_submit) ... 
+  test_submit (tests.test_final_pg.P1_PgServiceJudgment.test_submit) (mutation='policy_revoked') ... FAIL
+  test_submit (tests.test_final_pg.P1_PgServiceJudgment.test_submit) (mutation='removed') ... FAIL
+  test_submit (tests.test_final_pg.P1_PgServiceJudgment.test_submit) (mutation='session_ended') ... FAIL
+test_client_connection_dropped_mid_call (tests.test_final_pg.P3_PgFailuresMidCall.test_client_connection_dropped_mid_call)
+The client's socket is shut down while its call waits (a dropped connection; no server process is signalled). The server ... ~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_final_pg.py:354: ResourceWarning: unclosed <socket.socket fd=11, family=2, type=1, proto=6, laddr=('127.0.0.1', 52382), raddr=('127.0.0.1', 25630)>
+  socket.socket(fileno=os.dup(c.fileno())).shutdown(socket.SHUT_RDWR)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_deadlock_victim_mid_call (tests.test_final_pg.P3_PgFailuresMidCall.test_deadlock_victim_mid_call)
+The owner holds the chain head and then asks for alice's advisory lock, which alice's submit holds while it waits for the ... ok
+test_lost_response_after_commit (tests.test_final_pg.P3_PgFailuresMidCall.test_lost_response_after_commit) ... ok
+test_statement_timeout_mid_call (tests.test_final_pg.P3_PgFailuresMidCall.test_statement_timeout_mid_call) ... ok
+test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call)
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just ... 
+  test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call) [submit]
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just ... FAIL
+  test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call) [explain]
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just ... FAIL
+  test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call) [read_table]
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just ... FAIL
+  test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call) [erase_candidates]
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just ... FAIL
+  test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call) [erase_values]
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just ... FAIL
+test_end_session_refuses_other_isolation_levels (tests.test_final_pg.P5_EndSessionIsolation.test_end_session_refuses_other_isolation_levels)
+a2d65fd: end_session had no isolation guard. Under REPEATABLE READ its update reads the transaction's snapshot: a session ... 
+  test_end_session_refuses_other_isolation_levels (tests.test_final_pg.P5_EndSessionIsolation.test_end_session_refuses_other_isolation_levels) (level='read uncommitted')
+a2d65fd: end_session had no isolation guard. Under REPEATABLE READ its update reads the transaction's snapshot: a session ... FAIL
+  test_end_session_refuses_other_isolation_levels (tests.test_final_pg.P5_EndSessionIsolation.test_end_session_refuses_other_isolation_levels) (level='repeatable read')
+a2d65fd: end_session had no isolation guard. Under REPEATABLE READ its update reads the transaction's snapshot: a session ... FAIL
+  test_end_session_refuses_other_isolation_levels (tests.test_final_pg.P5_EndSessionIsolation.test_end_session_refuses_other_isolation_levels) (level='serializable')
+a2d65fd: end_session had no isolation guard. Under REPEATABLE READ its update reads the transaction's snapshot: a session ... FAIL
+
+======================================================================
+FAIL: test_explain (tests.test_final_pg.P1_JudgmentNeverWaits.test_explain) (table='factors')
+a2d65fd: explain's principal check WAS a read that waited, inside the STABLE dc._explain_raw called from a simple
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_final_pg.py", line 164, in test_explain
+    self.assertTrue(waited, "vacuous: explain did not wait for dc.%s" % table)
+AssertionError: False is not true : vacuous: explain did not wait for dc.factors
+
+======================================================================
+FAIL: test_explain (tests.test_final_pg.P1_JudgmentNeverWaits.test_explain) (table='principal')
+a2d65fd: explain's principal check WAS a read that waited, inside the STABLE dc._explain_raw called from a simple
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_final_pg.py", line 165, in test_explain
+    self.assertIsNone(r, "explain answered after dc.%s changed while it waited" % table)
+AssertionError: {'req': 'r1', 'head': {'last': None, 'status': 'unset', 'version': 0, 'value_by': None, 'contested': None, 'value_ref': None, 'value_event': None, 'value_label': None, 'value_version': 0}, 'open': [{'id': 'alice/seed', 'base': 0, 'kind': 'proposal', 'label': {'acl': [], 'holds': [], 'banned': [], 'models': None, 'regions': None, 'tenants': ['tenant-a'], 'subjects': [], 'local_only': False, 'restricted': False, 'sensitivity': 0}, 'author': 'alice', 'status': 'open', 'channel': None, 'closed_by': None, 'value_ref': 'val-5a90a06e1e97b9beda6e04a73d08ec524d77701e', 'author_kind': 'human'}], 'tenant': 'tenant-a', 'values': {'val-5a90a06e1e97b9beda6e04a73d08ec524d77701e': {'text': 'about dana', 'label': {'acl': [], 'holds': [], 'banned': [], 'models': None, 'regions': None, 'tenants': ['tenant-a'], 'subjects': [], 'local_only': False, 'restricted': False, 'sensitivity': 0}}}, 'principal': 'admin'} is not None : explain answered after dc.principal changed while it waited
+
+======================================================================
+FAIL: test_submit (tests.test_final_pg.P1_JudgmentNeverWaits.test_submit) (table='factors')
+Regression guard for sessions and principal (a2d65fd judged again after _lock_event, in plain statements). The factors
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_final_pg.py", line 150, in test_submit
+    self.assertTrue(waited, "vacuous: submit did not wait for dc.%s" % table)
+AssertionError: False is not true : vacuous: submit did not wait for dc.factors
+
+======================================================================
+FAIL: test_erase_decision_changes_during_wait (tests.test_final_pg.P1_PgServiceJudgment.test_erase_decision_changes_during_wait) (mutation='hold_recorded')
+Each value's erase decision (a recorded legal hold queues it; a tenant without the erase grant is denied) is the in-process
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_final_pg.py", line 269, in test_erase_decision_changes_during_wait
+    self.assertEqual((got, left), (want, left_want), "service erasure after a wait with mutation %s" % name)
+AssertionError: Tuples differ: ({'erased': 2, 'queued': 0, 'denied': 0, 'result': 'erased'}, (0, 0)) != ({'erased': 1, 'queued': 1, 'denied': 0, 'result': 'incomplete'}, (1, 0))
+
+First differing element 0:
+{'erased': 2, 'queued': 0, 'denied': 0, 'result': 'erased'}
+{'erased': 1, 'queued': 1, 'denied': 0, 'result': 'incomplete'}
+
+- ({'denied': 0, 'erased': 2, 'queued': 0, 'result': 'erased'}, (0, 0))
+?                          ^            ^              ^^^ -     ^
+
++ ({'denied': 0, 'erased': 1, 'queued': 1, 'result': 'incomplete'}, (1, 0))
+?                          ^            ^             +++++++ ^      ^
+ : service erasure after a wait with mutation hold_recorded
+
+======================================================================
+FAIL: test_erase_decision_changes_during_wait (tests.test_final_pg.P1_PgServiceJudgment.test_erase_decision_changes_during_wait) (mutation='erase_grant_withdrawn')
+Each value's erase decision (a recorded legal hold queues it; a tenant without the erase grant is denied) is the in-process
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_final_pg.py", line 269, in test_erase_decision_changes_during_wait
+    self.assertEqual((got, left), (want, left_want), "service erasure after a wait with mutation %s" % name)
+AssertionError: Tuples differ: ({'erased': 2, 'queued': 0, 'denied': 0, 'result': 'erased'}, (0, 0)) != ({'erased': 0, 'queued': 0, 'denied': 2, 'result': 'incomplete'}, (1, 1))
+
+First differing element 0:
+{'erased': 2, 'queued': 0, 'denied': 0, 'result': 'erased'}
+{'erased': 0, 'queued': 0, 'denied': 2, 'result': 'incomplete'}
+
+- ({'denied': 0, 'erased': 2, 'queued': 0, 'result': 'erased'}, (0, 0))
+?             ^            ^                           ^^^ -     ^  ^
+
++ ({'denied': 2, 'erased': 0, 'queued': 0, 'result': 'incomplete'}, (1, 1))
+?             ^            ^                          +++++++ ^      ^  ^
+ : service erasure after a wait with mutation erase_grant_withdrawn
+
+======================================================================
+FAIL: test_erase_subject (tests.test_final_pg.P1_PgServiceJudgment.test_erase_subject) (mutation='policy_revoked')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_final_pg.py", line 237, in test_erase_subject
+    self.assertEqual((r["refused"], left), ("unauthorized", 1), "service erased after a wait with mutation %s" % name)
+AssertionError: Tuples differ: (None, 0) != ('unauthorized', 1)
+
+First differing element 0:
+None
+'unauthorized'
+
+- (None, 0)
++ ('unauthorized', 1) : service erased after a wait with mutation policy_revoked
+
+======================================================================
+FAIL: test_erase_subject (tests.test_final_pg.P1_PgServiceJudgment.test_erase_subject) (mutation='removed')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_final_pg.py", line 237, in test_erase_subject
+    self.assertEqual((r["refused"], left), ("unauthorized", 1), "service erased after a wait with mutation %s" % name)
+AssertionError: Tuples differ: (None, 0) != ('unauthorized', 1)
+
+First differing element 0:
+None
+'unauthorized'
+
+- (None, 0)
++ ('unauthorized', 1) : service erased after a wait with mutation removed
+
+======================================================================
+FAIL: test_erase_subject (tests.test_final_pg.P1_PgServiceJudgment.test_erase_subject) (mutation='session_ended')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_final_pg.py", line 237, in test_erase_subject
+    self.assertEqual((r["refused"], left), ("unauthorized", 1), "service erased after a wait with mutation %s" % name)
+AssertionError: Tuples differ: (None, 0) != ('unauthorized', 1)
+
+First differing element 0:
+None
+'unauthorized'
+
+- (None, 0)
++ ('unauthorized', 1) : service erased after a wait with mutation session_ended
+
+======================================================================
+FAIL: test_submit (tests.test_final_pg.P1_PgServiceJudgment.test_submit) (mutation='policy_revoked')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_final_pg.py", line 219, in test_submit
+    self.assertEqual(r.get("code"), want, "service submit after a wait with mutation %s" % name)
+AssertionError: 'proposed' != 'principal_revoked'
+- proposed
++ principal_revoked
+ : service submit after a wait with mutation policy_revoked
+
+======================================================================
+FAIL: test_submit (tests.test_final_pg.P1_PgServiceJudgment.test_submit) (mutation='removed')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_final_pg.py", line 219, in test_submit
+    self.assertEqual(r.get("code"), want, "service submit after a wait with mutation %s" % name)
+AssertionError: 'proposed' != 'unauthenticated:invalid_session'
+- proposed
++ unauthenticated:invalid_session
+ : service submit after a wait with mutation removed
+
+======================================================================
+FAIL: test_submit (tests.test_final_pg.P1_PgServiceJudgment.test_submit) (mutation='session_ended')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_final_pg.py", line 219, in test_submit
+    self.assertEqual(r.get("code"), want, "service submit after a wait with mutation %s" % name)
+AssertionError: 'proposed' != 'unauthenticated:invalid_session'
+- proposed
++ unauthenticated:invalid_session
+ : service submit after a wait with mutation session_ended
+
+======================================================================
+FAIL: test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call) [submit]
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_final_pg.py", line 283, in test_a_revoked_factor_ends_its_sessions_on_every_call
+    self.assertFalse(self._ok(name, tok), "%s accepted a session of a revoked factor" % name)
+AssertionError: True is not false : submit accepted a session of a revoked factor
+
+======================================================================
+FAIL: test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call) [explain]
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_final_pg.py", line 283, in test_a_revoked_factor_ends_its_sessions_on_every_call
+    self.assertFalse(self._ok(name, tok), "%s accepted a session of a revoked factor" % name)
+AssertionError: True is not false : explain accepted a session of a revoked factor
+
+======================================================================
+FAIL: test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call) [read_table]
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_final_pg.py", line 283, in test_a_revoked_factor_ends_its_sessions_on_every_call
+    self.assertFalse(self._ok(name, tok), "%s accepted a session of a revoked factor" % name)
+AssertionError: True is not false : read_table accepted a session of a revoked factor
+
+======================================================================
+FAIL: test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call) [erase_candidates]
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_final_pg.py", line 283, in test_a_revoked_factor_ends_its_sessions_on_every_call
+    self.assertFalse(self._ok(name, tok), "%s accepted a session of a revoked factor" % name)
+AssertionError: True is not false : erase_candidates accepted a session of a revoked factor
+
+======================================================================
+FAIL: test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call) [erase_values]
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_final_pg.py", line 283, in test_a_revoked_factor_ends_its_sessions_on_every_call
+    self.assertFalse(self._ok(name, tok), "%s accepted a session of a revoked factor" % name)
+AssertionError: True is not false : erase_values accepted a session of a revoked factor
+
+======================================================================
+FAIL: test_end_session_refuses_other_isolation_levels (tests.test_final_pg.P5_EndSessionIsolation.test_end_session_refuses_other_isolation_levels) (level='read uncommitted')
+a2d65fd: end_session had no isolation guard. Under REPEATABLE READ its update reads the transaction's snapshot: a session
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_final_pg.py", line 312, in test_end_session_refuses_other_isolation_levels
+    self.assertEqual(got, "refused:end_session refused: isolation", "%s: end_session answered %r (token live: %s)" % (level, got, live))
+AssertionError: True != 'refused:end_session refused: isolation' : read uncommitted: end_session answered True (token live: True)
+
+======================================================================
+FAIL: test_end_session_refuses_other_isolation_levels (tests.test_final_pg.P5_EndSessionIsolation.test_end_session_refuses_other_isolation_levels) (level='repeatable read')
+a2d65fd: end_session had no isolation guard. Under REPEATABLE READ its update reads the transaction's snapshot: a session
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_final_pg.py", line 312, in test_end_session_refuses_other_isolation_levels
+    self.assertEqual(got, "refused:end_session refused: isolation", "%s: end_session answered %r (token live: %s)" % (level, got, live))
+AssertionError: False != 'refused:end_session refused: isolation' : repeatable read: end_session answered False (token live: True)
+
+======================================================================
+FAIL: test_end_session_refuses_other_isolation_levels (tests.test_final_pg.P5_EndSessionIsolation.test_end_session_refuses_other_isolation_levels) (level='serializable')
+a2d65fd: end_session had no isolation guard. Under REPEATABLE READ its update reads the transaction's snapshot: a session
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-a2d6/src/tests/test_final_pg.py", line 312, in test_end_session_refuses_other_isolation_levels
+    self.assertEqual(got, "refused:end_session refused: isolation", "%s: end_session answered %r (token live: %s)" % (level, got, live))
+AssertionError: False != 'refused:end_session refused: isolation' : serializable: end_session answered False (token live: True)
+
+----------------------------------------------------------------------
+Ran 12 tests in 15.903s
+
+FAILED (failures=19)

@@ -1,0 +1,4 @@
+FAIL  test_44_forward_creates_the_evictor_role.test_44_forward_creates_the_evictor_role  | AssertionError: forward failed on a cluster without dc_evictor: 42704 role "dc_evictor" does not exist
+FAIL  test_44_rollback_gives_the_old_engine_its_advisory_lock.test_44_rollback_gives_the_old_engine_its_advisory_lock  | AssertionError: False is not true
+TOTALS {('FAIL', 'AssertionError'): 2} [('Ran 7 tests in 1.678s', 'FAILED (failures=2)')]
+VACUOUS/LIVENESS-CONTROL entries: 0

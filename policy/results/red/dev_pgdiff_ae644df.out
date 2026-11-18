@@ -1,0 +1,5 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), container emlab2-policyfix-pg; home paths shown as ~
+# COMPLETE DEV pg_diff at ae644df (no PGDIFF_LOGS, no PGDIFF_SCEN), started only with >= 17 GiB free, 15 GiB watcher; exit notstarted: sh kit/run.sh o-ae64 m exp.pg_diff
+NOT STARTED: free 15485024 KiB < 17 GiB (17825792 KiB) at 2026-11-18T09:08:30Z
+Filesystem     1K-blocks      Used Available Use% Mounted on
+/dev/sda1      673353188 657851800  15485004  98% /

@@ -1,0 +1,15 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), container emlab2-policyfix-pg; home paths shown as ~
+# VOID (b3 row voided by the disk guard): DEV verify at 088ab4c, tree o-088a: sh kit/run.sh o-088a m verify results --dev
+e1_lattice         FAIL  exp=None  recomputed=None  agree=None no result file
+e2_egress          FAIL  exp=None  recomputed=None  agree=None no result file
+e3_clash           FAIL  exp=None  recomputed=None  agree=None no result file
+e4_tighten         FAIL  exp=None  recomputed=None  agree=None no result file
+e5_threads         FAIL  exp=None  recomputed=None  agree=None no result file
+e6_policy_format   FAIL  exp=None  recomputed=None  agree=None no result file
+b1_modelcheck      FAIL  exp=None  recomputed=None  agree=None no result file
+b2_rebuild         FAIL  exp=None  recomputed=None  agree=None no result file
+b3_pg              FAIL  exp=FAIL  recomputed=FAIL  agree=True DEV.b3_pg.0110936f20f5291a.json
+pg_diff            FAIL  exp=None  recomputed=None  agree=None no result file
+mig_rehearsal      PASS  exp=PASS  recomputed=PASS  agree=True DEV.mig_rehearsal.42f65754d5689388.json
+s2_sessions        PASS  exp=PASS  recomputed=PASS  agree=True DEV.s2_sessions.dd8fc825681d7f30.json
+VERIFY overall=FAIL sha256=aa9ba7798c2c47711e4f8dd24766e490438ac29bd6001175aae14d6ab4052094 file=results/DEV.VERIFY.aa9ba7798c2c4771.json

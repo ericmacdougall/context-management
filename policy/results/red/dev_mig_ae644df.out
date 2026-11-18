@@ -1,0 +1,104 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), container emlab2-policyfix-pg; home paths shown as ~
+# DEV seeds at ae644df, tree o-ae64: sh kit/run.sh o-ae64 m exp.mig_rehearsal
+RESULT mig_rehearsal verdict=PASS sha256=e20c6dfb5474dd4a847f7110a75331e59abb57939cfa4bf5bb67b2ad94846b4b file=~/emlab2-16096/policyfix/runs/o-ae64/src/results/DEV.mig_rehearsal.e20c6dfb5474dd4a.json
+{
+ "pass": true,
+ "clean": [
+  {
+   "forward_twice_refused": "no pre-R3-7 schema dc (dc.apply_authority not found)",
+   "rollback_restores_fingerprint": true,
+   "rollback_after_write": "written after the migration (chainhead, events, props, vals): a rollback would discard those writes or undo an erasure; carry them back by hand or keep the migrated schema",
+   "write_kept": true,
+   "ok": true
+  },
+  {
+   "forward_twice_refused": "no pre-R3-7 schema dc (dc.apply_authority not found)",
+   "rollback_restores_fingerprint": true,
+   "rollback_after_write": "written after the migration (chainhead, events, props, vals): a rollback would discard those writes or undo an erasure; carry them back by hand or keep the migrated schema",
+   "write_kept": true,
+   "ok": true
+  },
+  {
+   "forward_twice_refused": "no pre-R3-7 schema dc (dc.apply_authority not found)",
+   "rollback_restores_fingerprint": true,
+   "rollback_after_write": "written after the migration (chainhead, events, props, vals): a rollback would discard those writes or undo an erasure; carry them back by hand or keep the migrated schema",
+   "write_kept": true,
+   "ok": true
+  }
+ ],
+ "controls": [
+  {
+   "control": "forged_grant",
+   "ok": true,
+   "refused": "tenant t1: old event seq 82 (forged/1) stored as granted, judged principal_revoked by the definer core: the log holds an event the rules refuse (forged or inserted outside the core)",
+   "rolled_back": null,
+   "write_lost": null,
+   "error": null
+  },
+  {
+   "control": "head_tampered",
+   "ok": true,
+   "refused": "tenant t1: state rebuilt from the log differs from the old tables in ['head']: the old state was written outside the event log",
+   "rolled_back": null,
+   "write_lost": null,
+   "error": null
+  },
+  {
+   "control": "rollback_unchecked",
+   "ok": true,
+   "refused": null,
+   "rolled_back": true,
+   "write_lost": true,
+   "error": null
+  },
+  {
+   "control": "forged_grant",
+   "ok": true,
+   "refused": "tenant t1: old event seq 93 (forged/1) stored as granted, judged unauthorized by the definer core: the log holds an event the rules refuse (forged or inserted outside the core)",
+   "rolled_back": null,
+   "write_lost": null,
+   "error": null
+  },
+  {
+   "control": "head_tampered",
+   "ok": true,
+   "refused": "tenant t1: state rebuilt from the log differs from the old tables in ['head']: the old state was written outside the event log",
+   "rolled_back": null,
+   "write_lost": null,
+   "error": null
+  },
+  {
+   "control": "rollback_unchecked",
+   "ok": true,
+   "refused": null,
+   "rolled_back": true,
+   "write_lost": true,
+   "error": null
+  },
+  {
+   "control": "forged_grant",
+   "ok": true,
+   "refused": "tenant t1: old event seq 81 (forged/1) stored as granted, judged unauthorized by the definer core: the log holds an event the rules refuse (forged or inserted outside the core)",
+   "rolled_back": null,
+   "write_lost": null,
+   "error": null
+  },
+  {
+   "control": "head_tampered",
+   "ok": true,
+   "refused": "tenant t1: state rebuilt from the log differs from the old tables in ['head']: the old state was written outside the event log",
+   "rolled_back": null,
+   "write_lost": null,
+   "error": null
+  },
+  {
+   "control": "rollback_unchecked",
+   "ok": true,
+   "refused": null,
+   "rolled_back": true,
+   "write_lost": true,
+   "error": null
+  }
+ ]
+}
+wrote ~/emlab2-16096/policyfix/runs/o-ae64/src/results/DEV.mig_rehearsal.e20c6dfb5474dd4a.json

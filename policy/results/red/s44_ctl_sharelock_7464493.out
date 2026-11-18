@@ -1,0 +1,18 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), container emlab2-policyfix-pg; home paths shown as ~
+# CONTROL (broken variant): tree o-ctl-7464 = 7464493 with the evictor's ShareLock filter line removed (control: removed the line [             ...; count 1 -> 0): sh kit/run.sh o-ctl-7464 t -v tests.test_s44_pg.S44_Scope.test_a_queued_revoker_is_not_evicted
+test_a_queued_revoker_is_not_evicted (tests.test_s44_pg.S44_Scope.test_a_queued_revoker_is_not_evicted)
+4.4: two admins revoke alice while her holder stalls. The one that evicts must not end the other, which waits for the same ... FAIL
+
+======================================================================
+FAIL: test_a_queued_revoker_is_not_evicted (tests.test_s44_pg.S44_Scope.test_a_queued_revoker_is_not_evicted)
+4.4: two admins revoke alice while her holder stalls. The one that evicts must not end the other, which waits for the same
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-ctl-7464/src/tests/test_s44_pg.py", line 355, in test_a_queued_revoker_is_not_evicted
+    self.assertTrue(self.alive(r2p), "the queued revoker was evicted: %r" % (o2,))
+AssertionError: False is not true : the queued revoker was evicted: {'r': {'id': 'admin/rv48b29d', 'code': 'revoked', 'original': None, 'value_ref': None}, 't': 1794990831.6957688}
+
+----------------------------------------------------------------------
+Ran 1 test in 2.655s
+
+FAILED (failures=1)

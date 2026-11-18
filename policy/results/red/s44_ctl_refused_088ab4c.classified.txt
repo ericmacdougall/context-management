@@ -1,0 +1,4 @@
+FAIL  test_a_refused_revoker_evicts_nobody.test_a_refused_revoker_evicts_nobody (mutation='factor') | AssertionError: False is not true : a refused revoker evicted the holder
+FAIL  test_a_refused_revoker_evicts_nobody.test_a_refused_revoker_evicts_nobody (mutation='principal') | AssertionError: False is not true : a refused revoker evicted the holder
+TOTALS {('FAIL', 'AssertionError'): 2} [('Ran 1 test in 6.102s', 'FAILED (failures=2)')]
+VACUOUS/LIVENESS-CONTROL entries: 0

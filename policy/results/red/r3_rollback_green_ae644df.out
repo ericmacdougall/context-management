@@ -1,0 +1,21 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), container emlab2-policyfix-pg; home paths shown as ~
+# GREEN at ae644df, tree o-ae64 : sh kit/run.sh o-ae64 t -v tests.test_review3_pg.Review3Rollback
+test_44_forward_creates_the_evictor_role (tests.test_review3_pg.Review3Rollback.test_44_forward_creates_the_evictor_role)
+FINAL-JUDGMENT.md 4.4: dc._evict is owned by dc_evictor, which pgcore.install creates; a migration on a cluster where ... ok
+test_44_rollback_gives_the_old_engine_its_advisory_lock (tests.test_review3_pg.Review3Rollback.test_44_rollback_gives_the_old_engine_its_advisory_lock)
+FINAL-JUDGMENT.md 4.4: the definer core makes the advisory-lock functions non-PUBLIC in its database. The pre-R3-7 engine ... ok
+test_n4_failure_mid_rollback_changes_nothing (tests.test_review3_pg.Review3Rollback.test_n4_failure_mid_rollback_changes_nothing)
+Delta review 1 (N4 leftover): a failure injected after rollback has dropped the migrated schema and dc_crypto, at the rename ... ok
+test_n4_rollback_after_a_refused_request_is_refused (tests.test_review3_pg.Review3Rollback.test_n4_rollback_after_a_refused_request_is_refused)
+A refused request writes an audit row: audit history is data too (0a20b64 drops it). ... ok
+test_n4_rollback_after_a_submit_is_refused (tests.test_review3_pg.Review3Rollback.test_n4_rollback_after_a_submit_is_refused)
+0a20b64: rollback drops the new schema unconditionally; an applied request made after the migration silently disappears. ... ok
+test_n4_rollback_after_an_erasure_is_refused (tests.test_review3_pg.Review3Rollback.test_n4_rollback_after_an_erasure_is_refused)
+0a20b64: a value erased after the migration comes back with the old schema (erasure undone). ... ok
+test_n4_rollback_without_writes_proceeds (tests.test_review3_pg.Review3Rollback.test_n4_rollback_without_writes_proceeds)
+Logins are not data: a session opened after the migration does not block the rollback; the old schema comes back. ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 1.689s
+
+OK

@@ -1,0 +1,4 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), container emlab2-policyfix-pg; home paths shown as ~
+# DEV seeds at 8547b27 (fixer run s1-exp): sh kit/run.sh s1-exp m exp.e6_policy_format
+RESULT e6_policy_format verdict=PASS sha256=12ba9c5f47e6f51b7a7e15db3d346ae6ebb1953b84157b92bb06dd065c0551be file=~/emlab2-16096/policyfix/runs/s1-exp/src/results/DEV.e6_policy_format.12ba9c5f47e6f51b.json
+PASS {'empty_allows': 0, 'malformed': 15000, 'parse_errors': 15000, 'safe_allows': 0, 'lenient_allow_rate': 0.29728, 'valid_allow_rate': 0.6009333333333333} holds_ok True artifact_bytes 589201 runtime_s 7.7

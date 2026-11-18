@@ -1,0 +1,18 @@
+FAIL  test_end_session_evicts_a_holder.test_end_session_evicts_a_holder  | AssertionError: {'error': '55P03', 'message': 'canceling statement due to lock timeout'} is not True : {'error': '55P03', 'message': 'canceling statement due to lock timeout'}
+FAIL  test_revoke_evicts_the_target_holder.test_revoke_evicts_the_target_holder (holder='idle_reset') | AssertionError: None != 'revoked' : {'error': '55P03', 'message': 'canceling statement due to lock timeout'}
+FAIL  test_revoke_evicts_the_target_holder.test_revoke_evicts_the_target_holder (holder='sleep') | AssertionError: None != 'revoked' : {'error': '55P03', 'message': 'canceling statement due to lock timeout'}
+FAIL  test_revoke_evicts_the_target_holder.test_revoke_evicts_the_target_holder (holder='stream') | AssertionError: None != 'revoked' : {'error': '55P03', 'message': 'canceling statement due to lock timeout'}
+FAIL  test_revoke_evicts_the_target_holder.test_revoke_evicts_the_target_holder (holder='submit') | AssertionError: None != 'revoked' : {'error': '55P03', 'message': 'canceling statement due to lock timeout'}
+FAIL  test_revoke_factor_evicts_a_holder.test_revoke_factor_evicts_a_holder  | AssertionError: {'error': '55P03', 'message': 'canceling statement due to lock timeout'} is not True : {'error': '55P03', 'message': 'canceling statement due to lock timeout'}
+FAIL  test_tenant_lock_holder_is_evicted.test_tenant_lock_holder_is_evicted  | AssertionError: None != 'revoked' : {'error': '55P03', 'message': 'canceling statement due to lock timeout'}
+FAIL  test_a_queued_revoker_is_not_evicted.test_a_queued_revoker_is_not_evicted  | AssertionError: True is not false : the stalled holder survived
+FAIL  test_login_roles_cannot_take_advisory_locks.test_login_roles_cannot_take_advisory_locks (role='dc_app', q='select pg_advisory_xact_lock_shared(1145241601::int, 1)') | AssertionError: InsufficientPrivilege not raised
+FAIL  test_login_roles_cannot_take_advisory_locks.test_login_roles_cannot_take_advisory_locks (role='dc_app', q='select pg_try_advisory_lock(1)') | AssertionError: InsufficientPrivilege not raised
+FAIL  test_login_roles_cannot_take_advisory_locks.test_login_roles_cannot_take_advisory_locks (role='dc_app', q='select pg_advisory_lock_shared(1145241606, 1)') | AssertionError: InsufficientPrivilege not raised
+FAIL  test_login_roles_cannot_take_advisory_locks.test_login_roles_cannot_take_advisory_locks (role='dc_idp', q='select pg_advisory_xact_lock_shared(1145241601::int, 1)') | AssertionError: InsufficientPrivilege not raised
+FAIL  test_login_roles_cannot_take_advisory_locks.test_login_roles_cannot_take_advisory_locks (role='dc_idp', q='select pg_try_advisory_lock(1)') | AssertionError: InsufficientPrivilege not raised
+FAIL  test_login_roles_cannot_take_advisory_locks.test_login_roles_cannot_take_advisory_locks (role='dc_idp', q='select pg_advisory_lock_shared(1145241606, 1)') | AssertionError: InsufficientPrivilege not raised
+FAIL  test_other_principals_and_databases_are_not_evicted.test_other_principals_and_databases_are_not_evicted  | AssertionError: None != 'revoked' : {'error': '55P03', 'message': 'canceling statement due to lock timeout'}
+FAIL  test_the_evictor_role_is_scoped.test_the_evictor_role_is_scoped  | AssertionError: None != (False, False, False, False)
+TOTALS {('FAIL', 'AssertionError'): 16} [('Ran 15 tests in 48.175s', 'FAILED (failures=16)')]
+VACUOUS/LIVENESS-CONTROL entries: 0

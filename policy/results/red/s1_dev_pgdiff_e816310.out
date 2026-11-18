@@ -1,0 +1,164 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), container emlab2-policyfix-pg; home paths shown as ~
+# DEV seeds at e816310 (fixer run s1-green), COMPLETE (no PGDIFF_LOGS, no PGDIFF_SCEN; 2 h cap; disk guard 15 GiB): sh kit/run.sh s1-green m exp.pg_diff
+b2 {"logs": 300, "events": 45206, "code_mismatches": 0, "view_mismatches": 0, "log_mismatches": 0, "first": null} 122 s
+b1 {"scenario": "r1", "depth": 6, "states": 66565, "transitions": 540504, "code_mismatches": 0, "view_mismatches": 0, "first": null} 1193 s
+b1 {"scenario": "r2", "depth": 8, "states": 8188, "transitions": 94300, "code_mismatches": 0, "view_mismatches": 0, "first": null} 1371 s
+b1 {"scenario": "r3", "depth": 8, "states": 14816, "transitions": 205650, "code_mismatches": 0, "view_mismatches": 0, "first": null} 1748 s
+b1 {"scenario": "caps", "depth": 8, "states": 17343, "transitions": 111943, "code_mismatches": 0, "view_mismatches": 0, "first": null} 1986 s
+b1 {"scenario": "joint", "depth": 4, "states": 21710, "transitions": 220401, "code_mismatches": 0, "view_mismatches": 0, "first": null} 2404 s
+RESULT pg_diff verdict=PASS sha256=47a2839d220305932ddbb0c1af3f75b9962015051473430357366b2ce0f65708 file=~/emlab2-16096/policyfix/runs/s1-green/src/results/DEV.pg_diff.47a2839d22030593.json
+{
+ "b2": {
+  "logs": 300,
+  "events": 45206,
+  "code_mismatches": 0,
+  "view_mismatches": 0,
+  "log_mismatches": 0,
+  "first": null
+ },
+ "b1": [
+  {
+   "scenario": "r1",
+   "depth": 6,
+   "states": 66565,
+   "transitions": 540504,
+   "code_mismatches": 0,
+   "view_mismatches": 0,
+   "first": null
+  },
+  {
+   "scenario": "r2",
+   "depth": 8,
+   "states": 8188,
+   "transitions": 94300,
+   "code_mismatches": 0,
+   "view_mismatches": 0,
+   "first": null
+  },
+  {
+   "scenario": "r3",
+   "depth": 8,
+   "states": 14816,
+   "transitions": 205650,
+   "code_mismatches": 0,
+   "view_mismatches": 0,
+   "first": null
+  },
+  {
+   "scenario": "caps",
+   "depth": 8,
+   "states": 17343,
+   "transitions": 111943,
+   "code_mismatches": 0,
+   "view_mismatches": 0,
+   "first": null
+  },
+  {
+   "scenario": "joint",
+   "depth": 4,
+   "states": 21710,
+   "transitions": 220401,
+   "code_mismatches": 0,
+   "view_mismatches": 0,
+   "first": null
+  }
+ ],
+ "control_no_stale": {
+  "b2": {
+   "logs": 30,
+   "events": 5029,
+   "code_mismatches": 463,
+   "view_mismatches": 25,
+   "log_mismatches": 26,
+   "first": {
+    "log": "dev-pgdiff-1/0",
+    "i": 16,
+    "ev": {
+     "type": "decide",
+     "id": "e17",
+     "idem": "k17",
+     "tenant": "t1",
+     "principal": "h1",
+     "channel": "owner_ui",
+     "req": "r1",
+     "verb": "amend",
+     "based_on": 2,
+     "proposal": "e2",
+     "proposal_hash": "06869185275cc83e0986583afb7f4dfdf53210961518ac2f74b5ccac82c548df",
+     "value_ref": "v4",
+     "label": {
+      "tenants": [
+       "t1"
+      ],
+      "acl": [
+       [
+        "g1"
+       ]
+      ],
+      "regions": [
+       "eu"
+      ],
+      "sensitivity": 2,
+      "models": null,
+      "banned": [
+       "m2"
+      ],
+      "local_only": false,
+      "restricted": false,
+      "holds": [],
+      "subjects": []
+     }
+    },
+    "oracle": [
+     "stale",
+     null
+    ],
+    "pg": [
+     "contested_opened",
+     null
+    ]
+   },
+   "errors": 2
+  },
+  "b1_r2": {
+   "scenario": "r2",
+   "depth": 8,
+   "states": 8188,
+   "transitions": 94300,
+   "code_mismatches": 5586,
+   "view_mismatches": 0,
+   "first": {
+    "ev": {
+     "type": "retract",
+     "id": "T2",
+     "idem": "T2",
+     "tenant": "T1",
+     "principal": "u1",
+     "channel": "owner_ui",
+     "req": "r2",
+     "based_on": 0
+    },
+    "oracle": [
+     "stale",
+     null
+    ],
+    "pg": [
+     "contested_opened",
+     null
+    ],
+    "level": 3
+   }
+  }
+ },
+ "control_caught": true,
+ "pass": true,
+ "verdict": "PASS",
+ "judged_by": "this module's pass condition, recomputed from the rows by verify/pgdiff.py (THRESHOLDS amendment 5)",
+ "seconds": 2597.7,
+ "items": {
+  "file": "DEV.pg_diff.items.a9364cc7e0f3de6a.jsonl.gz",
+  "sha256": "a9364cc7e0f3de6a88503d5c1297a32457a12b03a4a60731bb1304916c2e0a5e",
+  "rows": 1454803
+ }
+}
+wrote ~/emlab2-16096/policyfix/runs/s1-green/src/results/DEV.pg_diff.47a2839d22030593.json sha256 47a2839d22030593

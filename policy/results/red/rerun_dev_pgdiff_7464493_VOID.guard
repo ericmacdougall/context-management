@@ -1,0 +1,8 @@
+start 2026-11-18T08:33:51Z free 15831928 KiB
+935cea61cf0a55928b229f2e014ab9d04061b84ae287fcfb4328e7c4a8179374   1         476.1MB
+floor 10485760 KiB; lowest free KiB 15708544; end 2026-11-18T08:38:13Z
+935cea61cf0a55928b229f2e014ab9d04061b84ae287fcfb4328e7c4a8179374   1         550.3MB
+guard15 start 2026-11-18T08:36:47Z free 15778112 KiB
+VOID: free 15717980 KiB < 15 GiB at 2026-11-18T08:37:57Z; stopping emlab2-policyfix-pg
+emlab2-policyfix-pg
+guard15 end 2026-11-18T08:38:00Z free 15715268 KiB

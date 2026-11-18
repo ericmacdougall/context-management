@@ -1,0 +1,24 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), container emlab2-policyfix-pg; home paths shown as ~
+# RED (4.4 migration, DEV seeds), tree o-red-mig (exp/ at 7464493): sh kit/run.sh o-red-mig m exp.mig_rehearsal
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "~/emlab2-16096/policyfix/runs/o-red-mig/src/exp/mig_rehearsal.py", line 330, in <module>
+    main()
+  File "~/emlab2-16096/policyfix/runs/o-red-mig/src/exp/mig_rehearsal.py", line 292, in main
+    out = {"clean": [arm_clean(OLD, s, anchor) for s in sd]}
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/runs/o-red-mig/src/exp/mig_rehearsal.py", line 190, in arm_clean
+    tenants, codes, _rng = build_old_history(OLD, seed)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/runs/o-red-mig/src/exp/mig_rehearsal.py", line 102, in build_old_history
+    c, _o = eng._submit(ev)
+            ^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/runs/o-red-mig/src/exp/fixtures/pgcore_5a80e52.py", line 321, in _submit
+    code, orig = self._once(ev, hook)
+                 ^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/runs/o-red-mig/src/exp/fixtures/pgcore_5a80e52.py", line 338, in _once
+    c.execute("select pg_advisory_xact_lock(hashtextextended(%s, 0))", (json.dumps([t, ev["principal"]]),))
+  File "~/emlab2-16096/policyfix/venv/lib/python3.12/site-packages/psycopg/connection.py", line 251, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.InsufficientPrivilege: permission denied for function pg_advisory_xact_lock

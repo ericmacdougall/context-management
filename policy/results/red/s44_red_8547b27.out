@@ -1,0 +1,214 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), container emlab2-policyfix-pg; home paths shown as ~
+# RED (4.4), tree o-red-s44 {"commit": "8547b270d1a12a972649d7e9378d7b78ef677a7f", "dirty": true, "thresholds_commit": "d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1", "tree_sha256": "a519b54f4d05d5bfa26ac9a1cf9ed8f100739782164a18dd3ea39f286278ac68", "tests_from": "6bed43090ed67f0db5a1f39cb286f9c551a24969"}, o_reset first: sh kit/run.sh o-red-s44 t -v tests.test_s44_pg tests.test_s1_pg.S1_RevokePath.test_revoke_gives_up_after_xwait
+test_without_eviction_the_holder_blocks_the_revoke (tests.test_s44_pg.S44_Control.test_without_eviction_the_holder_blocks_the_revoke) ... MEASURE control_no_eviction 2.009
+ok
+test_a_reconnecting_adversary (tests.test_s44_pg.S44_Eviction.test_a_reconnecting_adversary)
+Three connections of alice keep re-taking her authority lock: each opens a transaction, makes a call, holds it 1 s with ... MEASURE revoke_reconnecting_adversary 0.532
+ADVERSARY {'evicted': 0, 'calls': 9, 'gated': 0}
+ok
+test_end_session_evicts_a_holder (tests.test_s44_pg.S44_Eviction.test_end_session_evicts_a_holder)
+end_session (A exclusive, by dc_idp) of a token whose principal's connection holds the authority lock. ... MEASURE end_session_holder 2.002
+FAIL
+test_revoke_evicts_the_target_holder (tests.test_s44_pg.S44_Eviction.test_revoke_evicts_the_target_holder)
+Red at 8547b27: 55P03 after XWAIT and the holder still connected, for every way of holding. ... MEASURE revoke_target_holder_idle_reset 2.008
+
+  test_revoke_evicts_the_target_holder (tests.test_s44_pg.S44_Eviction.test_revoke_evicts_the_target_holder) (holder='idle_reset')
+Red at 8547b27: 55P03 after XWAIT and the holder still connected, for every way of holding. ... FAIL
+MEASURE revoke_target_holder_sleep 2.002
+  test_revoke_evicts_the_target_holder (tests.test_s44_pg.S44_Eviction.test_revoke_evicts_the_target_holder) (holder='sleep')
+Red at 8547b27: 55P03 after XWAIT and the holder still connected, for every way of holding. ... FAIL
+MEASURE revoke_target_holder_stream 2.002
+  test_revoke_evicts_the_target_holder (tests.test_s44_pg.S44_Eviction.test_revoke_evicts_the_target_holder) (holder='stream')
+Red at 8547b27: 55P03 after XWAIT and the holder still connected, for every way of holding. ... FAIL
+MEASURE revoke_target_holder_submit 2.002
+  test_revoke_evicts_the_target_holder (tests.test_s44_pg.S44_Eviction.test_revoke_evicts_the_target_holder) (holder='submit')
+Red at 8547b27: 55P03 after XWAIT and the holder still connected, for every way of holding. ... FAIL
+test_revoke_factor_evicts_a_holder (tests.test_s44_pg.S44_Eviction.test_revoke_factor_evicts_a_holder)
+dc.revoke_factor (owner-only, A exclusive) of the holder's factor. ... MEASURE revoke_factor_holder 2.003
+FAIL
+test_tenant_lock_holder_is_evicted (tests.test_s44_pg.S44_Eviction.test_tenant_lock_holder_is_evicted)
+Any submitter of the tenant holds the tenant lock (L3) shared until COMMIT; a revoke of ANOTHER principal and an erasure ... MEASURE revoke_tenant_holder 2.009
+FAIL
+test_the_idle_timeout_bounds_only_a_cooperating_holder (tests.test_s44_pg.S44_Options.test_the_idle_timeout_bounds_only_a_cooperating_holder)
+Option 'timeouts': with the role default lowered to 3 s, a holder that leaves its setting alone is ended by the server ... MEASURE idle_timeout_cooperating_holder_ended_after 2.831
+MEASURE idle_timeout_noncooperating_holder_still_connected_after 8.000
+ok
+test_a_queued_revoker_is_not_evicted (tests.test_s44_pg.S44_Scope.test_a_queued_revoker_is_not_evicted)
+4.4: two admins revoke alice while her holder stalls. The one that evicts must not end the other, which waits for the same ... FAIL
+test_a_refused_revoker_evicts_nobody (tests.test_s44_pg.S44_Scope.test_a_refused_revoker_evicts_nobody)
+Regression guard: the admin's own authority changes while its revoke waits for the holder; the revoke is refused and the ... ok
+test_an_owner_holder_is_never_evicted (tests.test_s44_pg.S44_Scope.test_an_owner_holder_is_never_evicted)
+Regression guard: a superuser connection holding alice's authority lock is not a dc_app or dc_idp backend. The revoke gives ... MEASURE revoke_owner_holder_gives_up 2.008
+ok
+test_login_roles_cannot_take_advisory_locks (tests.test_s44_pg.S44_Scope.test_login_roles_cannot_take_advisory_locks)
+4.4: a raw advisory call is a way to hold A, T, a fence or an idempotency lock outside any API call, where no judgment or ... 
+  test_login_roles_cannot_take_advisory_locks (tests.test_s44_pg.S44_Scope.test_login_roles_cannot_take_advisory_locks) (role='dc_app', q='select pg_advisory_xact_lock_shared(1145241601::int, 1)')
+4.4: a raw advisory call is a way to hold A, T, a fence or an idempotency lock outside any API call, where no judgment or ... FAIL
+  test_login_roles_cannot_take_advisory_locks (tests.test_s44_pg.S44_Scope.test_login_roles_cannot_take_advisory_locks) (role='dc_app', q='select pg_try_advisory_lock(1)')
+4.4: a raw advisory call is a way to hold A, T, a fence or an idempotency lock outside any API call, where no judgment or ... FAIL
+  test_login_roles_cannot_take_advisory_locks (tests.test_s44_pg.S44_Scope.test_login_roles_cannot_take_advisory_locks) (role='dc_app', q='select pg_advisory_lock_shared(1145241606, 1)')
+4.4: a raw advisory call is a way to hold A, T, a fence or an idempotency lock outside any API call, where no judgment or ... FAIL
+  test_login_roles_cannot_take_advisory_locks (tests.test_s44_pg.S44_Scope.test_login_roles_cannot_take_advisory_locks) (role='dc_idp', q='select pg_advisory_xact_lock_shared(1145241601::int, 1)')
+4.4: a raw advisory call is a way to hold A, T, a fence or an idempotency lock outside any API call, where no judgment or ... FAIL
+  test_login_roles_cannot_take_advisory_locks (tests.test_s44_pg.S44_Scope.test_login_roles_cannot_take_advisory_locks) (role='dc_idp', q='select pg_try_advisory_lock(1)')
+4.4: a raw advisory call is a way to hold A, T, a fence or an idempotency lock outside any API call, where no judgment or ... FAIL
+  test_login_roles_cannot_take_advisory_locks (tests.test_s44_pg.S44_Scope.test_login_roles_cannot_take_advisory_locks) (role='dc_idp', q='select pg_advisory_lock_shared(1145241606, 1)')
+4.4: a raw advisory call is a way to hold A, T, a fence or an idempotency lock outside any API call, where no judgment or ... FAIL
+test_no_holder_evicts_nothing (tests.test_s44_pg.S44_Scope.test_no_holder_evicts_nothing)
+Regression guard: a revoke with nothing in its way ends no backend. ... ok
+test_other_principals_and_databases_are_not_evicted (tests.test_s44_pg.S44_Scope.test_other_principals_and_databases_are_not_evicted)
+Revoking alice evicts alice's holder only: bob's connection holding his own authority lock (no tenant lock), an idle dc_idp ... MEASURE revoke_with_bystanders 2.008
+FAIL
+test_the_evictor_role_is_scoped (tests.test_s44_pg.S44_Scope.test_the_evictor_role_is_scoped)
+4.4 only (no such role at 8547b27): dc_evictor cannot log in, is not a superuser, is a member of pg_signal_backend and of ... FAIL
+test_revoke_gives_up_after_xwait (tests.test_s1_pg.S1_RevokePath.test_revoke_gives_up_after_xwait)
+S1 only: an exclusive wait is capped at XWAIT (2 s). Past it the revoke fails with 55P03, applies nothing, and the ... ok
+
+======================================================================
+FAIL: test_end_session_evicts_a_holder (tests.test_s44_pg.S44_Eviction.test_end_session_evicts_a_holder)
+end_session (A exclusive, by dc_idp) of a token whose principal's connection holds the authority lock.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-s44/src/tests/test_s44_pg.py", line 143, in test_end_session_evicts_a_holder
+    self.assertIs(r, True, "%r" % (r,))
+AssertionError: {'error': '55P03', 'message': 'canceling statement due to lock timeout'} is not True : {'error': '55P03', 'message': 'canceling statement due to lock timeout'}
+
+======================================================================
+FAIL: test_revoke_evicts_the_target_holder (tests.test_s44_pg.S44_Eviction.test_revoke_evicts_the_target_holder) (holder='idle_reset')
+Red at 8547b27: 55P03 after XWAIT and the holder still connected, for every way of holding.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-s44/src/tests/test_s44_pg.py", line 130, in test_revoke_evicts_the_target_holder
+    self.assertEqual(r.get("code"), "revoked", "%r" % (r,))
+AssertionError: None != 'revoked' : {'error': '55P03', 'message': 'canceling statement due to lock timeout'}
+
+======================================================================
+FAIL: test_revoke_evicts_the_target_holder (tests.test_s44_pg.S44_Eviction.test_revoke_evicts_the_target_holder) (holder='sleep')
+Red at 8547b27: 55P03 after XWAIT and the holder still connected, for every way of holding.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-s44/src/tests/test_s44_pg.py", line 130, in test_revoke_evicts_the_target_holder
+    self.assertEqual(r.get("code"), "revoked", "%r" % (r,))
+AssertionError: None != 'revoked' : {'error': '55P03', 'message': 'canceling statement due to lock timeout'}
+
+======================================================================
+FAIL: test_revoke_evicts_the_target_holder (tests.test_s44_pg.S44_Eviction.test_revoke_evicts_the_target_holder) (holder='stream')
+Red at 8547b27: 55P03 after XWAIT and the holder still connected, for every way of holding.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-s44/src/tests/test_s44_pg.py", line 130, in test_revoke_evicts_the_target_holder
+    self.assertEqual(r.get("code"), "revoked", "%r" % (r,))
+AssertionError: None != 'revoked' : {'error': '55P03', 'message': 'canceling statement due to lock timeout'}
+
+======================================================================
+FAIL: test_revoke_evicts_the_target_holder (tests.test_s44_pg.S44_Eviction.test_revoke_evicts_the_target_holder) (holder='submit')
+Red at 8547b27: 55P03 after XWAIT and the holder still connected, for every way of holding.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-s44/src/tests/test_s44_pg.py", line 130, in test_revoke_evicts_the_target_holder
+    self.assertEqual(r.get("code"), "revoked", "%r" % (r,))
+AssertionError: None != 'revoked' : {'error': '55P03', 'message': 'canceling statement due to lock timeout'}
+
+======================================================================
+FAIL: test_revoke_factor_evicts_a_holder (tests.test_s44_pg.S44_Eviction.test_revoke_factor_evicts_a_holder)
+dc.revoke_factor (owner-only, A exclusive) of the holder's factor.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-s44/src/tests/test_s44_pg.py", line 157, in test_revoke_factor_evicts_a_holder
+    self.assertIs(r, True, "%r" % (r,))
+AssertionError: {'error': '55P03', 'message': 'canceling statement due to lock timeout'} is not True : {'error': '55P03', 'message': 'canceling statement due to lock timeout'}
+
+======================================================================
+FAIL: test_tenant_lock_holder_is_evicted (tests.test_s44_pg.S44_Eviction.test_tenant_lock_holder_is_evicted)
+Any submitter of the tenant holds the tenant lock (L3) shared until COMMIT; a revoke of ANOTHER principal and an erasure
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-s44/src/tests/test_s44_pg.py", line 170, in test_tenant_lock_holder_is_evicted
+    self.assertEqual(r.get("code"), "revoked", "%r" % (r,))
+AssertionError: None != 'revoked' : {'error': '55P03', 'message': 'canceling statement due to lock timeout'}
+
+======================================================================
+FAIL: test_a_queued_revoker_is_not_evicted (tests.test_s44_pg.S44_Scope.test_a_queued_revoker_is_not_evicted)
+4.4: two admins revoke alice while her holder stalls. The one that evicts must not end the other, which waits for the same
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-s44/src/tests/test_s44_pg.py", line 352, in test_a_queued_revoker_is_not_evicted
+    self.assertFalse(self.alive(bp), "the stalled holder survived")
+AssertionError: True is not false : the stalled holder survived
+
+======================================================================
+FAIL: test_login_roles_cannot_take_advisory_locks (tests.test_s44_pg.S44_Scope.test_login_roles_cannot_take_advisory_locks) (role='dc_app', q='select pg_advisory_xact_lock_shared(1145241601::int, 1)')
+4.4: a raw advisory call is a way to hold A, T, a fence or an idempotency lock outside any API call, where no judgment or
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-s44/src/tests/test_s44_pg.py", line 332, in test_login_roles_cannot_take_advisory_locks
+    with self.assertRaises(psycopg.errors.InsufficientPrivilege):
+AssertionError: InsufficientPrivilege not raised
+
+======================================================================
+FAIL: test_login_roles_cannot_take_advisory_locks (tests.test_s44_pg.S44_Scope.test_login_roles_cannot_take_advisory_locks) (role='dc_app', q='select pg_try_advisory_lock(1)')
+4.4: a raw advisory call is a way to hold A, T, a fence or an idempotency lock outside any API call, where no judgment or
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-s44/src/tests/test_s44_pg.py", line 332, in test_login_roles_cannot_take_advisory_locks
+    with self.assertRaises(psycopg.errors.InsufficientPrivilege):
+AssertionError: InsufficientPrivilege not raised
+
+======================================================================
+FAIL: test_login_roles_cannot_take_advisory_locks (tests.test_s44_pg.S44_Scope.test_login_roles_cannot_take_advisory_locks) (role='dc_app', q='select pg_advisory_lock_shared(1145241606, 1)')
+4.4: a raw advisory call is a way to hold A, T, a fence or an idempotency lock outside any API call, where no judgment or
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-s44/src/tests/test_s44_pg.py", line 332, in test_login_roles_cannot_take_advisory_locks
+    with self.assertRaises(psycopg.errors.InsufficientPrivilege):
+AssertionError: InsufficientPrivilege not raised
+
+======================================================================
+FAIL: test_login_roles_cannot_take_advisory_locks (tests.test_s44_pg.S44_Scope.test_login_roles_cannot_take_advisory_locks) (role='dc_idp', q='select pg_advisory_xact_lock_shared(1145241601::int, 1)')
+4.4: a raw advisory call is a way to hold A, T, a fence or an idempotency lock outside any API call, where no judgment or
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-s44/src/tests/test_s44_pg.py", line 332, in test_login_roles_cannot_take_advisory_locks
+    with self.assertRaises(psycopg.errors.InsufficientPrivilege):
+AssertionError: InsufficientPrivilege not raised
+
+======================================================================
+FAIL: test_login_roles_cannot_take_advisory_locks (tests.test_s44_pg.S44_Scope.test_login_roles_cannot_take_advisory_locks) (role='dc_idp', q='select pg_try_advisory_lock(1)')
+4.4: a raw advisory call is a way to hold A, T, a fence or an idempotency lock outside any API call, where no judgment or
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-s44/src/tests/test_s44_pg.py", line 332, in test_login_roles_cannot_take_advisory_locks
+    with self.assertRaises(psycopg.errors.InsufficientPrivilege):
+AssertionError: InsufficientPrivilege not raised
+
+======================================================================
+FAIL: test_login_roles_cannot_take_advisory_locks (tests.test_s44_pg.S44_Scope.test_login_roles_cannot_take_advisory_locks) (role='dc_idp', q='select pg_advisory_lock_shared(1145241606, 1)')
+4.4: a raw advisory call is a way to hold A, T, a fence or an idempotency lock outside any API call, where no judgment or
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-s44/src/tests/test_s44_pg.py", line 332, in test_login_roles_cannot_take_advisory_locks
+    with self.assertRaises(psycopg.errors.InsufficientPrivilege):
+AssertionError: InsufficientPrivilege not raised
+
+======================================================================
+FAIL: test_other_principals_and_databases_are_not_evicted (tests.test_s44_pg.S44_Scope.test_other_principals_and_databases_are_not_evicted)
+Revoking alice evicts alice's holder only: bob's connection holding his own authority lock (no tenant lock), an idle dc_idp
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-s44/src/tests/test_s44_pg.py", line 301, in test_other_principals_and_databases_are_not_evicted
+    self.assertEqual(r.get("code"), "revoked", "%r" % (r,))
+AssertionError: None != 'revoked' : {'error': '55P03', 'message': 'canceling statement due to lock timeout'}
+
+======================================================================
+FAIL: test_the_evictor_role_is_scoped (tests.test_s44_pg.S44_Scope.test_the_evictor_role_is_scoped)
+4.4 only (no such role at 8547b27): dc_evictor cannot log in, is not a superuser, is a member of pg_signal_backend and of
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/o-red-s44/src/tests/test_s44_pg.py", line 311, in test_the_evictor_role_is_scoped
+    self.assertEqual(self.o.execute("select rolcanlogin, rolsuper, rolcreaterole, rolcreatedb from pg_roles where rolname = 'dc_evictor'")
+AssertionError: None != (False, False, False, False)
+
+----------------------------------------------------------------------
+Ran 15 tests in 48.175s
+
+FAILED (failures=16)

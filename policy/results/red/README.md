@@ -4,6 +4,48 @@ Each log is the unittest output of a red run: the new tests against the code the
 broken variant), on local, never-pushed `red/*` branches. Home paths are redacted to `~`. Before commit the logs were scanned for
 credential shapes (private-key blocks, AWS key ids, `sk-` keys, user:password URLs); none occur. The 64-hex strings are sha256 digests.
 
+## S1 (the final review's P1-P4 merged) and FINAL-JUDGMENT.md 4.4, t2-dev, 2026-11-18
+
+The fixer's S1 runs (`s1_*`) were never committed before; the policy owner's reruns (`rerun_*`, `s44_*`, `r3_*`, `dev_*`) ran in
+exact-commit trees built by `git archive` (sha256 of each tar checked on both ends; the stamp JSON of the tree is in each log's
+header). A lab session token that one assertion printed (`s44_fence_red_8547b27.*`) is replaced by `<lab session token
+redacted>`. Each log's first two lines say what ran, on which tree and commit, and with which command. A red log has a
+`.classified.txt` beside it (kit/o-classify.py): every failure and error with its assertion text, split into behavioural assertions,
+import or undefined-function errors, and liveness or vacuity failures; only behavioural assertions count as failing-first evidence.
+`MANIFEST-policy-owner-reruns.txt` holds the sha256 of every log here and of the DEV result documents kept on t2-dev (not committed).
+`batch_o*.guard` and `batch_o6.samples` are the disk watcher's records (OWNER-COMMON: no run may leave under 15 GB free, read as
+15 GiB; my watcher stopped my own container the moment free space fell under it, and every later step of that batch is VOID).
+
+Counting rule for the S1 red logs: a failure counts as behavioural only if its assertion shows the call applied, answered or opened
+when it should have refused. UndefinedFunction errors (the S1 helpers do not exist at the old commit), "vacuous" or "did not wait"
+liveness failures, and "no lock trace recorded" are listed in the `.classified.txt` but are NOT evidence.
+
+| What | Log | Code under test | Result |
+|---|---|---|---|
+| S1 P1/P4 (blocking points) | `rerun_s1_pg_red_a2d65fd.out` | a2d65fd + the S1 tests of 8547b27 | FAILED (failures=81, errors=5): 28 behavioural failures; 5 UndefinedFunction errors, 44 vacuous or liveness failures and 9 "no lock trace recorded" are not evidence. |
+| S1 at ea4677a (the fixer's red) | `s1_pg_red_ea4677a.out` (fixer run s1-red), `rerun_s1_pg_red_ea4677a.out` (my rerun, same counts) | ea4677a + the S1 tests of 8547b27 | FAILED (failures=70, errors=5): 14 behavioural; 5 UndefinedFunction, 47 vacuous or liveness, 9 no-trace. |
+| P1, P4, P5 on Postgres, rerun | `rerun_final_pg_red_a2d65fd.out` | a2d65fd + test_final_pg of 8547b27 | FAILED (failures=19), 2 of them vacuous. At ea4677a the same module passes (`s1_final_pg_red_ea4677a.out`, `rerun_final_pg_ea4677a.out`: ea4677a already had the recheck fixes). |
+| erase_values judged again after a wait | `rerun_delta1_pg_red_a2d65fd.out`, `rerun_delta1_pg_red_ea4677a.out`, `s1_delta1_pg_red_ea4677a.out` | a2d65fd / ea4677a | FAILED (failures=1) each: erased 1 after the wait. |
+| P1, P3 in memory; P2 S2 verifier, reruns | `rerun_final_mem_red_a2d65fd.out`, `rerun_verify_s2_red_a2d65fd.out` | a2d65fd | FAILED (failures=16) each, all assertions (as in the a2d65fd logs above). |
+| Green, S1 | `s1_pg_green_e816310.out` (Ran 126 OK), `s1_pg_green_8547b27.out` (test_s1_pg, Ran 51 OK), `rerun_pg7_green_8547b27.out` (Ran 126 OK), `rerun_mem_green_8547b27.out` (in-memory and evidence suites, Ran 183 OK) | e816310, 8547b27 | OK |
+| 4.4 eviction | `s44_red_8547b27.out` | 8547b27 + the 4.4 tests of 6bed430 | FAILED (failures=16), all assertions: a revoke, end_session, revoke_factor, tenant revoke or erasure behind a stalled holder gave up with 55P03 instead of applying. |
+| 4.4 fences | `s44_fence_red_8547b27.out` | 8547b27 + 0046ef6 tests | FAILED (failures=4): open_session, submit, explain and the tenant's submits were not refused (None != '55P03') while a revocation evicted. |
+| 4.4 migration | `s44_mig_tests_red_7464493.out`; `s44_mig_exp_red_7464493.out` | 7464493 + ae644df tests; 7464493 exp.mig_rehearsal | FAILED (failures=2): forward on a cluster without dc_evictor (42704), rollback leaves the old engine without its advisory lock; the rehearsal stops at "permission denied for function pg_advisory_xact_lock". `s44_mig_tests_red_7464493_SPOILED.out` (0046ef6 tests) is NOT evidence: its forward test dropped dc_evictor and 6 later setUps errored; ae644df restores the role. |
+| 4.4 broken variants | `s44_ctl_sharelock_7464493.out`, `s44_ctl_refused_088ab4c.out` | 7464493 without the evictor's ShareLock filter; 088ab4c with dc._xlock_caller's eviction unconditional | FAILED (1, "the queued revoker was evicted"; 2, "a refused revoker evicted the holder"): the tests catch both variants. |
+| Green, 4.4 | `s44_pg8_green_7464493.out` (Ran 140 OK), `mem_green_7464493.out` (Ran 183 OK), `s44_pg8_green_088ab4c.out` (Ran 145 OK), `s44_pg8_green_ae644df.out` (Ran 145 OK), `r3_rollback_green_ae644df.out` (Ran 7 OK) | 7464493, 088ab4c, ae644df | OK |
+
+DEV seeds (development observations, not proof):
+- e816310 (fixer run s1-green): `s1_dev_s2_e816310.out` PASS, `s1_dev_b3_e816310.out` PASS (1031.7 s), and a COMPLETE pg_diff,
+  `s1_dev_pgdiff_e816310.out`: PASS, 2597.7 s, 1,454,803 rows, lowest free 17042204 KiB. At 8547b27: e2, e3, e5, e6 PASS.
+- 088ab4c and ae644df (code identical in pol/, exp/, ops/, verify/): mig_rehearsal PASS, s2_sessions PASS (1860 rows, 0 accepted
+  attacks) at both. b3_pg is VOID three times (`dev_b3_088ab4c_VOID.out`, `dev_b3_ae644df_VOID_o5.out`, `dev_b3_ae644df_VOID_o6.out`):
+  each time my watcher stopped the container during the idem_unprotected control; the nine scenarios and the other two controls had
+  passed (50 of 50 each) in the 088ab4c and o6 runs. The verify logs show those VOID b3 rows.
+- Complete pg_diff at 8547b27 and 7464493: VOID (`rerun_dev_pgdiff_*_VOID.out` with their `.guard`); at ae644df NOT STARTED: free
+  space 15.5-15.8 GiB (16.6-17.0 GB) against the owner's start bar of 17 GiB, later 16.25 GiB (ASSUMPTION: the owner's choice).
+  The fixer's complete run never had less than 17042204 KiB (16.25 GiB) free; mine at 7464493 grew my container's volume by 74 MB
+  in 4 minutes before the watcher fired.
+
 ## Evidence identity (class B of the reviews: verifiers counted rows, not identities) at ea4677a
 
 Each verifier's property tests (tests/test_evidence_<x>.py on tests/evidence_props.py: an honest synthetic set built from the declared
