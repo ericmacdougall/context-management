@@ -764,12 +764,19 @@ holds no secrets. Fixes:
   tree 12 register=True sites do not call the sink yet (H-1 to H-4).
 
 ### 7.6 The sink (wp/secret_sink.py, new in this branch; used once H-2 to H-6 land)
-`register(value, label)` adds a value (str or bytes; label is static text, never derived from the value) to this
-process's registry. `find(data)` returns the labels of registered values present in data in any representation
-the scanner uses, searched on the original bytes and on each intermediate view. `write(path, data, mode)` is the only
-writer of results/ and logs/: it raises `SecretInOutput` (naming labels only) instead of writing. `RedactingFilter`
-is a logging filter that replaces registered values with `<secret:label>`. A process knows only the values it created
-or loaded; that is a stated limit.
+`register(value, label, complete=False)` adds a value (str or bytes; label is static text, never derived from the
+value, and refused if it holds a registered value) to this process's registry; `complete=True` matches only the whole
+value, for values that begin with a public part (an encoded API key, `id:key`). `find(data)` returns the labels of
+registered values present in data in any representation the scanner uses, searched on the original bytes and on each
+intermediate view (it reuses runkit/leak_scan.py, loaded by path). `write(path, data, mode)` is the only writer of
+results/ and logs/: it writes atomically, or raises `SecretInOutput` (naming labels only) and writes nothing;
+`SinkError` when the content cannot be searched completely. `RedactingFilter` is a logging filter that replaces a
+record holding a registered value, in its message or its exception text, whole by `<redacted: holds a registered
+secret (labels)>`. A process knows only the values it created or loaded; that is a stated limit. Evidence:
+`tests/test_secret_sink.py` (9 tests), red in a temporary tree from e21b99b (`runkit/failing_first_variant.sh`) with
+the module absent (`reviewF-sink-absent-e21b99b.tree.red.out`, 9 errors) and against two broken variants
+(`reviewF-sink-broken-a-no-views.r4.red.out`: 4 failures, exactly the cases that need a view;
+`reviewF-sink-broken-b-no-check.r4.red.out`: 12 failures, every refusal).
 
 ### 7.7 Scanner scenario map (reviews A, D and F)
 | Finding | Resolution |
@@ -793,14 +800,23 @@ or loaded; that is a stated limit.
 - H-1 host/bootstrap.py, wp/setup.py, wp/es_security.py: generate every credential per store generation; refuse to
   start when a secret file already exists (`secrets/*`, `oldhome/pgpass`); `secret_sink.register(value, "<static
   label>")` right after generating each.
-- H-2 wp/broker.py: `secret_sink.register(encoded, "broker api key")`, and the decoded `id:key` and `key`, before the
-  minting function returns.
+- H-2 wp/broker.py `Broker._mint`: `secret_sink.register(encoded, "broker api key", complete=True)`,
+  `secret_sink.register(f"{id}:{key}", "broker api key", complete=True)` and `secret_sink.register(key, "broker api
+  key")` before it returns (complete=True for the two forms that begin with the public id, so a logged key id is not
+  refused).
 - H-3 wp/es_keys.py and wp/keysvc.py (or wp/keys.py): register each API key when created or loaded, each tenant key
   when loaded, each chain key when derived.
 - H-4 exp/h_probe_es.py: drop its `_VALUES` substring check in favour of `secret_sink.find()` over its output.
 - H-5 every experiment result writer and log setup: write through `secret_sink.write` and add `RedactingFilter`; then
   remove the expected-failure mark from `tests/test_result_sink_fence.py`, which then fails on any direct write into
-  results/ or logs/.
+  results/ or logs/. On this tree the fence finds two: `exp/common.py write_result` (`p.write_bytes`) and
+  `exp/registry_marker.py run_one` (the deliberate rogue file, `write_text`; its content holds no secret, so it can
+  go through the sink too).
+- Fence state on this branch (both marked expected failures; the owner removes a mark when its calls land): the
+  registration fence lists 12 sites: exp/h_probe_es.py mint and setup; host/bootstrap.py _scram (hmac.new) and main
+  (token_urlsafe); wp/broker.py Broker._mint; wp/es_keys.py create and create_broker; wp/es_security.py enable;
+  wp/keys.py KeyService.keys, tenant_hmac and tenant_hmac_many (os.urandom); wp/setup.py _ensure_roles. The chain key
+  (wp/keys.py chain_key) has no creation call of its own: H-3 registers it there, and no fence checks that call.
 - H-6 the gated chain's runbook: seal, scan, teardown, receipt and stage-check after the last experiment of a chain
   (runkit/README.md step 6), before any result is committed.
 - H-7 THRESHOLDS.md: append H6c (6.6).

@@ -22,3 +22,15 @@ Review D (F10: tests ran with the current tree first on sys.path, so an older ga
 Receipts made before review D's F10 fix (2026-11-17 22:00Z) record no module provenance: where the working tree
 differed from the commit under test, the tests may have imported current modules. They are history, not evidence for
 v3; v3's evidence is the reviewD-* receipts listed in GATE-DESIGN.md section 5.11.
+- reviewF-sink-broken-a-no-views.red.out and reviewF-sink-broken-b-no-check.red.out (with variants/*.broken-*.py,
+  not .r2): every test ERRORs, not fails. Loaded from results/failing-first/variants/, the variant looked for
+  runkit/leak_scan.py two levels too shallow. Infrastructure, not red evidence.
+- reviewF-sink-broken-*.r2.red.out: the variants find runkit/ (parents[3]), but the refusal subtests shared one
+  directory, so a file left by one form failed the later forms (variant A reported 9 failures, 5 of them cascades).
+  Superseded by the r3 receipts, made after the test writes each refusal in its own directory.
+- reviewF-sink-*.r3.red.out and reviewF-sink-absent-e21b99b.red.out: run in the working tree, so their tracebacks
+  held local paths, and test_secret_sink.py then held a credential-URL-shaped template the pre-push scan stops.
+  Superseded by reviewF-sink-broken-*.r4.red.out and reviewF-sink-absent-e21b99b.tree.red.out, made with
+  runkit/failing_first_variant.sh in a temporary tree from e21b99b with the current tests (same failures: 9 errors;
+  4 and 12 failures). The superseded sink receipts above were redacted before publication, as each one's second
+  line states; none was pushed unredacted.

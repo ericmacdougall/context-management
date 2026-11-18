@@ -1,0 +1,67 @@
+# failing-first receipt (new module)
+# date: 2026-11-18T00:57:25Z
+# tree: writepath at e21b99b (git archive); the current tests/ copied into it; run from it
+# module under test: results/failing-first/variants/secret_sink.broken-a-no-views.r2.py sha256 a28b4e62a1c69e91662885439f96819a000594a386eb6070b5ac1b4f4f5c7f6a, copied into the tree
+# its difference from wp/secret_sink.py at HEAD 8190f2c:
+# diff: 40c40
+# diff: <         p = pathlib.Path(__file__).resolve().parents[1] / "runkit" / "leak_scan.py"
+# diff: ---
+# diff: >         p = pathlib.Path(__file__).resolve().parents[3] / "runkit" / "leak_scan.py"
+# diff: 94c94
+# diff: <         for x in ls.views(_bytes(data)):
+# diff: ---
+# diff: >         for x in [_bytes(data)]:   # BROKEN VARIANT A: raw bytes only, no views
+# test file: tests/test_secret_sink.py from HEAD 8190f2c blob 17cec158e8e5ed1ec933291257cf5f0d30f073b7
+# command: (cd <tree>/writepath && SECRET_SINK_UNDER_TEST=<tree>/writepath/results/failing-first/variants/secret_sink.broken-a-no-views.r2.py python3 -m unittest -v tests.test_secret_sink)
+test_bytes_are_checked_like_text (tests.test_secret_sink.Sink) ... FAIL
+test_clean_write_lands_with_its_mode (tests.test_secret_sink.Sink) ... ok
+test_encoded_forms_are_refused (tests.test_secret_sink.Sink) ... test_find_returns_labels_only (tests.test_secret_sink.Sink) ... ok
+test_label_holding_a_value_is_refused (tests.test_secret_sink.Sink) ... ok
+test_log_record_holding_a_value_is_redacted_whole (tests.test_secret_sink.Sink) ... ok
+test_public_key_id_alone_is_not_refused (tests.test_secret_sink.Sink) ... ok
+test_raw_value_is_refused (tests.test_secret_sink.Sink) ... ok
+test_unsearchable_content_is_refused (tests.test_secret_sink.Sink) ... FAIL
+
+======================================================================
+FAIL: test_bytes_are_checked_like_text (tests.test_secret_sink.Sink)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.1L0IQQMSdM/writepath/tests/test_secret_sink.py", line 85, in test_bytes_are_checked_like_text
+    self.refused(f"x {self.pw}".encode("utf-16-le"))
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.1L0IQQMSdM/writepath/tests/test_secret_sink.py", line 62, in refused
+    self.s.write(p, data)
+AssertionError: SecretInOutput not raised
+
+======================================================================
+FAIL: test_encoded_forms_are_refused (tests.test_secret_sink.Sink) (form='percent')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.1L0IQQMSdM/writepath/tests/test_secret_sink.py", line 82, in test_encoded_forms_are_refused
+    self.refused(v, name=f"{n}.txt")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.1L0IQQMSdM/writepath/tests/test_secret_sink.py", line 62, in refused
+    self.s.write(p, data)
+AssertionError: SecretInOutput not raised
+
+======================================================================
+FAIL: test_encoded_forms_are_refused (tests.test_secret_sink.Sink) (form='unicode_escaped')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.1L0IQQMSdM/writepath/tests/test_secret_sink.py", line 82, in test_encoded_forms_are_refused
+    self.refused(v, name=f"{n}.txt")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.1L0IQQMSdM/writepath/tests/test_secret_sink.py", line 62, in refused
+    self.s.write(p, data)
+AssertionError: SecretInOutput not raised
+
+======================================================================
+FAIL: test_unsearchable_content_is_refused (tests.test_secret_sink.Sink)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.1L0IQQMSdM/writepath/tests/test_secret_sink.py", line 102, in test_unsearchable_content_is_refused
+    self.s.write(self.tmp / "x.gz", b"\x1f\x8b\x08\x00" + secrets.token_bytes(64))
+AssertionError: SinkError not raised
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.046s
+
+FAILED (failures=4)
+# exit status: 1
