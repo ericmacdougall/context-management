@@ -7,6 +7,7 @@
 3. Before erasure: SQL scan of every table of wp_events and wp_keys (row::text) = 0 hits (no plaintext in Postgres);
    ES API hits > 0; on-disk greps of the PG data directory (after CHECKPOINT) and the ES data directory are recorded.
    Positive control for the PG grep: the old code's plaintext marker in database 'emlab' on the same cluster.
+   TOAST control (review J M10, reported, not judged): the grep's sensitivity to compressed and out-of-line values.
 4. Erase X (the verifier runs the expunge). ES API hits for X = 0, Y > 0; on-disk ES grep again after a flush.
    Controls, one change each: ctl_no_placeholders (runner writes no placeholders), ctl_key_kept (key not destroyed).
    X's key hex: grep of the key database files before destroy (positive) and after (must be 0).
@@ -32,6 +33,30 @@ def grep_paths(container, path, pattern):
 
 def grep_files(container, path, pattern):
     return len(grep_paths(container, path, pattern))
+
+
+def toast_control():
+    """Review J M10: which disk files of the PC step's two tables (database emlab) the grep finds, for a pattern that is
+    a literal run in the stored value (one copy) and one that a compressed value holds only as a back-reference (three
+    copies). Expected: default storage (compressed, inline) finds one copy, not three; storage external (out of line,
+    uncompressed) finds both. Absent tables: recorded as such (the PC step did not run)."""
+    a = db.admin(db="emlab")
+    try:
+        paths, size = {}, {}
+        for t in ("pc_toast_c", "pc_toast_x"):
+            r = a.execute("select pg_relation_filepath(c.oid), pg_relation_filepath(nullif(c.reltoastrelid, 0)) from pg_class c "
+                          "where c.relname = %s", (t,)).fetchone()
+            if r is None:
+                return {"absent": t}
+            paths[t] = [x for x in r if x]
+            size[t] = a.execute(f"select pg_column_size(x) from {t}").fetchone()[0]
+    finally:
+        a.close()
+    out = {"stored_bytes": size}
+    for label, pat in (("one_copy", "zqtoastpc-"), ("three_copies", "zqtoastpc-" * 3)):
+        hits = grep_paths(PG_C, "/var/lib/postgresql/data", pat)
+        out[label] = {t: any(h.endswith("/" + p) for h in hits for p in ps) for t, ps in paths.items()}
+    return out
 
 
 def sql_scan(conn, marker):
@@ -96,7 +121,8 @@ def run_one(arm):
                      "es_api_Y": es_count_all(es, t, {"multi_match": {"query": my, "fields": ["content", "value"]}}),
                      "pg_disk_files_X": grep_files(PG_C, "/var/lib/postgresql/data", mx),
                      "pg_disk_positive_control_old_plaintext": grep_files(PG_C, "/var/lib/postgresql/data", "zqn6secret"),
-                     "es_disk_files_X": grep_files(ES_C, "/usr/share/elasticsearch/data", mx)}
+                     "es_disk_files_X": grep_files(ES_C, "/usr/share/elasticsearch/data", mx),
+                     "toast_control": toast_control()}
     keyhex = ks.keys(t, ["X"])["X"].hex()
     out["before"]["keydb_disk_files_keyhex"] = grep_files(PG_C, "/var/lib/postgresql/data", keyhex)
     # ---- 4. erase

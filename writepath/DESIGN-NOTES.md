@@ -963,6 +963,14 @@ and the WORST ADMITTED CALL IS THE LONG-KEY SHAPE, ABOUT 24 S OF MATCHER CPU (pl
 measured), up to 8 times that with WPS17 retries; there is no per-tenant rate limit. That is the cost of a key-count
 budget with keys up to 259 code points; a budget counted in key code points instead would cap it, at the price of
 re-deriving every b1 number (not done; stated for main).
+CORRECTION (review J M4, probe P2 at f36766c, the reviewer's measurement, not re-run here): the table understates the
+worst admitted EVENT. A 65,003-byte event of 10,284 tokens with a 64-code-point token "I" x 12 + "a" x 46 + 6 hex
+(4,096 readings) every 80th token is admitted at 4,387,720 keys (budget 5,000,000) and took 28.2 s of matcher time for
+ONE event (12.7 MiB traced). Scaled to the call's 5,000,000-key cap that is about 32 s per call, plus about three
+tokenisations of the content (admission in the authority, admission again in scan, the plan), the store lookups and the
+key-service round trips; a WPS17 retry repeats all of it (up to 8). Not bounded further here: the authority is one
+GIL-bound process, so one allowed peer can occupy it for every tenant for that long per call. The clients' 120 s
+timeout (review J M11) is set above it. A budget in key code points remains the stated alternative.
 
 ### H9. Sources (read 2026-11-17)
 
@@ -1014,7 +1022,8 @@ ONE operation, seal(tenant, lease_scope, lease_epoch, batch_id, events=[{event_i
      removed, sorted by code point;
   4. encryption under the subject key (K.seal, AAD tenant/subject/event_id, unchanged format);
   5. the attestation per event: seal_mac = HMAC-SHA256(seal key, M) where M is the length-prefixed encoding
-     ("<octets>:<value>" per field, so no separator can be forged) of: "wp-seal-v1", seal key id, tenant, event_id,
+     ("<octets>:<value>" per field, so no separator can be forged) of: "wp-seal-v1" (since review J M2: "wp-seal-v2",
+     then the purpose, events or quarantine), seal key id, tenant, event_id,
      subject_id, sha256 hex of the ciphertext, v, the matcher id, the secret-scan version, the mentions (count, then
      each), lease_scope, lease_epoch, batch_id, index in batch, batch size.
   Returns {event_id: (ciphertext, mentions, v, matcher, secret_scan, key_id, mac)}. The app inserts exactly that.
@@ -1052,6 +1061,10 @@ H3) still cover them, and stay as defence in depth for everything.
   takes). Lowering is refused the same way. So the only accepted attestation is one scanned against the current set.
 - REPLAY under another matcher or budget: the matcher id (which names the budget and the token cap) is in M; WPS38
   compares it with the tenant's.
+- NOT BOUND (review J M2; see "Review J" below): seq, prev_hash, hash, kind, actor, trust_origin, ts_event, idem_key,
+  req_hash and the decision fields. A sealed row can be withheld and inserted later at another position of its own
+  session chain; batch completeness (all indexes of a batch present) is not checked. Since v2 the target table is
+  attested, so an events attestation is refused in quarantine and the reverse (WPS41).
 - BATCH: batch_id, index and size are in M, so the attestation names the admission call it came from (audit: a batch
   is visible as admitted together). It bounds nothing across calls: an app may make many calls (no rate limit; the
   authority is the natural place for one, not built here).
@@ -1156,3 +1169,80 @@ column. Fixed here, before any test or code:
 - LIVE STATUS. t2-dev 16,938,356 KiB free at 2026-11-18T02:18:09Z (floor 20,971,520) and the run lock held by another
   owner: the live S-series is written but NOT RUN, neither red nor green; the offline receipts are not evidence for
   the store-side checks.
+
+## Review J (writepath-review-f36766c, relayed by main 2026-11-18): what changed, what the seal claims, stated limits
+
+Commits on feat/writepath-hardening after the reviewed 5811368: e087433 (D1 to D3), fcb2779 (N1), 8615532 (M2),
+b2b31be (N2, M11, M13), bd2fd17 (M8), 6e290ce (amendment H6e, alone), ec86d75 (M7), c8a3206 (M5, M6), and the commit
+that carries this section (M10 control, the statements below). Each fix carries a test that fails by assertion on the
+tree before it (receipts under results/failing-first/reviewJ/); the live tests run in one window at the final head.
+
+### What the seal attests (M2), stated so that it is true as written
+The seal authority's attestation makes the store refuse a row whose CONTENT, MENTIONS AND SCAN CLAIMS (identifier-set
+version, matcher, secret-scan version) were not produced by the authority for THIS tenant, event id, speaker, session
+scope, lease epoch and TARGET TABLE (events or quarantine, since wp-seal-v2). In those terms a wp_app holder cannot
+plant (WPS40), forge (WPS41) or replay an attestation onto another event, tenant, speaker, session, epoch or table
+(WPS41), nor below the current identifier set (WPS17). It does NOT bind seq, prev_hash, hash, kind, actor,
+trust_origin, ts_event, idem_key, req_hash or the decision fields: those remain the writer's word as before the
+authority, and a sealed row can be withheld and inserted later at another position of its own session chain. Batch
+completeness is not checked (index and count are attested, never verified as a set). "Cannot plant, forge or
+replay rows" without these qualifiers over-claims and is not used.
+
+### Fixed
+- N1 (material): quarantine_guard applies WPS38, WPS17 and WPS18 exactly as events_guard; the cascade records the
+  event ids of the quarantine rows it removes (quarantine_removed, owner-only, registered) and the guard refuses them
+  afterwards (WPS42); the residue counts quarantine rows scanned below the job's identifier set
+  (pg:quarantine_unscanned), so a held speaker's stale row makes completion wait. Supersedes the A8 sentence "a held
+  speaker's stale quarantine row is kept and not retried after release": it is kept and completion waits for it.
+  log.py reseals a fenced (WPS01) batch for quarantine, which is also a fresh scan.
+- N2 (material): the transport of the key service, the broker and the authority reads a request line with a bound
+  and a deadline from its first byte (idle connections between requests have none), sends replies under the same
+  deadline, and caps live connections per peer uid and in all; over a cap the accept loop answers busy before a
+  thread starts. Authority: 8 MiB lines (6 x call_bytes for the worst JSON escaping plus 1 KiB per event, asserted),
+  30 s, 8 per uid, 32 in all, so request buffers hold at most 256 MiB; key service and broker: 2 MiB, 30 s, 32, 128,
+  and the client splits tenant_hmac_many and keys under 1 MiB per request. A per-uid cap still lets one allowed uid
+  occupy its own slots (and, through the authority's CPU, every tenant: M4); there is no per-tenant rate limit.
+- M11: every client (key service, broker, authority) times out after 120 s (purge: plus its own timeout), closes the
+  connection and raises; the appender never blocks forever.
+- M13: the socket is created mode 0666 by umask at bind; no chmod by path follows a symlink. NOT CHECKED in code: the
+  directory holding the socket must be writable only by the service (an impostor that can bind the path while the
+  service is down receives plaintext; it cannot forge attestations). The lab's directories are 0755, service-owned.
+- M8: role keys rotate mint-first (successor minted and written, then the name's other active ids invalidated);
+  the broker logs and the D6 results carry key-id fingerprints, never ids.
+- M5: unregistered() lists large objects, data streams and .ds- backing indices; TEMPORARY is revoked from public on
+  both databases; S5 matches unlogged, if-not-exists, uppercase and quoted tables. Dynamic SQL in DO blocks remains
+  outside the static check; the runtime gate covers relkinds r, p, v, m, f.
+- M6: static S7 (any-case grants on wp_seal, alter default privileges in schema wp_seal, grant wp_owner to); live S8
+  covers every login role, including wp_verifier, wp_sealer and wp_broker, and wp_owner membership.
+- M7: amendment H6e; C9 opens the three role-key files and seal_key; C14a to C14d.
+
+### Stated limits (not built here)
+- M1, tenant authority (MATERIAL for client use): the seal authority, the key service and the broker trust every
+  allowed peer uid for EVERY tenant. Through the authority an allowed peer can ask whether a text contains another
+  tenant's declared identifiers (the mentions reply names subject ids), creates subject keys in any tenant
+  (keys(..., create=True)) and receives ciphertext under any tenant's subject keys. In the lab wp_app is one
+  all-tenant role with SELECT on subject_identifiers, so nothing new is exposed there; a client deployment needs a
+  mapping from peer identity to allowed tenants at all three services (design path item 2).
+- M3, symmetric key in the database (MATERIAL for client use): wp_seal.seal_keys holds the HMAC pads, which ARE the
+  key. Any Postgres superuser, any physical or base backup, any pg_dump of wp_seal and any replica can mint valid
+  attestations; the lab's superuser is the docker host. A client deployment needs an asymmetric signature verified in
+  the store (the database holds only a public key) or an HSM/KMS-held key with backups and replicas treated as signing
+  material. Server logging of the pads at install (wp_seal.install binds them as parameters): the lab server's
+  log_statement and log_parameter_max_length are read in the next live window and recorded in packet J; with
+  log_statement = all or mod and log_parameter_max_length = -1 the log would print them.
+- M4: see the CORRECTION under H10: about 28 s for one admitted event, about 32 s per call, more with retries.
+- M7: the default role-key mode (WP_BROKER unset) has NO tenant isolation; only broker-minted keys are tenant- and
+  epoch-scoped; a broker-mode deployment must not mint or place the role keys where the application runs.
+- M9: RH's reds at f36766c show that the hold-report API (wp_hold_report) was absent at that commit
+  ('42883' != '57014', None != 'pending'), not the defect itself (a hold rolled back by a slow report). The claim
+  rests on the greens (H16a, H16b).
+- M10: the PG disk grep finds plaintext stored uncompressed, in line or out of line; a value Postgres compresses
+  (about 2 KB and more, pglz) is visible only in its literal runs, so a repeated or long compressible plaintext can be
+  missed. Measured in the next window by registry_marker's toast_control (one table compressed, one storage
+  external); reported, not judged.
+- M12 (hypothesis, recorded, not changed): the rescan treats an event that fails authentication (InvalidTag) as
+  unscannable and removes it whole. A key service returning a wrong key of valid length (a restore, a bug) would make
+  every event of that speaker fail and be removed. Refusing instead when every event of a speaker fails would block
+  the erasure (WPS24) on deliberately corrupted rows; the trade-off (content removal versus erasure availability) is
+  main's to decide; until then the docstring's "an environmental fault must never remove content" holds for faults
+  that raise, not for a wrong key.

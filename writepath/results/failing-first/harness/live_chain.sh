@@ -116,6 +116,14 @@ a = db.admin(db="emlab")
 a.execute("create table if not exists pc_marker(x text)")
 if not a.execute("select 1 from pc_marker limit 1").fetchone():
     a.execute("insert into pc_marker values (%s)", ("zqn6secret plaintext positive control",))
+# review J M10: TOAST sensitivity. The same 20 KB compressible value in a table with default storage (compressed) and
+# one with storage external (out of line, uncompressed); registry_marker greps both (toast_control)
+for t, ext in (("pc_toast_c", False), ("pc_toast_x", True)):
+    a.execute(f"drop table if exists {t}")
+    a.execute(f"create table {t}(x text)")
+    if ext:
+        a.execute(f"alter table {t} alter column x set storage external")
+    a.execute(f"insert into {t} values (%s)", ("zqtoastpc-" * 2000,))
 a.execute("checkpoint")
 print("PC seeded", a.execute("select count(*) from pc_marker").fetchone()[0])' > "$O/PC.out" 2>&1; say "PC exit=$? $(tail -1 "$O/PC.out")";;
     SS) timeout 600 $PY results/failing-first/harness/seal_socket_e2e.py > "$O/SS.out" 2>&1; say "SS exit=$? $(tail -1 "$O/SS.out" | S | cut -c1-600)";;
