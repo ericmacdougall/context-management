@@ -807,25 +807,45 @@ class S1_OpenSession(_S1):
         except psycopg.Error as e:
             return {"error": e.sqlstate, "message": e.diag.message_primary}
 
+    def _blocked_by_any(self, waiter, holders, timeout=1.0):
+        t0 = time.time()
+        while time.time() - t0 < timeout:
+            if self.o.execute("select pg_blocking_pids(%s) && %s::int[]", (waiter, list(holders))).fetchone()[0]:
+                return True
+            time.sleep(0.02)
+        return False
+
     def _twin(self, how, a_end):
-        """A presents p in an open transaction; B presents p and waits for A (L8); the mutation must wait for B (and A); A ends
-        (`a_end`); B is then opened (A rolled back) or refused as a replay (A committed)."""
+        """A presents p in an open transaction; B presents p in a transaction of its own and waits for A (L8). The mutation starts
+        while B waits and must be blocked (by A or B: both pinned the row FOR SHARE, and the writer waits for the lockers one at a
+        time). A ends (`a_end`); B's call returns (opened when A rolled back, refused as a replay when A committed) with B's
+        transaction still open, and the mutation must now be blocked by B; it lands only when B ends."""
         f = enroll(self.o, T, "bob", "owner_ui")
         p = proof(f)
+        b = self.mut_idp
+        ap, bp, mp = self.pid(self.idp_t), self.pid(b), self.pid(self.mut_o)
         self.idp_t.execute("begin")
         self.assertIn("token", self.idp_t.execute("select dc.open_session(%s, 60)", (p,)).fetchone()[0])
-        bt, bo = self.start(lambda: self._open(p))
-        self.assertTrue(self.blocked_by(self.pid(self.idp), self.pid(self.idp_t)), "vacuous: B did not wait for A")
+        b.execute("begin")
+        bt, bo = self.start(lambda: self._open(p, b))
+        self.assertTrue(self.blocked_by(bp, ap), "vacuous: B did not wait for A")
         mut = {"factor": ("update dc.factors set revoked = true where factor = %s", (f.factor_id,)),
                "principal": ("update dc.principal set revoked = true where tenant = %s and pid = 'bob'", (T,))}.get(how)
         mt, waited = None, None
-        if mut:
-            mt, _mo = self.start(lambda: self.mut_o.execute(*mut))
-            waited = self.blocked_by(self.pid(self.mut_o), self.pid(self.idp), timeout=1.0)
-        self.idp_t.execute(a_end)
-        bt.join(20)
+        try:
+            if mut:
+                mt, _mo = self.start(lambda: self.mut_o.execute(*mut))
+                self.assertTrue(self._blocked_by_any(mp, (ap, bp)), "vacuous: the %s revocation did not wait while B waited" % how)
+            self.idp_t.execute(a_end)
+            bt.join(20)
+            self.assertFalse(bt.is_alive(), "B stuck")
+            if mt is not None:
+                waited = self.blocked_by(mp, bp, timeout=1.0) and mt.is_alive()
+        finally:
+            b.execute("commit")       # a refused call left B's transaction aborted: COMMIT then rolls it back
         if mt is not None:
             mt.join(20)
+            self.assertFalse(mt.is_alive(), "the mutation is stuck")
         return bo["r"], waited, f
 
     def test_twin_rolls_back(self):

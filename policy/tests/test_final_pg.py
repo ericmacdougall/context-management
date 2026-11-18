@@ -56,7 +56,9 @@ class _Wait(_Base):
 
     @staticmethod
     def pid(c):
-        return c.execute("select pg_backend_pid()").fetchone()[0]
+        """The backend pid from libpq, with no round trip: a query here would queue behind a call another thread is running on
+        the same connection, so a wait check would only start after that call ended and could never see it waiting."""
+        return c.info.backend_pid
 
     def h(self, tok):
         return __import__("hashlib").sha256(tok.encode()).hexdigest()
