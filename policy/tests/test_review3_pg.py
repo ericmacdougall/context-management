@@ -344,7 +344,7 @@ class Review3Rollback(unittest.TestCase):
             self.MIG.forward(self.o, {T: CFG}, os.environ["POL_PG_IDP_PASSWORD_FILE"])
         except psycopg.Error as e:
             self.fail("forward failed on a cluster without dc_evictor: %s %s" % (e.sqlstate, e.diag.message_primary))
-        self.assertEqual(self.o.execute("select proowner::regrole::text from pg_proc where oid = 'dc._evict(integer,integer)'::regprocedure")
+        self.assertEqual(self.o.execute("select proowner::regrole::text from pg_proc where oid = 'dc._evict(integer,integer,text[])'::regprocedure")
                          .fetchone()[0], "dc_evictor")
         self.assertTrue(self.o.execute("select pg_has_role('dc_evictor', 'pg_signal_backend', 'MEMBER')").fetchone()[0])
         self.assertEqual(self.o.execute("select rolcanlogin from pg_roles where rolname = 'dc_evictor'").fetchone()[0], False)

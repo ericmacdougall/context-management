@@ -134,6 +134,10 @@ records the sequence in the transaction-local setting `dc.trace`, which the enum
 | L7 | the tenant's chain-head row | | every submit (session path; the owner-only raw path takes it at the event insert, as before, so the B3 controls still demonstrate) |
 | L8 | nonce lock N(factor, nonce): advisory, class 1145241604 | | `open_session` |
 
+Not a level: the marker M(k) of section 4.4 (advisory class 1145241607, session-level, SHARED only) is taken by a call before it
+requests A or T exclusively and released on every exit of that call. No one ever takes it exclusively, so no request for it waits;
+it only tells `dc._evict` that its holder is a call in progress on k (review of 6b77354 N1).
+
 | Entry point | Sequence |
 |---|---|
 | `dc.submit` (propose, decide, supersede, resolve, retract, remark) | L0 (the 12 tables it can touch, `tenant` and `used_proofs` excepted: row exclusive; factors, principal, sessions row share); L1 A(caller) sh; L2.0-2.2; L3 T sh; L4; L5.0 head(req); L6 S(subjects); L7 |
@@ -232,23 +236,39 @@ further cap. Past it, the call fails with SQLSTATE 55P03: nothing is applied, it
     - `end_session`, `dc.revoke_factor`, and the tenant lock of a revoke, grant or erasure come after their pins and judgment
       already.
     - A refused revoker evicts nobody (`S44_Scope`).
-  - **Whom.** Eviction ends backends that meet all of these:
-    - they belong to THIS database;
-    - their session user is not a superuser and not a member of dc_owner (review of 2262eaa F2b: until then eviction matched the
-      user NAMES dc_app and dc_idp, so a login role that is a MEMBER of dc_app, the one-role-per-service pattern, was never
-      evicted and made its principal unrevocable; `F2b_MemberRole`);
-    - they are not the caller;
-    - they hold the lock (or its fence) SHARED or wait for it SHARED, or hold it EXCLUSIVELY while not themselves inside the lock
-      protocol.
+  - **Whom.** An exclusive request E on key k (A or T; F is k's fence) ends a backend B only if all of these hold, each read from
+    `pg_locks` (review of 6b77354 N1, N3, N4; the rule before it is described, and refuted, below):
+    - B belongs to THIS database, is not the caller, and its session user is not a superuser and not a member of dc_owner (review
+      of 2262eaa F2b: until then eviction matched the user NAMES dc_app and dc_idp, so a login role that is a MEMBER of dc_app,
+      the one-role-per-service pattern, was never evicted and made its principal unrevocable; `F2b_MemberRole`);
+    - (a) B held the lock E evicts for (k, or F when E could not take the fence), GRANTED, in transaction X, when E's request
+      began: `dc._snap` records `pid:virtualtransaction` of the granted holders just before each request. A backend that queued
+      behind E is not in it;
+    - (b) B still holds it, granted, in the same X, re-checked for B immediately before its signal. So B held it for at least
+      XWAIT within one transaction;
+    - (c) B is not a call in progress on k: it does not hold the marker M(k) (class 1145241607, key k, session-level SHARED, taken
+      by `dc._xlock` and `dc._xlock_caller` before they request k exclusively, released by `dc._unmark` on every exit of
+      `dc.submit` (revoke or grant), `dc.end_session`, `dc.revoke_factor` and `dc.erase_values`, from their exception handlers
+      too) together with k or F EXCLUSIVELY, granted.
 
-    "Inside the protocol" (review of 2262eaa H1) means: waiting right now for an A, T or fence lock of this database, or for a
-    backend it is evicting to exit (`BackendTermination`). That is a revocation in progress, bounded by its own rounds and expiry;
-    until then a later exclusive request on the same key (dc_idp's `end_session` of the target) evicted it and the revocation was
-    lost (`H1_RevocationInProgress`). An exclusive holder that waits for nothing (a revocation that applied and whose transaction
-    stays open) is a stalled holder and is evicted (`test_a_stalled_applied_revoke_is_still_evicted`). A backend waiting
-    EXCLUSIVELY is a queued revocation and is left alone (`test_a_queued_revoker_is_not_evicted`, which fails with that filter
-    removed). Owner, superuser and other-database backends are never evicted. A round that finds nothing to evict gives up with
-    55P03 (measured: 2.01 s against an owner holder).
+    The states of a call marked for k, and what (c) does with each: waiting for k and holding nothing of it (not a holder, never
+    ended); holding only F while it judges or evicts, including the 100 ms polls of `pg_terminate_backend` (spared); holding k
+    exclusively, parked on anything (a row lock, T, an eviction) (spared); returned with its transaction left open (unmarked: a
+    stalled holder, ended, `test_a_stalled_applied_revoke_is_still_evicted`). Two calls marked for the same key never end each other;
+    the later one gives up with 55P03 (retryable). A marker of another key spares nothing. A marked backend that holds k only SHARED
+    is ended (`N1_ModeRule`). Waiters, exclusive or shared, are never ended (`test_a_queued_revoker_is_not_evicted`). Owner,
+    superuser and other-database backends are never ended. A round that signals nobody gives up with 55P03 when every current holder
+    is spared (measured locally: about 2 s against an owner holder), and otherwise waits another round, whose snapshot includes a
+    holder that came after the last one.
+
+    The rule this replaces (review of 2262eaa H1, at 6b77354) spared an exclusive holder that was "inside the protocol", read as:
+    waiting for an A, T or fence lock, or `wait_event = 'BackendTermination'`. `dc._evict` runs as dc_evictor, which cannot read
+    `wait_event` of other roles' backends (it is NULL without `pg_read_all_stats`), so that clause never spared anyone, and a
+    revocation that was evicting, running or parked on a row lock was ended by a later `end_session`, `dc.revoke_factor` or second
+    revoke of the same target, and the revocation was lost (review of 6b77354 N1: 10 of 10 trials; `N1_ParkedRevocation`, red on
+    6b77354 in all six state and trigger combinations). The same rule spared ANY backend waiting for any A, T or fence lock, so an
+    admin holding T(a) exclusively while waiting for T(b) froze tenant a (N4, `N4_ParkedExclusive`), and it ended every ShareLock
+    row, waiters included, so a submit that queued behind a revoke was ended after it committed (N3, `N3_InnocentWaiter`).
   - **Lock identities (review of 2262eaa F1, F5).** Until then A and T used `hashtext(kind, tenant, name)`, one 32-bit space for
     every tenant, and an admin's revoke took A(target) exclusively for ANY target string. A tenant admin could search names offline
     whose key equals another tenant's principal, revoke one, and evict that principal's backends and fence its calls; a subject of
@@ -262,13 +282,21 @@ further cap. Past it, the call fails with SQLSTATE 55P03: nothing is applied, it
       a collision is a wait under the caller's own budget, never an eviction (S is not evictable).
     - Unchanged and disclosed: the nonce lock N (32-bit hash of a random nonce: a collision is a short wait) and the idempotency
       lock L4 (`hashtextextended`, 64 bits, over (tenant, principal): 2^-64 per pair, a wait only). Neither is evictable.
-    - A revoke takes A(target) exclusively only when the target is a principal of the caller's tenant, and a revoke or grant takes
-      T exclusively only when the rules would apply it (target exists; for a grant, the requirement exists and the target is not
-      revoked). Otherwise it takes T shared and the rules refuse it (`bad_event`) without waiting for or evicting anyone
-      (`F5_RefusedAuthorityChange`). If an authority change nevertheless applies without its exclusive lock (the target or
-      requirement appeared between the pre-read and the rules), the call fails with 55P03 and applies nothing.
-    - Residual: a duplicate or idempotent retry of a VALID revoke or grant still takes the exclusive locks (the pre-read does not
-      look at idempotency) and may evict, as the original did.
+    - A revoke takes A(target) exclusively, and a revoke or grant takes T exclusively, only when an unlocked pre-read predicts that
+      the call would apply it. Review of 2262eaa F5 checked only the rules' facts (target exists; for a grant, the requirement
+      exists and the target is not revoked). Review of 6b77354 N2 showed that six other refused shapes still took A and T
+      exclusively and evicted a bystander (a bad client_id, an unknown key, a label without a value, a grant with role owner, an
+      exact retry, a reused idempotency key), so the claim made here before ("refused without waiting for or evicting anyone") was
+      false for them. The pre-read now also runs the stage's body checks (`dc._body_refusal`, the same function the stage runs),
+      `dc._shape` of the event the stage builds, the idempotency lookup (an earlier event with the same key means `duplicate` or
+      `idem_conflict`) and the caller's own revocation. Every refusal the code can return for an admin's revoke or grant is listed,
+      with its source, in `N2_RefusedShapes`; each is refused without an exclusive request, so it waits for no exclusive holder and
+      evicts nobody (`N2_RefusedShapes`, `F5_RefusedAuthorityChange`). If an authority change nevertheless applies without its
+      exclusive lock (the target or requirement appeared between the pre-read and the rules), the call fails with 55P03 and
+      applies nothing.
+    - Residual: the prediction comes from an UNLOCKED pre-read. A change the pre-read predicts will apply, and that is refused
+      because the state changed during its wait (only owner SQL can revoke a target or remove a requirement), still took the
+      exclusive locks and may have evicted (review of 6b77354 probe X (b)).
   - **Prepared transactions (review of 2262eaa F2a).** A prepared transaction keeps its locks with no backend, so eviction cannot
     end it (`ROLLBACK PREPARED` needs an operator and cannot run inside a transaction block). ASSUMPTION (the fixer's choice): fail
     closed. `pol.pgcore.install` refuses a server with `max_prepared_transactions > 0`, and every API call (`dc._no2pc`) refuses
@@ -284,7 +312,8 @@ further cap. Past it, the call fails with SQLSTATE 55P03: nothing is applied, it
     transaction. It takes the fence BEFORE its judgment and its first eviction on every path (review of 2262eaa F3: the first
     round of a revoke's A(target) evicted without it, so a holder that reconnected at once re-took the lock behind the eviction and
     answered; `F3_FenceBeforeEviction`). When another backend holds the fence, the round evicts that backend if it is a stalled
-    holder of the fence and tries again next round. A call about to take that A or T shared first reads `pg_locks`. If the fence is held, the call refuses with 55P03
+    holder of the fence (by the same rule: never a call in progress marked for that key, `N1_ParkedRevocation` fence-only cases)
+    and tries again next round. A call about to take that A or T shared first reads `pg_locks`. If the fence is held, the call refuses with 55P03
     and does nothing (`S44_Fence`: under F_A the target's explain, submit and open_session refuse within 0.5 s and bob's calls
     answer; under F_T submits refuse and reads answer; control `S44_FenceControl` with `dc._fenced` a no-op). It never waits for
     the fence, so the lock order of 4.2 is unchanged for every call that does not evict. As a result, a later round can meet only
@@ -311,20 +340,37 @@ further cap. Past it, the call fails with SQLSTATE 55P03: nothing is applied, it
     2.11-2.12 s.
   - **Residuals (disclosed).**
     1. A backend ended by eviction loses its whole connection and its open transaction, including any unrelated work on it. For T
-       this can be a legitimate submit of another principal that held T longer than XWAIT. That caller sees a terminated
-       connection (57P01). Nothing of its transaction committed, and it can retry.
+       this can be a legitimate submit of another principal, but only one that held T for at least XWAIT within one transaction
+       (rules (a) and (b) above). Correction (review of 6b77354 N3): at 6b77354 this residual said the same, but the code ended
+       every ShareLock row, waiters included, so a submit that queued behind a revoke, was granted T for under 0.1 s and committed,
+       had its connection terminated afterwards. Remaining window: B can commit between the re-check (b) and the signal, a few
+       microseconds; then B's committed work stands and its connection is ended (57P01) before its next statement.
     2. While a revocation evicts, new calls are refused with 55P03 (retryable): the target's calls under fence F_A, or the tenant's
        calls under fence F_T.
     3. A stalled submitter also holds the chain-head row (L7). Other submits of its tenant wait until their own expiry and are
        refused. This lasts until a revoke, grant or erasure of that tenant evicts the staller through T, or a revoke of the staller
        evicts it through A. It is a denial of service ended by an operator's action, never a wrong decision. It is not measured.
     4. dc_owner may call `dc._evict` for any A or T key. dc_owner is the trusted owner role.
-    5. "Inside the protocol" is read from `pg_locks` and `pg_stat_activity` at the moment of eviction. A revocation in progress that
-       is between two waits (running plpgsql, a few microseconds) or applying (holding every lock, not waiting) looks like a stalled
-       exclusive holder; a concurrent exclusive request that has itself waited XWAIT may evict it then. Not observed in the tests;
-       not measured.
+    5. Correction (review of 6b77354 N1). This residual said that a revocation in progress was exposed only "between two waits (a
+       few microseconds)". That was false: the exemption it described never worked (dc_evictor cannot read `wait_event`), and a
+       revocation was exposed for its whole eviction loop (about 100 ms per stalled holder) and whenever it was parked on a row lock.
+       Now a call in progress is recognised by its marker, which does not depend on what it is doing at that moment. What remains:
+       a marker is released by the API function's exception handler, so it can leak only if an error escapes that handler itself
+       (for example a second cancel arriving inside it) and the client then rolls back to a savepoint and keeps its transaction.
+       A leaked marker spares only an EXCLUSIVE lock on its key that the same transaction took in an earlier, completed call, i.e.
+       an admin's applied revoke or grant (only an admin's call, `end_session` and `dc.revoke_factor` take markers). That admin can
+       then freeze its tenant's T, or a revoke target's A, until it is itself revoked: every call of that transaction holds
+       A(admin) SHARED, which no marker spares, so revoking the admin ends it (`N1_LeakBound`, run on a core whose `dc._unmark` is a
+       no-op). The same bound as N4 before the fix, reachable only through that race. Not observed; not measured.
     6. The policy API refuses to run while `max_prepared_transactions > 0` (F2a above).
     7. Within a tenant, two subject names collide on S with probability 2^-32 per pair (a wait only); N and L4 as above.
+    8. A refusal caused by state that changed after the unlocked pre-read (owner SQL only) may still have evicted (N2 above).
+    9. There is no migration from an already deployed R3-7 schema of the 2262eaa era (no `lockid` columns) to this one:
+       `pol.pgcore.install` replaces schema dc, and `ops/migrate_r3_7` refuses because `dc.apply_authority` is absent (review of
+       6b77354 N7). This matters only if such a database exists; none is known. The rollback restores the advisory ACL recorded
+       in `dc.migration_mark`, a table dc_owner can rewrite, as superuser; it now refuses a mark that names anything but a live
+       advisory-lock function or has a malformed entry, so the mark's text never reaches SQL (`N7_RollbackMark`: at 6b77354 a
+       tampered mark made the rollback grant `pg_read_file` to PUBLIC).
 
 ### 4.5 Deadlocks
 

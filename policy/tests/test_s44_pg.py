@@ -318,11 +318,11 @@ class S44_Scope(_S44):
                                                       join pg_roles b on b.oid = m.roleid where a.rolname = 'dc_evictor'""").fetchall()}
         self.assertEqual(member_of, {"pg_signal_backend"})
         owned = {f for (f,) in self.o.execute("select oid::regprocedure::text from pg_proc where proowner = 'dc_evictor'::regrole").fetchall()}
-        self.assertEqual(owned, {"dc._evict(integer,integer)"})
-        can = {r: self.o.execute("select has_function_privilege(%s, 'dc._evict(integer,integer)', 'EXECUTE')", (r,)).fetchone()[0]
+        self.assertEqual(owned, {"dc._evict(integer,integer,text[])"})
+        can = {r: self.o.execute("select has_function_privilege(%s, 'dc._evict(integer,integer,text[])', 'EXECUTE')", (r,)).fetchone()[0]
                for r in ("dc_app", "dc_idp", "dc_owner")}
         self.assertEqual(can, {"dc_app": False, "dc_idp": False, "dc_owner": True})
-        d = self.o.execute("select prosecdef, proconfig from pg_proc where oid = 'dc._evict(integer,integer)'::regprocedure").fetchone()
+        d = self.o.execute("select prosecdef, proconfig from pg_proc where oid = 'dc._evict(integer,integer,text[])'::regprocedure").fetchone()
         self.assertTrue(d[0])
         self.assertIn("search_path=pg_catalog, pg_temp", d[1] or [])
 
@@ -441,7 +441,7 @@ class S44_FenceControl(_Fence):
     8547b27 too, where nothing evicts."""
 
     def test_without_eviction_the_holder_blocks_the_revoke(self):
-        self.o.execute("create or replace function dc._evict(p_cls int, p_key int) returns int language sql as $$ select 0 $$")
+        self.o.execute("create or replace function dc._evict(p_cls int, p_key int, p_snap text[]) returns int language sql as $$ select 0 $$")
         self.unrevoke("alice")
         c, bp, _ = self.holder("alice", "idle_reset")
         r, dt = self.revoke("alice")
