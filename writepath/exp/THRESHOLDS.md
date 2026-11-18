@@ -1126,3 +1126,25 @@ any stop is unacknowledged. A stop is acknowledged only by disk_gate clear-stop 
 stop and never revalidates a run that stop voided. A legacy state/STOP file is ingested as a stop and left in place.
 (The ledger is implemented on the gate fixer's branch fix/writepath-gate; it governs runs once that branch is
 integrated here.)
+
+## Amendment H6c (2026-11-18, written before the run it governs; owner a5bed869; no threshold changes)
+An UNSTAMPED recorded run of exp.h_d6_broker R=5 on t2-dev, from a tree pinned by git archive at the commit that
+carries this amendment or a later one (the result names it), under the run lock with >= 20971520 KiB free at start, in
+the owner's live chain (results/failing-first/harness/live_chain.sh), NOT through runkit/launch_one.sh and with no
+disk-gate verdict claimed: the gate (fix/writepath-gate) is not yet reviewed, so no stamped run is made. It is judged
+by the H6 and H6a rules unchanged (fenced C1 to C11 and C13 hold 5/5 and C12 holds 5/5; the control, the shared
+projector-role-key build, accepts at least one C1 or C4 request 5/5; any INVALID-REQUEST case makes that case "not
+demonstrated"). It is NOT the stamped H6 result; that rerun waits for the reviewed gate. Changes since the
+superseded stamped run at 0110981 that this run exercises live for the first time: the alias CAS fix (b87d705, -w0
+layout) and the seal authority (projection's appends are sealed by the in-process authority with the operator's key).
+What is demonstrable on a Basic licence, and what is not (Elastic documentation read 2026-11-18):
+- DEMONSTRABLE: per-role API keys minted by a principal that is not itself an API key (the broker user, cluster
+  privilege manage_own_api_key), each with role descriptors naming only its own tenant's and epoch's alias names
+  (create-API-key API: index names are indices or patterns;
+  https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-security-create-api-key). Role-based access
+  control is part of Basic since 6.8.0 and 7.1.0 (https://www.elastic.co/blog/security-for-elasticsearch-is-now-free).
+  The deciding evidence is the lab cluster itself: its licence type is read and recorded with the run.
+- NOT USED, by an API rule (not a licence limit): a key created while authenticated with an API key "cannot have
+  any privileges" (same create-API-key page). The H1/H1a PA result ("derived API keys are not demonstrated on
+  Basic") is this rule; its attribution to the licence is corrected here; the result itself stands.
+- NOT AVAILABLE on Basic: field- and document-level security (paid; same blog post). The fence does not use it.
