@@ -751,7 +751,17 @@ holds no secrets. Fixes:
 - FS6: one versioned `LIMITS` constant, printed with every result and quoted by this note and the run-kit README;
   fragment classes (16 consecutive characters of a password-like value) and complete-match classes (key-store and
   derived keys, an `encoded` API key) are named apart; results/README.md states that committed sets have not been
-  rescanned with v3 or v4.
+  rescanned with v3 or v4. As built (`runkit/leak_scan.py` LIMITS, scanner LIMITS v4): "found = 16 consecutive
+  characters of one listed representation of a file-held secret (fragment class), or one complete representation of
+  a key-store or derived key or of an encoded API key (complete class), in one view; views are the original bytes,
+  NUL-free bytes, and unescape, percent-decode and whitespace removal in any order to depth 3, and gzip to depth 3.
+  Not found: pieces shorter than 16 characters (of a complete-class value: anything short of the whole), encrypted
+  content, compression other than gzip, gzip inside another encoding, deeper nesting, unlisted encodings, and values
+  outside the inventory (memory-only keys, SCRAM internals, rotated or destroyed values). Clearance rests on teardown
+  (runkit/clearance.py), not on this scan."
+- FS3 as built: SITES rows are (file, enclosing function, callee, count, what, coverage, register); uuid.uuid4 and
+  random.Random(seed) are left out by design (identifiers and reproducible test data, not credentials). On this
+  tree 12 register=True sites do not call the sink yet (H-1 to H-4).
 
 ### 7.6 The sink (wp/secret_sink.py, new in this branch; used once H-2 to H-6 land)
 `register(value, label)` adds a value (str or bytes; label is static text, never derived from the value) to this

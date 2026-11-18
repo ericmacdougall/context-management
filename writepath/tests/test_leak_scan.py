@@ -1,7 +1,8 @@
-"""Offline test of runkit/leak_scan.py (review A, A4 and A6; review D F4, F5, F6, F12): every representation of every
-secret the stream creates is found, non-secret controls are not, a hit exits 1, anything the scanner could not read or
-chose not to read exits 2, and nothing printed holds a candidate. All values are FAKE, generated here at run time;
-nothing prints a value (assertion messages name files and classes only).
+"""Offline test of runkit/leak_scan.py (review A, A4 and A6; review D F4, F5, F6, F12; review F FS1 to FS6): every
+representation of every secret the stream creates is found in every view, non-secret controls are not, a hit exits 1,
+anything the scanner could not read or chose not to read exits 2, nothing printed comes from the scanned tree, and the
+creation sites are checked by parsing, with counts. All values are FAKE, generated here at run time; nothing prints a
+value (assertion messages name files, functions and classes only).
 
 The scanner under test runs as a subprocess, the way the run kit runs it: this tree's runkit/leak_scan.py, or the file
 named in LEAK_SCAN_UNDER_TEST (runkit/failing_first.sh runs the dce5f07 blob, the scanner review A inspected). A fake
@@ -138,14 +139,44 @@ class Scan(unittest.TestCase):
         cls.env = dict(os.environ, PATH=f"{bindir}:{os.environ['PATH']}", FAKE_KS=str(cls.tmp / "keys.txt"),
                        FAKE_KS_TENANT=str(cls.tmp / "tenant_keys.txt"), FAKE_KS_LEGACY=str(cls.tmp / "legacy_keys.txt"),
                        FAKE_KS_FAIL=str(cls.tmp / "ks_fail"))
-        cls.rc, cls.out = cls.run_scan(home, res)
-        cls.hits = {pathlib.Path(ln.split()[1]).name for ln in cls.out.splitlines() if ln.startswith("HIT ")}
+        cls.mapdir = cls.tmp / "maps"
+        cls.mapdir.mkdir()
+        cls.rc, cls.out, m = cls.run_mapped(home, res)
+        if m is not None:             # scanner v4 (review F FS4): opaque output, names only in the 0600 map
+            cls.hits = {pathlib.Path(m["files"][n]).name for n in re.findall(r"(?m)^HIT file #(\d+)", cls.out)}
+        else:                         # an older scanner prints paths
+            cls.rc, cls.out = cls.run_scan(home, res)
+            cls.hits = {pathlib.Path(ln.split()[1]).name for ln in cls.out.splitlines() if ln.startswith("HIT ")}
 
     @classmethod
     def run_scan(cls, home, *dirs, env=None, extra=(), timeout=600):
         r = subprocess.run([sys.executable, SCANNER, str(home), *map(str, dirs), *extra], capture_output=True,
                            text=True, env=env or cls.env, timeout=timeout)
         return r.returncode, r.stdout + r.stderr
+
+    @classmethod
+    def run_mapped(cls, home, *dirs, **kw):
+        """A scan with --map: (rc, output, the map as JSON, or None when the scanner wrote none)."""
+        p = cls.mapdir / f"map-{secrets.token_hex(4)}.json"
+        rc, out = cls.run_scan(home, *dirs, extra=("--map", str(p)) + tuple(kw.pop("extra", ())), **kw)
+        return rc, out, (json.loads(p.read_text()) if p.exists() else None)
+
+    def scanner(self):
+        spec = importlib.util.spec_from_file_location(f"leak_scan_under_test_{secrets.token_hex(3)}", SCANNER)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod
+
+    def mirror(self, name):
+        """The Python files of this tree (tests/ and results/ left out) copied to a fresh directory, for mutation."""
+        d = self.tmp / name
+        for f in HERE.rglob("*.py"):
+            rel = f.relative_to(HERE)
+            if rel.parts[0] in ("tests", "results"):
+                continue
+            (d / rel).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(f, d / rel)
+        return d
 
     def leaked(self, out):
         """Indexes of the fake values with a 12-character fragment in `out` (never the fragments themselves)."""
@@ -285,51 +316,158 @@ class Scan(unittest.TestCase):
         rc, out = self.run_scan(self.home, self.tmp / "clean", extra=("--no-keystore", f"see {self.key}"))
         self.assertEqual(self.leaked(out), [], "the scanner printed a waiver reason holding a secret value")
 
-    # ---- review D F5 and F6: inventory from the creation sites, stated limits
-    def test_every_creation_site_is_in_the_inventory_table(self):
-        spec = importlib.util.spec_from_file_location("leak_scan_under_test", SCANNER)
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
-        table = getattr(mod, "SITES", None)
-        self.assertIsNotNone(table, "the scanner has no creation-site table (SITES)")
-        # Every file of writepath except tests/ and results/ (fixtures and receipts) and the scanner itself (its
-        # self-test makes fake values). Python, shell and SQL forms.
-        pat = re.compile(r"token_(bytes|hex|urlsafe)\(|urandom\(|hmac\.new\(|hmac\.digest\(|SystemRandom|"
-                         r"secrets\.choice\(|encrypt_password\(|elasticsearch-(reset-password|service-tokens|"
-                         r"create-enrollment-token)|_security/(api_key|service|user)\b.*\b(POST|PUT)\b|"
-                         r"\b(POST|PUT)\b.*_security/(api_key|service|user)\b|/dev/u?random|openssl rand|"
-                         r"gen_random_bytes|gen_random_uuid|POSTGRES_PASSWORD|ELASTIC_PASSWORD|"
-                         r"random\.(rand|choice|getrandbits)")
-        found, unlisted = set(), []
+    # ---- review D F5 and F6, review F FS3: inventory from the creation sites, found structurally
+    LINT = re.compile(r"token_(bytes|hex|urlsafe)\(|urandom\(|hmac\.new\(|hmac\.digest\(|SystemRandom|"
+                      r"secrets\.choice\(|encrypt_password\(|elasticsearch-(reset-password|service-tokens|"
+                      r"create-enrollment-token)|_security/(api_key|service|user)\b.*\b(POST|PUT)\b|"
+                      r"\b(POST|PUT)\b.*_security/(api_key|service|user)\b|/dev/u?random|openssl rand|"
+                      r"gen_random_bytes|gen_random_uuid|POSTGRES_PASSWORD|ELASTIC_PASSWORD|"
+                      r"random\.(rand|choice|getrandbits)")
+
+    def test_every_python_creation_site_is_in_the_table_with_its_count(self):
+        mod = self.scanner()
+        check = getattr(mod, "check_sites", None)
+        self.assertIsNotNone(check, "the scanner has no structural creation-site check (check_sites)")
+        self.assertEqual(check(HERE), [], "Python creation sites differ from leak_scan.SITES")
+
+    def test_mutated_creation_sites_are_named(self):
+        # review F FS3: a duplicate in another function, a second call in a listed function, an aliased generator and
+        # a call split across lines, each in wp/setup.py of a copy of this tree
+        mod = self.scanner()
+        check = getattr(mod, "check_sites", None)
+        self.assertIsNotNone(check, "the scanner has no structural creation-site check (check_sites)")
+        line = "pw = secrets.token_urlsafe(32)"
+        cases = {
+            "_extra": lambda s: s + "\n\ndef _extra():\n    pw = secrets.token_urlsafe(32)\n    return pw\n",
+            "_ensure_roles": lambda s: s.replace(line, line + "; pw2 = secrets.token_urlsafe(32)", 1),
+            "_aliased": lambda s: s + "\n\nfrom secrets import token_urlsafe as _t\n\n\ndef _aliased():\n    return _t(32)\n",
+            "_multi": lambda s: s + "\n\ndef _multi():\n    return secrets.token_urlsafe(\n        32)\n",
+        }
+        for fn, mutate in cases.items():
+            with self.subTest(mutation=fn):
+                d = self.mirror(f"mut-{fn}")
+                p = d / "wp" / "setup.py"
+                src = p.read_text()
+                self.assertIn(line, src, "the mutation's anchor line is gone from wp/setup.py")
+                p.write_text(mutate(src))
+                probs = check(d)
+                self.assertTrue(any("wp/setup.py" in x and fn in x for x in probs),
+                                f"the mutation in {fn} was not reported: {probs}")
+
+    def test_shell_and_sql_creation_lines_lint(self):
+        # a regex over shell and SQL text: a lint, not proof (GATE-DESIGN 7.5 FS3)
+        mod = self.scanner()
+        lint = getattr(mod, "LINT_SITES", None) or [(s[0], s[1]) for s in mod.SITES]
+        unlisted = []
         for f in sorted(HERE.rglob("*")):
             rel = str(f.relative_to(HERE))
-            if (f.suffix not in (".py", ".sh", ".sql") or not f.is_file() or rel.split("/")[0] in ("tests", "results")
-                    or rel == "runkit/leak_scan.py"):
+            if f.suffix not in (".sh", ".sql") or not f.is_file() or rel.split("/")[0] in ("tests", "results"):
                 continue
-            for n, line in enumerate(f.read_text(errors="replace").splitlines(), 1):
-                if not pat.search(line):
-                    continue
-                m = [i for i, s in enumerate(table) if s[0] == rel and s[1] in line]
-                if m:
-                    found.update(m)
-                else:
+            for n, ln in enumerate(f.read_text(errors="replace").splitlines(), 1):
+                if self.LINT.search(ln) and not any(s[0] == rel and s[1] in ln for s in lint):
                     unlisted.append(f"{rel}:{n}")
-        self.assertEqual(unlisted, [], "secret creation or derivation sites missing from leak_scan.SITES")
-        stale = [f"{s[0]} {s[1]!r}" for i, s in enumerate(table) if i not in found and not s[0].startswith("legacy:")]
-        self.assertEqual(stale, [], "leak_scan.SITES entries that match no line any more")
-        # the legacy write path's creation sites, from its own commit when this checkout has the history
-        legacy = [s for s in table if s[0].startswith("legacy:")]
-        self.assertTrue(legacy, "the legacy write path's key store (old_repro) is not in leak_scan.SITES")
+        self.assertEqual(unlisted, [], "shell or SQL creation lines missing from the scanner's lint table")
+
+    def test_legacy_write_path_sites(self):
+        mod = self.scanner()
+        lint = getattr(mod, "LINT_SITES", None) or [(s[0], s[1]) for s in mod.SITES]
+        legacy = [s for s in lint if s[0].startswith("legacy:")]
+        self.assertTrue(legacy, "the legacy write path's key store (old_repro) is not in the scanner's tables")
         for _, commit, path in {tuple(s[0].split(":", 2)) for s in legacy}:
             r = subprocess.run(["git", "-C", str(HERE), "show", f"{commit}:{path}"], capture_output=True, text=True)
-            if r.returncode != 0:
-                continue                                # no history here (an extracted tree): checked in the repo
+            if r.returncode != 0:     # review F: said, not silent
+                self.skipTest(f"NOT CHECKED: no history for {commit}:{path} here (an extracted tree); run in the repo")
             lines = r.stdout.splitlines()
-            unl = [n for n, ln in enumerate(lines, 1) if pat.search(ln) and
+            unl = [n for n, ln in enumerate(lines, 1) if self.LINT.search(ln) and
                    not any(s[1] in ln for s in legacy if s[0] == f"legacy:{commit}:{path}")]
-            self.assertEqual(unl, [], f"creation sites in {commit}:{path} missing from leak_scan.SITES")
+            self.assertEqual(unl, [], f"creation sites in {commit}:{path} missing from the scanner's tables")
             gone = [s[1] for s in legacy if s[0] == f"legacy:{commit}:{path}" and not any(s[1] in ln for ln in lines)]
-            self.assertEqual(gone, [], f"leak_scan.SITES entries that match no line of {commit}:{path}")
+            self.assertEqual(gone, [], f"table entries that match no line of {commit}:{path}")
+
+    def test_no_issuer_side_check_is_claimed(self):
+        # review F FS2: the broker and the probe never checked their output with find(); the claim is withdrawn
+        mod = self.scanner()
+        claims = [s for s in mod.SITES if "checks its own output" in " ".join(map(str, s))]
+        self.assertEqual(claims, [], "SITES still claims an issuer-side check that does not exist")
+        self.assertNotIn("check their own output", (HERE / "runkit" / "README.md").read_text())
+
+    # ---- review F FS1: every intermediate view is searched
+    def test_unicode_escaped_password_with_a_percent_is_found_and_never_printed(self):
+        home = self.tmp / "home_pct"
+        shutil.copytree(self.home, home)
+        pw = secrets.token_urlsafe(8)[:8] + "%41" + secrets.token_urlsafe(9)[:9]   # under 16 unchanged chars per side
+        (home / "secrets" / "pw_percent").write_text(pw + "\n")
+        esc = "".join("\\u%04x" % ord(c) for c in pw)
+        d = self.fresh("escaped_percent")
+        (d / "log.json").write_text('{"note": "' + esc + '"}\n')
+        rc, out = self.run_scan(home, d)
+        self.assertEqual(rc, 1, "a password written as JSON unicode escapes, holding '%41', was not found")
+        rc, out = self.run_scan(home, self.tmp / "clean", extra=("--no-keystore", f"see {esc}"))
+        self.assertFalse(any(esc[j:j + 12] in out for j in range(len(esc) - 11)),
+                         "the scanner printed an escaped password (in a waiver reason)")
+
+    # ---- review F FS4: no text from the scanned tree is printed; ids and offsets only
+    def test_near_complete_key_and_short_fragment_in_names_are_never_printed(self):
+        d = self.fresh("near_complete")
+        kms = self.values[7]
+        names = [kms[:63], f"x{self.broker[2:17]}y"]          # 63 of 64 hex characters; a 15-character fragment
+        for n in names:
+            (d / n).write_text("nothing inside\n")
+            (d / n).chmod(0)
+        (d / "hit.log").write_text(f"pw {self.broker}\n")
+        try:
+            if os.access(d / names[0], os.R_OK):
+                self.skipTest("running as a user who can read a mode-000 file")
+            rc, out = self.run_scan(self.home, d)
+        finally:
+            for n in names:
+                (d / n).chmod(0o600)
+        self.assertEqual(self.leaked(out), [], "the output holds a fragment of an inventoried value (indexes only)")
+        self.assertNotIn("hit.log", out, "the output names a file of the scanned tree")
+        self.assertNotIn(str(d), out, "the output holds a path of the scanned tree")
+
+    def test_hit_lines_are_ids_and_offsets(self):
+        self.assertTrue(re.search(r"(?m)^HIT file #\d+ (name )?view \d+ offset \d+ inventory v\d+ class \S+$", self.out),
+                        "hits are not reported as file number, view, offset, inventory id and class")
+        self.assertNotIn(str(self.tmp), self.out, "the output holds a path of the scanned tree")
+
+    def test_map_is_private_and_never_inside_a_scanned_root(self):
+        d = self.fresh("mapped")
+        rc, out = self.run_scan(self.home, d, extra=("--map", str(d / "map.json")))
+        self.assertEqual(rc, 2, "a map inside a scanned root must be refused")
+        self.assertFalse((d / "map.json").exists(), "the map was written inside a scanned root")
+        p = self.mapdir / "private.json"
+        rc, out = self.run_scan(self.home, d, extra=("--map", str(p)))
+        self.assertTrue(p.exists(), "no map written with --map")
+        self.assertEqual(os.stat(p).st_mode & 0o777, 0o600, "the map is not private (0600)")
+        m = json.loads(p.read_text())
+        self.assertIn(str(d / "clean.json"), m["files"].values())
+        self.assertEqual(self.leaked(json.dumps(m)), [], "the map holds a secret value")
+
+    # ---- review F FS5: every requested root's own name is searched
+    def test_requested_root_names_are_searched(self):
+        frag = self.broker[2:24]
+        empty = self.tmp / f"empty-{frag}"
+        empty.mkdir()
+        alias = self.tmp / f"alias-{frag}"
+        alias.symlink_to(self.tmp / "clean", target_is_directory=True)
+        for root in (empty, alias):
+            with self.subTest(root=root.name[:5]):
+                rc, _ = self.run_scan(self.home, self.tmp / "clean", root)
+                self.assertEqual(rc, 1, "a requested root whose name holds a secret value was not a hit")
+
+    # ---- review F FS6: one versioned statement of the limits
+    def test_limits_are_one_versioned_statement(self):
+        mod = self.scanner()
+        lim = mod.LIMITS
+        self.assertTrue(lim.startswith("LIMITS v4"), "the scanner's limits are not versioned")
+        for part in ("16 consecutive characters", "complete", "gzip inside another encoding", "depth 3"):
+            self.assertIn(part, lim, f"the limits do not state: {part}")
+        rc, out = self.run_scan(self.home, self.tmp / "clean")
+        self.assertIn(lim, out, "the scan does not print its limits")
+        self.assertIn(lim, (HERE / "runkit" / "README.md").read_text(), "runkit/README.md does not quote the limits")
+        self.assertIn("LIMITS v4", (HERE / "runkit" / "GATE-DESIGN.md").read_text())
+        self.assertIn("not been rescanned with scanner v3 or v4", (HERE / "results" / "README.md").read_text())
 
     def test_clearance_states_the_split_rule_and_limits(self):
         rc, out = self.run_scan(self.home, self.tmp / "clean")

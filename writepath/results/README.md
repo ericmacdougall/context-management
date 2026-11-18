@@ -14,8 +14,10 @@ scanners before v2 (`runkit/leak_scan.py` at dce5f07 and earlier), and it is qua
   (`failing-first/reviewA-a4-leak_scan-dce5f07.red.out`).
 - No scan, of any version, can check values rotated or destroyed since a run, keys minted only in memory by the
   broker or a probe, or SCRAM verifiers.
-- **No result set in this folder has been rescanned with scanner v2.** A rescan is recorded here separately, with
-  its date, scanner sha256, inventory counts and exit status.
+- **No result set in this folder has been rescanned with a scanner later than dce5f07.** Each set has
+  not been rescanned with scanner v3 or v4 (review F FS6), nor with v2. A rescan is recorded here separately, with
+  its date, scanner sha256, inventory counts and exit status. These sets predate clearance by teardown (runkit/GATE-DESIGN.md 7): no teardown receipt covers them,
+  so they keep the limits stated here.
 
 So this folder makes no unqualified "no secret values" claim; the claim is limited to what the earlier scanners covered.
 
