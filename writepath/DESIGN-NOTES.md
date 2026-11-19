@@ -1443,8 +1443,13 @@ Receipts on t2-dev under ~/emlab2-16096/wphard/windows-c6d3e85/ (L2, R1, R2-cont
   exit 0 for all four. The probe's server is keysvc.Server with the authority's bounds, not a full authority process.
 - R3 chain judge, live: L2 judged every step and failed RS and RH on "Ran 47, expected 42" (exit 3) with the stale
   signatures, which is the judge catching a lost or added test; RS and RH were then re-signed from L2's outputs
-  (n1c2's text set by hand from the same traceback). XB red with its signature. A chain with every step as declared at
-  the re-signed head is owed by the next run (L3).
+  (n1c2's text set by hand from the same traceback). XB red with its signature. Chain L3 at 735e258 (the re-signed
+  head; windows-735e258/L3.out): 14 steps, every step as declared, CHAIN OK (exit 0): G1 78, G2 47 and G3 3 OK; XB,
+  RS and RH red with their signatures; M3 holds (2/0 on the success arms); D6 enable exit 0, licence 200 basic
+  active, fenced 5/5, control 5/5 (h_d6_broker.2f45a50217db6b8a.json, limits without the read claim); oom_kill 0 for
+  both stores at every step. Not shown live: a mutated red that the judge must refuse (offline DR11 to DR19 only).
+- Receipts copied into results/failing-first/live-J/review42-735e258/ (home paths as ~, the stream's leak scan 0 of
+  49, MANIFEST.sha256). Elasticsearch after L3: 60 indices, every one under this stream's wp16096 prefix.
 - R5: oom_kill read per step for both stores, 0 throughout (the ES container id changed at D6's enable; the judge
   takes the new id from 0).
 - R7 live (L2/M3.out): success_control 2 of 2 pads found, success_quiet 0 of 2, holds true.
