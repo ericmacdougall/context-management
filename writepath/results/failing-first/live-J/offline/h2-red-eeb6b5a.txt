@@ -1,0 +1,39 @@
+h_d2 helpers RED at eeb6b5a (35eee02 removed _root; h_d6_broker and seal_uids_e2e still call it) with the new tests/test_h_d2_helpers.py
+test_h2h1_prep_mounts (tests.test_h_d2_helpers.Helpers) ... ok
+test_h2h2_witness_read_only (tests.test_h_d2_helpers.Helpers) ... ok
+test_h2h3_whole_experiment_helper_runs (tests.test_h_d2_helpers.Helpers) ... h_d2_uids {'fenced_holds': '0/0', 'control_violated': '0/0', 'pass': True}
+ok
+test_h2h4_mount_points_are_emptied_not_removed (tests.test_h_d2_helpers.Helpers) ... ok
+test_h2h5_d6_uses_the_named_helpers (tests.test_h_d2_helpers.Helpers) ... ERROR
+test_h2h6_every_h2_attribute_the_orchestrators_use_exists (tests.test_h_d2_helpers.Helpers) ... FAIL
+
+======================================================================
+ERROR: test_h2h5_d6_uses_the_named_helpers (tests.test_h_d2_helpers.Helpers)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/73716864-6b3b-4deb-94ef-8ed2c8432e4a/agent-a5bed86994269066b/red-eeb/writepath/tests/test_h_d2_helpers.py", line 116, in test_h2h5_d6_uses_the_named_helpers
+    D.prepare("fenced")
+  File "~/.agent-harness/work/73716864-6b3b-4deb-94ef-8ed2c8432e4a/agent-a5bed86994269066b/red-eeb/writepath/exp/h_d6_broker.py", line 354, in prepare
+    H2._root("\n".join(lines))
+AttributeError: module 'exp.h_d2_uids' has no attribute '_root'
+
+======================================================================
+FAIL: test_h2h6_every_h2_attribute_the_orchestrators_use_exists (tests.test_h_d2_helpers.Helpers)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/73716864-6b3b-4deb-94ef-8ed2c8432e4a/agent-a5bed86994269066b/red-eeb/writepath/tests/test_h_d2_helpers.py", line 135, in test_h2h6_every_h2_attribute_the_orchestrators_use_exists
+    self.assertEqual(sorted(a for a in used if not hasattr(H, a)), [], f)
+AssertionError: Lists differ: ['_root'] != []
+
+First list contains 1 additional elements.
+First extra element 0:
+'_root'
+
+- ['_root']
++ [] : exp/h_d6_broker.py
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.036s
+
+FAILED (failures=1, errors=1)
+exit=1

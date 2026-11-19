@@ -1,0 +1,27 @@
+chain judge v2 GREEN: worktree live_chain.sh, expected-red/ and tests (8c5d513 + v2 judge); t2-dev 2026-11-19T02:08:43Z
+test_dr10_expected_red_with_its_signature_passes (tests.test_live_chain_disk.ChainDisk.test_dr10_expected_red_with_its_signature_passes) ... ok
+test_dr11_red_for_another_reason_fails_the_chain (tests.test_live_chain_disk.ChainDisk.test_dr11_red_for_another_reason_fails_the_chain) ... ok
+test_dr11b_an_extra_failure_fails_the_chain (tests.test_live_chain_disk.ChainDisk.test_dr11b_an_extra_failure_fails_the_chain) ... ok
+test_dr11c_the_kind_is_pinned (tests.test_live_chain_disk.ChainDisk.test_dr11c_the_kind_is_pinned) ... ok
+test_dr11d_names_are_matched_whole (tests.test_live_chain_disk.ChainDisk.test_dr11d_names_are_matched_whole) ... ok
+test_dr11e_the_committed_signatures_parse (tests.test_live_chain_disk.ChainDisk.test_dr11e_the_committed_signatures_parse) ... ok
+test_dr12_red_step_without_signature_file_fails_the_chain (tests.test_live_chain_disk.ChainDisk.test_dr12_red_step_without_signature_file_fails_the_chain) ... ok
+test_dr13_mixed_chain_prints_every_step_and_fails_on_one (tests.test_live_chain_disk.ChainDisk.test_dr13_mixed_chain_prints_every_step_and_fails_on_one) ... ok
+test_dr14_all_steps_as_declared (tests.test_live_chain_disk.ChainDisk.test_dr14_all_steps_as_declared) ... ok
+test_dr15_verdict_fail_with_exit_0_fails_the_chain (tests.test_live_chain_disk.ChainDisk.test_dr15_verdict_fail_with_exit_0_fails_the_chain) ... ok
+test_dr1_starts_at_12_gb (tests.test_live_chain_disk.ChainDisk.test_dr1_starts_at_12_gb) ... ok
+test_dr2_refuses_at_9_gb (tests.test_live_chain_disk.ChainDisk.test_dr2_refuses_at_9_gb) ... ok
+test_dr2b_exact_boundary (tests.test_live_chain_disk.ChainDisk.test_dr2b_exact_boundary) ... ok
+test_dr3_stops_at_8_gb_during_a_step (tests.test_live_chain_disk.ChainDisk.test_dr3_stops_at_8_gb_during_a_step) ... ok
+test_dr5_grouped_step_runs_nothing_after_the_stop (tests.test_live_chain_disk.ChainDisk.test_dr5_grouped_step_runs_nothing_after_the_stop) ... ok
+test_dr6_watermark_line_voids_the_step (tests.test_live_chain_disk.ChainDisk.test_dr6_watermark_line_voids_the_step) ... ok
+test_dr7_rp_rotates_inside_the_window (tests.test_live_chain_disk.ChainDisk.test_dr7_rp_rotates_inside_the_window) ... ok
+test_dr8_failing_pass_step_fails_the_chain (tests.test_live_chain_disk.ChainDisk.test_dr8_failing_pass_step_fails_the_chain) ... ok
+test_dr8b_failing_unittest_step_fails_the_chain (tests.test_live_chain_disk.ChainDisk.test_dr8b_failing_unittest_step_fails_the_chain) ... ok
+test_dr9_expected_red_that_goes_green_fails_the_chain (tests.test_live_chain_disk.ChainDisk.test_dr9_expected_red_that_goes_green_fails_the_chain) ... ok
+
+----------------------------------------------------------------------
+Ran 20 tests in 180.636s
+
+OK
+exit=0

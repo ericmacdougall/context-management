@@ -1,0 +1,7 @@
+# offline modules from a working-tree copy (h2fix-focused), run 2026-11-19T02:03:01Z: python -m unittest tests.test_h_d2_helpers tests.test_h2_probe tests.test_stopsig tests.test_d6_descriptors tests.test_keysvc tests.test_sealer tests.test_setup_roles tests.test_store_tmpfs tests.test_m3_pad_log
+..h_d2_uids {'fenced_holds': '0/0', 'control_violated': '0/0', 'pass': True}
+........................................
+----------------------------------------------------------------------
+Ran 42 tests in 4.745s
+
+OK

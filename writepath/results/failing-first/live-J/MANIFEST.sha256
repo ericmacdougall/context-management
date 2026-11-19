@@ -1,10 +1,14 @@
 b46240c1463ec9199cdae80b76f05affa0430806469d936d093d5e176ed48b7b  ./offline/chain-green.txt
 456cc407803ca999c0954b26577a0a8bdbdf5dbdada745c7b9cc1730c56f53ed  ./offline/chain-red-6d83f6c.txt
+32adff5a670513004cc8db844bd6938117ad545986fb2921ca80dbe62f05cc68  ./offline/chain2-green.txt
+064d4f1d12e85bb8bbd077f3e5b9204f93453ea2a4fba5f1f83fafea9e9b3b16  ./offline/chain2-red-8c5d513.txt
 b848e5f1b84828a924e04307f72b795c6267eb013b9853fcae5e94cd798b2a2b  ./offline/dc-green.txt
 75b667d9c206279761e7dc0160ee66b863d815da7365083cb73b7efa4d75822a  ./offline/dc-red-1ffbfa1.txt
 ae9a03c62adf2744b22652182e867279e7ed3cede0ba27d7a86b09091adc5ac6  ./offline/h2-green.txt
 3f9505c0cf567dafed80822251b0da2319e13fb8a9d29102511767cb0f43ca28  ./offline/h2-red-6d83f6c.txt
+ffcffb792f30424b817cf9d53f0886cd778783abdbf6fc4c63aae310f7d8d75d  ./offline/h2-red-eeb6b5a.txt
 1dd0affcb50797042c1d67c31666c3673826a5464468f7d2b7f9513e7c7b5a13  ./offline/h2-smoke.txt
+11e4ee9de15b691fa3ed05ec8f084299e4b7914aba3c979bd42fa0437dbfe48b  ./offline/h2fix-focused.txt
 4346a23da0beb3b25e74dbf0a6bf8db11735109df650cc79038102e10d94611d  ./offline/m3-green.txt
 2b666664ca18e1d83b2d9dab7158eed08308efaf15a64dfb6c317d0504d50429  ./offline/rp-green.txt
 6e7b3107ecbdc49bd8ae76a2104103c19c019a0a97d3fdf7f6534ccdfcc950d3  ./offline/rp-red-778bc42.txt

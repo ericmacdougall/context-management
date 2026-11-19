@@ -1203,7 +1203,9 @@ the gate side has its allow entries for these helpers (main's decision).
 ## Amendment H6f (2026-11-19, main's finding on window A at 1ffbfa1; owner a5bed869; no threshold changes)
 Source: main's relay ("Your chain exited 0 for window A although D6 exited 1"). The owner's live chain
 (results/failing-first/harness/live_chain.sh) judges every step against a declared outcome and exits 3 on any
-mismatch: pass for every step except XB, RS, RH and RX, which are red with a signature (a non-zero exit AND every test
-named in results/failing-first/harness/expected-red/<step>.txt failing). A red step that passes, a red without its
-signature, a missing signature file or an unknown step is a mismatch. The chain's exit status is not a verdict of any
-H-amendment; each experiment's own verdict rule stands.
+mismatch: pass for every step except XB, RS, RH and RX, which are red with a signature (a non-zero exit AND the
+step's failing tests exactly the "<FAIL|ERROR> <test>" lines of results/failing-first/harness/expected-red/<step>.txt:
+kind pinned, nothing missing, nothing extra). P1 and P2 pass only with exit 0 AND their PASS verdict line (both
+programs exit 0 whatever their verdict). A red step that passes or fails otherwise, a missing signature file (RX has
+none) or an unknown step is a mismatch. The chain's exit status is not a verdict of any H-amendment; each
+experiment's own verdict rule stands. (Text revised at 7c3a83f, before any run under this amendment.)

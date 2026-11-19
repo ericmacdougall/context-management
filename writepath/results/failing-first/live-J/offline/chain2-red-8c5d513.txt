@@ -1,0 +1,104 @@
+chain judge v2 RED: live_chain.sh of 8c5d513 (first judge) with the v2 tests and kind-pinned signatures; t2-dev 2026-11-19T02:06:02Z
+test_dr10_expected_red_with_its_signature_passes (tests.test_live_chain_disk.ChainDisk.test_dr10_expected_red_with_its_signature_passes) ... FAIL
+test_dr11_red_for_another_reason_fails_the_chain (tests.test_live_chain_disk.ChainDisk.test_dr11_red_for_another_reason_fails_the_chain) ... FAIL
+test_dr11b_an_extra_failure_fails_the_chain (tests.test_live_chain_disk.ChainDisk.test_dr11b_an_extra_failure_fails_the_chain) ... FAIL
+test_dr11c_the_kind_is_pinned (tests.test_live_chain_disk.ChainDisk.test_dr11c_the_kind_is_pinned) ... FAIL
+test_dr11d_names_are_matched_whole (tests.test_live_chain_disk.ChainDisk.test_dr11d_names_are_matched_whole) ... FAIL
+test_dr11e_the_committed_signatures_parse (tests.test_live_chain_disk.ChainDisk.test_dr11e_the_committed_signatures_parse) ... FAIL
+test_dr12_red_step_without_signature_file_fails_the_chain (tests.test_live_chain_disk.ChainDisk.test_dr12_red_step_without_signature_file_fails_the_chain) ... ok
+test_dr13_mixed_chain_prints_every_step_and_fails_on_one (tests.test_live_chain_disk.ChainDisk.test_dr13_mixed_chain_prints_every_step_and_fails_on_one) ... ok
+test_dr14_all_steps_as_declared (tests.test_live_chain_disk.ChainDisk.test_dr14_all_steps_as_declared) ... ok
+test_dr15_verdict_fail_with_exit_0_fails_the_chain (tests.test_live_chain_disk.ChainDisk.test_dr15_verdict_fail_with_exit_0_fails_the_chain) ... FAIL
+test_dr1_starts_at_12_gb (tests.test_live_chain_disk.ChainDisk.test_dr1_starts_at_12_gb) ... ok
+test_dr2_refuses_at_9_gb (tests.test_live_chain_disk.ChainDisk.test_dr2_refuses_at_9_gb) ... ok
+test_dr2b_exact_boundary (tests.test_live_chain_disk.ChainDisk.test_dr2b_exact_boundary) ... ok
+test_dr3_stops_at_8_gb_during_a_step (tests.test_live_chain_disk.ChainDisk.test_dr3_stops_at_8_gb_during_a_step) ... ok
+test_dr5_grouped_step_runs_nothing_after_the_stop (tests.test_live_chain_disk.ChainDisk.test_dr5_grouped_step_runs_nothing_after_the_stop) ... ok
+test_dr6_watermark_line_voids_the_step (tests.test_live_chain_disk.ChainDisk.test_dr6_watermark_line_voids_the_step) ... ok
+test_dr7_rp_rotates_inside_the_window (tests.test_live_chain_disk.ChainDisk.test_dr7_rp_rotates_inside_the_window) ... ok
+test_dr8_failing_pass_step_fails_the_chain (tests.test_live_chain_disk.ChainDisk.test_dr8_failing_pass_step_fails_the_chain) ... ok
+test_dr8b_failing_unittest_step_fails_the_chain (tests.test_live_chain_disk.ChainDisk.test_dr8b_failing_unittest_step_fails_the_chain) ... ok
+test_dr9_expected_red_that_goes_green_fails_the_chain (tests.test_live_chain_disk.ChainDisk.test_dr9_expected_red_that_goes_green_fails_the_chain) ... ok
+
+======================================================================
+FAIL: test_dr10_expected_red_with_its_signature_passes (tests.test_live_chain_disk.ChainDisk.test_dr10_expected_red_with_its_signature_passes)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/chaintest/red2/writepath/tests/test_live_chain_disk.py", line 211, in test_dr10_expected_red_with_its_signature_passes
+    self.assertEqual(rc, 0, out)
+AssertionError: 3 != 0 : lock taken 2026-11-19T02:06:02Z head new seal0 seal0 h0 h0 free_kib 12582912
+XB exit=1 tree new Ran 3 tests in 0.1s FAILED (failures=1, errors=1) 
+  XB seconds=0 watermark_lines 0 expected red observed red-without-signature(missing 2)
+free_kib_end 12582912 chain done 2026-11-19T02:06:02Z
+steps expected/observed: XB:red/red-without-signature(missing 2)
+CHAIN FAILED: a step's outcome differs from its declared one (exit 3)
+lock released 2026-11-19T02:06:02Z
+
+
+======================================================================
+FAIL: test_dr11_red_for_another_reason_fails_the_chain (tests.test_live_chain_disk.ChainDisk.test_dr11_red_for_another_reason_fails_the_chain)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/chaintest/red2/writepath/tests/test_live_chain_disk.py", line 221, in test_dr11_red_for_another_reason_fails_the_chain
+    self.assertIn("RS:red/red-without-signature(missing 1 extra 1)", out)
+AssertionError: 'RS:red/red-without-signature(missing 1 extra 1)' not found in "lock taken 2026-11-19T02:06:07Z head new seal0 seal0 h0 h0 free_kib 12582912\nRS exit=1 Ran 3 tests in 0.1s FAILED (failures=2, errors=0) \n  RS seconds=0 watermark_lines 0 expected red observed red-without-signature(missing 3)\nfree_kib_end 12582912 chain done 2026-11-19T02:06:07Z\nsteps expected/observed: RS:red/red-without-signature(missing 3)\nCHAIN FAILED: a step's outcome differs from its declared one (exit 3)\nlock released 2026-11-19T02:06:07Z\n"
+
+======================================================================
+FAIL: test_dr11b_an_extra_failure_fails_the_chain (tests.test_live_chain_disk.ChainDisk.test_dr11b_an_extra_failure_fails_the_chain)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/chaintest/red2/writepath/tests/test_live_chain_disk.py", line 228, in test_dr11b_an_extra_failure_fails_the_chain
+    self.assertIn("RS:red/red-without-signature(missing 0 extra 1)", out)
+AssertionError: 'RS:red/red-without-signature(missing 0 extra 1)' not found in "lock taken 2026-11-19T02:06:12Z head new seal0 seal0 h0 h0 free_kib 12582912\nRS exit=1 Ran 3 tests in 0.1s FAILED (failures=3, errors=0) \n  RS seconds=0 watermark_lines 0 expected red observed red-without-signature(missing 2)\nfree_kib_end 12582912 chain done 2026-11-19T02:06:12Z\nsteps expected/observed: RS:red/red-without-signature(missing 2)\nCHAIN FAILED: a step's outcome differs from its declared one (exit 3)\nlock released 2026-11-19T02:06:12Z\n"
+
+======================================================================
+FAIL: test_dr11c_the_kind_is_pinned (tests.test_live_chain_disk.ChainDisk.test_dr11c_the_kind_is_pinned)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/chaintest/red2/writepath/tests/test_live_chain_disk.py", line 236, in test_dr11c_the_kind_is_pinned
+    self.assertIn("RH:red/red-without-signature(missing 1 extra 1)", out)
+AssertionError: 'RH:red/red-without-signature(missing 1 extra 1)' not found in "lock taken 2026-11-19T02:06:17Z head new seal0 seal0 h0 h0 free_kib 12582912\nRH exit=1 Ran 2 tests in 0.1s FAILED (failures=2, errors=0) \n  RH seconds=0 watermark_lines 0 expected red observed red-without-signature(missing 2)\nfree_kib_end 12582912 chain done 2026-11-19T02:06:17Z\nsteps expected/observed: RH:red/red-without-signature(missing 2)\nCHAIN FAILED: a step's outcome differs from its declared one (exit 3)\nlock released 2026-11-19T02:06:17Z\n"
+
+======================================================================
+FAIL: test_dr11d_names_are_matched_whole (tests.test_live_chain_disk.ChainDisk.test_dr11d_names_are_matched_whole)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/chaintest/red2/writepath/tests/test_live_chain_disk.py", line 244, in test_dr11d_names_are_matched_whole
+    self.assertIn("RS:red/red-without-signature(missing 1 extra 1)", out)
+AssertionError: 'RS:red/red-without-signature(missing 1 extra 1)' not found in "lock taken 2026-11-19T02:06:22Z head new seal0 seal0 h0 h0 free_kib 12582912\nRS exit=1 Ran 2 tests in 0.1s FAILED (failures=1, errors=0) \n  RS seconds=0 watermark_lines 0 expected red observed red-without-signature(missing 2)\nfree_kib_end 12582912 chain done 2026-11-19T02:06:22Z\nsteps expected/observed: RS:red/red-without-signature(missing 2)\nCHAIN FAILED: a step's outcome differs from its declared one (exit 3)\nlock released 2026-11-19T02:06:22Z\n"
+
+======================================================================
+FAIL: test_dr11e_the_committed_signatures_parse (tests.test_live_chain_disk.ChainDisk.test_dr11e_the_committed_signatures_parse)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/chaintest/red2/writepath/tests/test_live_chain_disk.py", line 259, in test_dr11e_the_committed_signatures_parse
+    self.assertEqual(rc, 0, out)
+AssertionError: 3 != 0 : lock taken 2026-11-19T02:06:27Z head new seal0 seal0 h0 h0 free_kib 12582912
+XB exit=1 tree new Ran 6 tests in 0.1s FAILED (failures=5, errors=0) 
+  XB seconds=0 watermark_lines 0 expected red observed red-without-signature(missing 5)
+free_kib_end 12582912 chain done 2026-11-19T02:06:27Z
+steps expected/observed: XB:red/red-without-signature(missing 5)
+CHAIN FAILED: a step's outcome differs from its declared one (exit 3)
+lock released 2026-11-19T02:06:27Z
+
+
+======================================================================
+FAIL: test_dr15_verdict_fail_with_exit_0_fails_the_chain (tests.test_live_chain_disk.ChainDisk.test_dr15_verdict_fail_with_exit_0_fails_the_chain)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/chaintest/red2/writepath/tests/test_live_chain_disk.py", line 280, in test_dr15_verdict_fail_with_exit_0_fails_the_chain
+    self.assertEqual(rc, 3, out)
+AssertionError: 0 != 3 : lock taken 2026-11-19T02:06:47Z head new seal0 seal0 h0 h0 free_kib 12582912
+P1 exit=0 registry_marker FAIL fenced 9 / 10 controls violated {} 
+  P1 seconds=0 watermark_lines 0 expected pass observed pass
+free_kib_end 12582912 chain done 2026-11-19T02:06:47Z
+steps expected/observed: P1:pass/pass
+CHAIN OK: every step as declared
+lock released 2026-11-19T02:06:47Z
+
+
+----------------------------------------------------------------------
+Ran 20 tests in 160.604s
+
+FAILED (failures=7)
+exit=1
