@@ -1430,3 +1430,25 @@ its holder pose as the server to a client; it must not reach a log.
 
 ### M12 (unchanged, ASSUMPTION)
 M12 stays as recorded above: main's decision as coordinator (ASSUMPTION, not the user's), not a user requirement.
+
+### Live results at c6d3e85 (2026-11-19, t2-dev, stores on tmpfs, under the run lock; UNSTAMPED)
+run validity not independently enforced (validity gate dropped after final review, GoodQA #16096).
+Receipts on t2-dev under ~/emlab2-16096/wphard/windows-c6d3e85/ (L2, R1, R2-container.out).
+- R1 red at 42cfd11 (XB step, tree 42cfd11 + tests/test_d3_pg.py@6f7d93f; R1/XB.out): Ran 47, FAILED (failures=3),
+  by assertion: n1d and n1e "Tuples differ: (1, 0) != (0, 1)" (a fenced writer's row was stored after the erasure
+  instead of being refused), n1f "... is not an instance of MentionsErased" (the retry stored content naming the
+  erased subject); the control n1g passed. Green at c6d3e85 (L2/G2.out): Ran 47, OK (n1c2, n1d to n1g included).
+- R2 in a 512 MiB container (exp/h_d2_uids.py's image, label and -m 512m, uid 20005; R2-container.out): pc1 1 peak
+  95.5 MiB, pd 8 peak 102.9, pc8 8 peak 137.5, pc8 32 peak 285.6 MiB; every request answered; OOMKilled false and
+  exit 0 for all four. The probe's server is keysvc.Server with the authority's bounds, not a full authority process.
+- R3 chain judge, live: L2 judged every step and failed RS and RH on "Ran 47, expected 42" (exit 3) with the stale
+  signatures, which is the judge catching a lost or added test; RS and RH were then re-signed from L2's outputs
+  (n1c2's text set by hand from the same traceback). XB red with its signature. A chain with every step as declared at
+  the re-signed head is owed by the next run (L3).
+- R5: oom_kill read per step for both stores, 0 throughout (the ES container id changed at D6's enable; the judge
+  takes the new id from 0).
+- R7 live (L2/M3.out): success_control 2 of 2 pads found, success_quiet 0 of 2, holds true.
+- R8 live (L2/D6.out, h_d6_broker.bf45961f0246e00c.json): enable exit 0, licence 200 basic active, fenced 5/5,
+  control 5/5 violated; every fenced C14c: 5 writes 403, own write after 201 (key valid), no index of the -w<E+5>
+  name afterwards; C1 B_read 403 in both arms. The control's search of B was REFUSED (403), so the limits line of
+  that receipt ("reads any tenant") was wrong; corrected in the code after this run (reading is not claimed).
