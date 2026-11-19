@@ -1247,3 +1247,11 @@ Live chain (R3, R5, R6), extending H6f's signature rule (results/failing-first/h
     container id) or a count that cannot be read fails the step.
   - every step timeout is "timeout -k 120": a step that ignores SIGTERM is killed 120 s later.
   - timings of a run whose stores are on tmpfs are not comparable with disk-backed runs (stated on each such run).
+
+## Amendment H6h (2026-11-19, owner a5bed869's own finding after the H6g run at c6d3e85; written before the code and the run it governs; no threshold changes)
+Source: review 42cfd11 R8 (vacuous D6 cases), applied to H6g's own C1 B_read. The run at c6d3e85 showed the fenced key
+refused 403 on a name that does not exist (C14c's -w<E+5>, admin HEAD 404), so a 403 on B's read alias does not by
+itself show that the alias exists: the refusal could be vacuous. Change: before each run's child, the operator (admin
+key) makes the same search (POST <B's read alias>/_search, size 0) and records it (C1_B_read_witness); in the fenced
+arm a witness other than 200 makes C1 B_read INVALID-REQUEST (as C9 needs an existence witness for each file). The
+H6g rule (a 404 is INVALID-REQUEST, a 200 fails) stands. The control records the same witness.
