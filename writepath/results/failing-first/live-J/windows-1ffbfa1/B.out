@@ -1,0 +1,31 @@
+lock taken 2026-11-19T01:14:49Z head 1ffbfa1 seal0 179412e h0 6ddeca3 free_kib 12433260
+EW exit=0 watermark.low=10gb watermark.high=9gb watermark.flood_stage=8gb 
+  EW seconds=27 watermark_lines 0
+G1 exit=0 Ran 78 tests in 39.532s OK 
+  G1 seconds=39 watermark_lines 0
+P0 setup ok reset 
+  P0 seconds=1 watermark_lines 0
+G3 exit=0 Ran 3 tests in 0.242s OK 
+  G3 seconds=0 watermark_lines 0
+PC exit=0 PC seeded 1
+  PC seconds=0 watermark_lines 0
+P1 exit=0 registry_marker PASS fenced 10 / 10 controls violated {'ctl_no_placeholders': 10, 'ctl_key_kept': 10}   sample fenced: {'before': {'pg_sql_hits_events_db': {}, 'pg_sql_hits_keys_db': {}, 'es_api_X': 4, 'es_api_Y': 3, 'pg_disk_files_X': 0, 'pg_disk_positive_control_old_plaintext': 2, 'es_disk_files_X': 2, 'toast_control': {'stored_bytes': {'pc_toast_c': 251, 'pc_toast_x': 20000}, 'one_copy': {'pc_toast_c': False, 'pc_toast_x': True}, 'three_copies': {'pc_toast_c': False, 'pc_toast_x': True}}, 'keyd   sample controls: {'ctl_no_placeholders': {'es_X_files': 2, 'keyhex_files': 0, 'es_api_X': 4}, 'ctl_key_kept': {'es_X_files': 0, 'keyhex_files': 2, 'es_api_X': 0}} RESULT registry_marker sha256=d9e1585c0ee5e5956e0eb165f3fc4962983cfadb1a06c46ac22304e37d24ebd0 file=~/emlab2-16096/wphard/wp/results/registry_marker.d9e1585c0ee5e595.json 
+  P1 seconds=988 watermark_lines 0
+P2 exit=0 d4_store_mark {'pass': True, 'why': []} RESULT d4_store_mark sha256=af86a019a9773f2d0a1fb368c2a766fe3583b02b4835593e98a1e58a7997af5b file=~/emlab2-16096/wphard/wp/results/d4_store_mark.af86a019a9773f2d.json 
+  P2 seconds=2 watermark_lines 0
+RR rr-tree-1795051946 unregistered ['pg:quarantine_removed', 'pg:seal_keys']
+RR src-1ffbfa1 unregistered []
+  RR seconds=0 watermark_lines 0
+RS exit=1 Ran 42 tests in 7.324s FAILED (failures=11, errors=3) 
+  RS seconds=8 watermark_lines 0
+RH exit=1 Ran 42 tests in 7.158s FAILED (failures=15, errors=9) 
+  RH seconds=7 watermark_lines 0
+SS exit=0 seal_socket_e2e {"E1": {"accepted": 1, "row_attested": [true, true]}, "E2": {"raised": "SealUnavailable", "stored": 0}, "E3": {"raised": "SealUnavailable", "stored": 0}, "same_uid_limit": true} PASS
+  SS seconds=2 watermark_lines 0
+SU exit=0 seal_uids_e2e {"K7": "SealUnavailable the seal authority refused this peer uid", "down": {"K6": "SealUnavailable", "phase": "down", "stored_delta": 0, "uid": 20001}, "limits": ["docker access on the host is root-equivalent: separation of service identities on one host, not host isolation", "one host, one Postgres", "the authority trusts every allowed peer uid for every tenant"], "uids": {"app": 20001, "keysvc": 20003, "peer": 20002, "sealer": 20005}, "up": {"K1_pgpass.wp_sealer": "PermissionError errno=13", "K1_seal_key": "PermissionError errno=13", "K2": "SealUnavailable", "K3": {"accepted": 1, "key_id_present": true, "mac_hex64": true}, "K4": "WPS40", "K5": "WPS41", "phase": "up", "stored_delta": 1, "uid": 20001}, "verdict": "PASS"}
+  SU seconds=6 watermark_lines 0
+LS candidate secret values loaded: 26 files scanned: 533 files with a secret value: 0 
+  LS seconds=1 watermark_lines 0
+dropped leaked test databases 0
+free_kib_end 11658492 chain done 2026-11-19T01:32:50Z
+lock released 2026-11-19T01:32:50Z

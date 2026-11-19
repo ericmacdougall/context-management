@@ -1,0 +1,6 @@
+# offline modules from a working-tree copy (m3-green), run 2026-11-18T23:55:09Z: python -m unittest tests.test_m3_pad_log tests.test_live_chain_disk tests.test_setup_roles tests.test_store_tmpfs
+....................
+----------------------------------------------------------------------
+Ran 20 tests in 95.384s
+
+OK

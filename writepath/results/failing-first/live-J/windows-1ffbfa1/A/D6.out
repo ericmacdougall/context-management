@@ -1,0 +1,6 @@
+tree 1ffbfa1 free_kib 13084240
+security on; key id fingerprints {'projector': 'sha256:6e3d4854ebdbf070', 'eraser': 'sha256:29d8b81540ce7649', 'verifier': 'sha256:9e02ddebae5a1329', 'admin': 'sha256:4f46d083541d3ba0'} rotation (invalidated, error) {'projector': [0, None], 'eraser': [0, None], 'verifier': [0, None], 'admin': [0, None]}
+licence 200 basic active
+h_d6_broker {"fenced_holds": "0/5", "control_violated": "5/5", "invalid_request_cases": [], "void": false, "feasible": false}
+RESULT h_d6_broker sha256=dc08269a7c563f583f94085b70efae2fae83f3c568331e91fb5c26b8deafd995 file=~/emlab2-16096/wphard/wp/results/h_d6_broker.dc08269a7c563f58.json
+exit=1

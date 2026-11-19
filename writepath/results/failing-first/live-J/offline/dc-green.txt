@@ -1,0 +1,6 @@
+# offline modules from a working-tree copy (dc-green), run 2026-11-19T01:34:28Z: python -m unittest tests.test_d6_descriptors tests.test_h6e_judge tests.test_broker tests.test_es_keys_output
+..................................
+----------------------------------------------------------------------
+Ran 34 tests in 0.564s
+
+OK

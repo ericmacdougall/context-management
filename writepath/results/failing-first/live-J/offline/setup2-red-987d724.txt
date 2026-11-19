@@ -1,0 +1,14 @@
+# offline modules from a working-tree copy (setup2-red-987d724), run 2026-11-18T23:50:10Z: python -m unittest tests.test_setup_roles
+..F
+======================================================================
+FAIL: test_s_role3_existing_roles_without_password_get_one (tests.test_setup_roles.SetupRoles.test_s_role3_existing_roles_without_password_get_one)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/setup2-red-987d724.voHQ/writepath/tests/test_setup_roles.py", line 90, in test_s_role3_existing_roles_without_password_get_one
+    self.assertTrue(a.password_set(r), f"{r} still has no password")
+AssertionError: False is not true : wp_app still has no password
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.007s
+
+FAILED (failures=1)

@@ -1,0 +1,40 @@
+# offline modules from a working-tree copy (dc-red-1ffbfa1), run 2026-11-19T01:34:30Z: python -m unittest tests.test_d6_descriptors
+FF.
+======================================================================
+FAIL: test_dc1_scoped_keys_checked_by_fingerprint (tests.test_d6_descriptors.Descriptors.test_dc1_scoped_keys_checked_by_fingerprint)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/dc-red-1ffbfa1.7yRT/writepath/tests/test_d6_descriptors.py", line 53, in test_dc1_scoped_keys_checked_by_fingerprint
+    self.assertEqual((r["checked"], r["n_bad"]), (2, 0), r)
+AssertionError: Tuples differ: (0, 2) != (2, 0)
+
+First differing element 0:
+0
+2
+
+- (0, 2)
++ (2, 0) : {'checked': 0, 'bad': ['sha256:47eed78d2bb74040: not readable (404)', 'sha256:8404eed1a6deeea3: not readable (404)'], 'n_bad': 2}
+
+======================================================================
+FAIL: test_dc2_other_tenant_alias_is_bad (tests.test_d6_descriptors.Descriptors.test_dc2_other_tenant_alias_is_bad)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/dc-red-1ffbfa1.7yRT/writepath/tests/test_d6_descriptors.py", line 58, in test_dc2_other_tenant_alias_is_bad
+    self.assertEqual((r["checked"], r["n_bad"]), (1, 1), r)
+AssertionError: Tuples differ: (0, 1) != (1, 1)
+
+First differing element 0:
+0
+1
+
+- (0, 1)
+?  ^
+
++ (1, 1)
+?  ^
+ : {'checked': 0, 'bad': ['sha256:47eed78d2bb74040: not readable (404)'], 'n_bad': 1}
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.001s
+
+FAILED (failures=2)

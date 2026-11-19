@@ -1,0 +1,20 @@
+lock taken 2026-11-19T01:06:43Z head 1ffbfa1 seal0 179412e h0 6ddeca3 free_kib 12940760
+EW exit=0 watermark.low=10gb watermark.high=9gb watermark.flood_stage=8gb 
+  EW seconds=30 watermark_lines 0
+P0 setup ok reset 
+  P0 seconds=0 watermark_lines 0
+G2 exit=0 Ran 42 tests in 8.008s OK 
+  G2 seconds=8 watermark_lines 0
+XB exit=1 tree 5811368+tests/test_d3_pg.py@8b12324 Ran 42 tests in 7.824s FAILED (failures=5) 
+  XB seconds=8 watermark_lines 0
+M3 exit=0 m3_pad_log {"client_pad_hits": 2, "client_sqlstate": "22023", "errors_logged": 2, "holds": true, "log_read": true, "server_pad_hits": 0, "server_sqlstate": "22023", "settings": {"log_destination": "stderr", "log_min_duration_statement": "-1", "log_min_error_statement": "error", "log_parameter_max_length": "-1", "log_parameter_max_length_on_error": "0", "log_statement": "none", "logging_collector": "off"}, "statement_lines": 9}
+  M3 seconds=2 watermark_lines 0
+D6 licence 200 basic active h_d6_broker {"fenced_holds": "0/5", "control_violated": "5/5", "invalid_request_cases": [], "void": false, "feasible": false} exit=1 
+  D6 seconds=249 watermark_lines 0
+RP in-window old ids hashed 4 before {"files": 4, "ids_changed": false, "valid_per_name": {"projector": 1, "eraser": 1, "verifier": 1, "admin": 1}, "old_ids_valid": 4} created keys; id fingerprints {'projector': 'sha256:36f6f9b776e622ee', 'eraser': 'sha256:e633946b4df71442', 'verifier': 'sha256:933d844685b3a75e', 'admin': 'sha256:a63cf85112485850'} rotation (invalidated, error) {'projector': [1, None], 'eraser': [1, None], 'verifier': [1, None], 'admin': [1, None]} after {"files": 4, "ids_changed": true, "valid_per_name": {"projector": 1, "eraser": 1, "verifier": 1, "admin": 1}, "old_ids_valid": 0} 
+  RP seconds=8 watermark_lines 0
+LS candidate secret values loaded: 34 files scanned: 35 files with a secret value: 0 
+  LS seconds=0 watermark_lines 0
+dropped leaked test databases 0
+free_kib_end 13801800 chain done 2026-11-19T01:11:48Z
+lock released 2026-11-19T01:11:48Z

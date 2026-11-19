@@ -1,0 +1,46 @@
+lock taken 2026-11-18T23:45:11Z tree 778bc42 free_kib 16052708 mem_avail_kib 52593952
+== before: leftovers check (main's info message: report, never repair silently)
+wp_events disabled_user_triggers=54
+wp_keys disabled_user_triggers=0
+roles=emlab,kms,wp,wp_app,wp_broker,wp_kms,wp_legal,wp_owner,wp_rev1,wp_rev2,wp_reviewer,wp_sealer,wp_verifier,wp_watchdog
+es_http_status 401
+
+template parsing error: template: :1:140: executing "" at <.HostConfig.Tmpfs>: map has no entry for key "Tmpfs"
+
+template parsing error: template: :1:140: executing "" at <.HostConfig.Tmpfs>: map has no entry for key "Tmpfs"
+== A-1 probe: a throwaway container with a nr_inodes=0 tmpfs (Docker 29.1.3)
+probe exit=0
+tmpfs /x tmpfs rw,nosuid,nodev,noexec,relatime,size=131072k,nr_inodes=0,inode64 0 0
+statfs type=tmpfs blocks=32768 bsize=4096 files=0
+== recreate (volumes kept)
+emlab2-wphard-pg emlab2-wphard-es 
+bootstrap ok {"stream": "emlab2-wphard", "pg_port": "25770", "es_url": "http://127.0.0.1:19570", "pg_container": "emlab2-wphard-pg", "es_container": "emlab2-wphard-es"} secrets: files only, nothing printed
+bootstrap exit=0
+== after
+emlab2-wphard-pg id=25d8d5f9be76c30efd82e9f17409ee68d7575eff32dd1d47a8854e0f5d0a5f86 started=2026-11-18T23:45:13.396467649Z mem=4294967296 swap=4294967296 tmpfs={"/var/lib/postgresql/data":"rw,size=4831838208,nr_inodes=0,mode=1777"} mounts=bind:~/emlab2-16096/wphard/wp/secrets/pg_password:/run/secrets/pgpw  ports={"5432/tcp":[{"HostIp":"127.0.0.1","HostPort":"25770"}]}
+  emlab2-wphard-pg memory.max=4294967296
+  emlab2-wphard-pg memory.swap.max=0
+  emlab2-wphard-pg memory.peak=123265024
+emlab2-wphard-es id=d095812623f72f8577c7166dc4e3c4fe89dff49b3ba94aa6c296b69ae750b509 started=2026-11-18T23:45:13.676056294Z mem=6442450944 swap=6442450944 tmpfs={"/usr/share/elasticsearch/data":"rw,size=17716740096,nr_inodes=0,mode=1777"} mounts= ports={"9200/tcp":[{"HostIp":"127.0.0.1","HostPort":"19570"}]}
+  emlab2-wphard-es memory.max=6442450944
+  emlab2-wphard-es memory.swap.max=0
+  emlab2-wphard-es memory.peak=1865682944
+tmpfs /var/lib/postgresql/data tmpfs rw,nosuid,nodev,noexec,relatime,size=4718592k,nr_inodes=0,inode64 0 0
+statfs type=tmpfs blocks=1179648 bsize=4096 files=0
+pgdata mode=700 owner=postgres
+PGDATA=/var/lib/postgresql/data
+data_directory=/var/lib/postgresql/data
+archive_mode=off (command line)
+max_connections=200 (command line)
+max_wal_size=256 (command line)
+min_wal_size=64 (command line)
+wal_keep_size=0 (command line)
+wal_recycle=off (command line)
+auto_conf_rows=0
+tmpfs /usr/share/elasticsearch/data tmpfs rw,nosuid,nodev,noexec,relatime,size=17301504k,nr_inodes=0,inode64 0 0
+statfs type=tmpfs files=0
+{"nodes":{"Ismi1EJMSMufOZVM89wBXw":{"fs":{"data":[{"path":"/usr/share/elasticsearch/data","mount":"/usr/share/elasticsearch/data (tmpfs)","type":"tmpfs","total_in_bytes":17716740096,"free_in_bytes":17716658176,"available_in_bytes":17716658176,"low_watermark_free_space_in_bytes":10737418240,"high_watermark_free_space_in_bytes":9663676416,"flood_stage_free_space_in_bytes":8589934592}]}}}}
+{}
+{}
+free_kib_end 16588100 mem_avail_kib 53468888 done 2026-11-18T23:45:44Z
+lock released 2026-11-18T23:45:44Z

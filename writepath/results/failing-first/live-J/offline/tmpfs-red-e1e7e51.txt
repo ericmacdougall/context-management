@@ -1,0 +1,42 @@
+# offline modules from a working-tree copy (tmpfs-red-e1e7e51), run 2026-11-18T22:25:15Z: python -m unittest tests.test_store_tmpfs
+FFF.F
+======================================================================
+FAIL: test_sto1_es (tests.test_store_tmpfs.StoreStorage.test_sto1_es)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/tmpfs-red-e1e7e51.uAmJ/writepath/tests/test_store_tmpfs.py", line 146, in test_sto1_es
+    self._common(self.es, ES_DATA, ES_LOW + MARGIN)
+  File "~/emlab2-16096/wphard/scratch/tmpfs-red-e1e7e51.uAmJ/writepath/tests/test_store_tmpfs.py", line 130, in _common
+    self.assertIsNotNone(t, f"no tmpfs at {data}: the store's free space is shared with the host disk")
+AssertionError: unexpectedly None : no tmpfs at /usr/share/elasticsearch/data: the store's free space is shared with the host disk
+
+======================================================================
+FAIL: test_sto1_pg (tests.test_store_tmpfs.StoreStorage.test_sto1_pg)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/tmpfs-red-e1e7e51.uAmJ/writepath/tests/test_store_tmpfs.py", line 143, in test_sto1_pg
+    self._common(self.pg, PG_DATA, MARGIN)
+  File "~/emlab2-16096/wphard/scratch/tmpfs-red-e1e7e51.uAmJ/writepath/tests/test_store_tmpfs.py", line 130, in _common
+    self.assertIsNotNone(t, f"no tmpfs at {data}: the store's free space is shared with the host disk")
+AssertionError: unexpectedly None : no tmpfs at /var/lib/postgresql/data: the store's free space is shared with the host disk
+
+======================================================================
+FAIL: test_sto2_pg_pgdata_and_settings (tests.test_store_tmpfs.StoreStorage.test_sto2_pg_pgdata_and_settings)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/tmpfs-red-e1e7e51.uAmJ/writepath/tests/test_store_tmpfs.py", line 149, in test_sto2_pg_pgdata_and_settings
+    self.assertIn(f"PGDATA={PG_DATA}", _opt(self.pg, "-e", "--env"))
+AssertionError: 'PGDATA=/var/lib/postgresql/data' not found in ['POSTGRES_PASSWORD_FILE=/run/secrets/pgpw', 'POSTGRES_USER=wp', 'POSTGRES_DB=wp_events']
+
+======================================================================
+FAIL: test_sto4_es_security_recreate_keeps_tmpfs (tests.test_store_tmpfs.StoreStorage.test_sto4_es_security_recreate_keeps_tmpfs)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/tmpfs-red-e1e7e51.uAmJ/writepath/tests/test_store_tmpfs.py", line 172, in test_sto4_es_security_recreate_keeps_tmpfs
+    self.assertIn(f"{ES_DATA}:{opts}", _opt(args, "--tmpfs"), "the recreated node loses its private tmpfs")
+AssertionError: '/usr/share/elasticsearch/data:rw,size=17716740096,nr_inodes=0,mode=1777' not found in [] : the recreated node loses its private tmpfs
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.005s
+
+FAILED (failures=4)

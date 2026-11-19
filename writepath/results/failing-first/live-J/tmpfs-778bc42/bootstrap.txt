@@ -1,0 +1,1 @@
+bootstrap ok {"stream": "emlab2-wphard", "pg_port": "25770", "es_url": "http://127.0.0.1:19570", "pg_container": "emlab2-wphard-pg", "es_container": "emlab2-wphard-es"} secrets: files only, nothing printed

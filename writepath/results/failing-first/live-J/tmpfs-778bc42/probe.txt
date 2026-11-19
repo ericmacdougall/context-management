@@ -1,0 +1,2 @@
+tmpfs /x tmpfs rw,nosuid,nodev,noexec,relatime,size=131072k,nr_inodes=0,inode64 0 0
+statfs type=tmpfs blocks=32768 bsize=4096 files=0

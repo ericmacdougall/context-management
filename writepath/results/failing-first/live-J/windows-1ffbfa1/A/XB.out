@@ -1,0 +1,118 @@
+test_a1_app_has_no_path_to_subject_identifiers (tests.test_d3_pg.D3Store.test_a1_app_has_no_path_to_subject_identifiers) ... ok
+test_a2_no_self_approval (tests.test_d3_pg.D3Store.test_a2_no_self_approval) ... ok
+test_a3_binding_rule_version_and_state (tests.test_d3_pg.D3Store.test_a3_binding_rule_version_and_state) ... ok
+test_b1_refused_write_leaves_no_row_and_is_recorded (tests.test_d3_pg.D3Store.test_b1_refused_write_leaves_no_row_and_is_recorded) ... ok
+test_b2_store_bounds_ciphertext_size (tests.test_d3_pg.D3Store.test_b2_store_bounds_ciphertext_size) ... ok
+test_b3_rescan_finds_a_mention_under_the_budget (tests.test_d3_pg.D3Store.test_b3_rescan_finds_a_mention_under_the_budget) ... ok
+test_b4_over_budget_legacy_event_is_removed_as_unscannable (tests.test_d3_pg.D3Store.test_b4_over_budget_legacy_event_is_removed_as_unscannable)
+Review H H3 (main's decision, Class B): an event the rescan cannot scan within budget is treated as a ... ok
+test_b5_planted_over_budget_event_through_the_app (tests.test_d3_pg.D3Store.test_b5_planted_over_budget_event_through_the_app)
+reviewH F14 after the authority (A4 MISSING): a wp_app writer can no longer plant. The validly encrypted, ... ok
+test_b6_garbage_ciphertext (tests.test_d3_pg.D3Store.test_b6_garbage_ciphertext)
+Through the app: garbage ciphertext has no attestation (WPS40). As legacy rows (owner fixture): ciphertext ... ok
+test_b7_app_cannot_update_events (tests.test_d3_pg.D3Store.test_b7_app_cannot_update_events) ... ok
+test_b8_hold_still_withholds_an_unscannable_event (tests.test_d3_pg.D3Store.test_b8_hold_still_withholds_an_unscannable_event) ... ok
+test_c1_app_has_no_redaction_path (tests.test_d3_pg.D3Store.test_c1_app_has_no_redaction_path) ... ok
+test_c2_proposal_cannot_commit_after_the_erasure (tests.test_d3_pg.D3Store.test_c2_proposal_cannot_commit_after_the_erasure)
+Reviewer's schedule: propose reads erased=false and pauses; the mark and the whole cascade finish; then the ... ok
+test_c3_approval_after_mark_refused (tests.test_d3_pg.D3Store.test_c3_approval_after_mark_refused) ... ok
+test_c4_matcher_stored_and_enforced (tests.test_d3_pg.D3Store.test_c4_matcher_stored_and_enforced) ... ok
+test_c5_null_content_needs_tombstone_and_job (tests.test_d3_pg.D3Store.test_c5_null_content_needs_tombstone_and_job) ... ok
+test_e1_rescan_link_waits_for_an_inflight_removal (tests.test_d3_pg.D3Store.test_e1_rescan_link_waits_for_an_inflight_removal)
+Review E F4, the reviewer's schedule: A's batch removes e (written by B); C's rescan links e to C; a hold on ... ok
+test_e2_hold_on_the_speaker_waits_and_reports_the_removal (tests.test_d3_pg.D3Store.test_e2_hold_on_the_speaker_waits_and_reports_the_removal) ... ok
+test_e3_hold_on_a_rescan_linked_subject_waits_and_reports (tests.test_d3_pg.D3Store.test_e3_hold_on_a_rescan_linked_subject_waits_and_reports) ... ok
+test_e4_hold_first_withholds_and_release_waits (tests.test_d3_pg.D3Store.test_e4_hold_first_withholds_and_release_waits) ... ok
+test_e5_hold_on_the_subject_itself (tests.test_d3_pg.D3Store.test_e5_hold_on_the_subject_itself) ... ok
+test_e6_repeated_mark_during_a_batch_does_not_deadlock (tests.test_d3_pg.D3Store.test_e6_repeated_mark_during_a_batch_does_not_deadlock)
+Review E F12: a batch holds the subject FOR SHARE and later updates the job cursor; a repeated mark took the ... ok
+test_e7_hold_against_mark (tests.test_d3_pg.D3Store.test_e7_hold_against_mark)
+Hold x mark, both orders. A hold placed first refuses the mark (WPS16). A hold placed while a mark is paused ... ok
+test_e8_hold_waits_for_the_final_pass (tests.test_d3_pg.D3Store.test_e8_hold_waits_for_the_final_pass)
+Hold x the cascade's final pass (facts, inbox, quarantine, proposals, identifiers of the subject), which no ... ok
+test_h16a_large_footprint (tests.test_d3_pg.D3Store.test_h16a_large_footprint) ... ok
+test_h16b_report_failure_keeps_the_hold (tests.test_d3_pg.D3Store.test_h16b_report_failure_keeps_the_hold) ... ok
+test_h6_receipt_lists_are_bounded (tests.test_d3_pg.D3Store.test_h6_receipt_lists_are_bounded) ... ok
+test_h_size_constraints (tests.test_d3_pg.D3Store.test_h_size_constraints) ... ok
+test_n1a2_zombie_row_naming_an_erased_subject_refused (tests.test_d3_pg.D3Store.test_n1a2_zombie_row_naming_an_erased_subject_refused)
+The same with X declared at sealing time (mentions = [X]) and erased before the quarantine insert. ... FAIL
+test_n1a_zombie_row_scanned_before_the_identifier_refused_after_erasure (tests.test_d3_pg.D3Store.test_n1a_zombie_row_scanned_before_the_identifier_refused_after_erasure)
+A row sealed at version v, before X's identifier existed; X declared and fully erased; the paused writer's ... FAIL
+test_n1b_removed_quarantine_row_cannot_come_back (tests.test_d3_pg.D3Store.test_n1b_removed_quarantine_row_cannot_come_back)
+A sealed quarantine row naming X; the cascade removes it; the identical row inserted again (wp_app kept a ... FAIL
+test_n1c_held_unscanned_quarantine_row_blocks_completion (tests.test_d3_pg.D3Store.test_n1c_held_unscanned_quarantine_row_blocks_completion)
+A quarantine row scanned below the job's identifier-set version, kept because its speaker is held: the ... FAIL
+test_s10_an_attestation_is_valid_in_one_table (tests.test_d3_pg.D3Store.test_s10_an_attestation_is_valid_in_one_table)
+Review J M2: the target table is attested. A row sealed for events is refused in quarantine and a row sealed ... FAIL
+test_s1_valid_attestation_accepted (tests.test_d3_pg.D3Store.test_s1_valid_attestation_accepted) ... ok
+test_s2_forged_claims_refused (tests.test_d3_pg.D3Store.test_s2_forged_claims_refused) ... ok
+test_s3_missing_attestation_refused (tests.test_d3_pg.D3Store.test_s3_missing_attestation_refused) ... ok
+test_s4_replayed_attestation_refused (tests.test_d3_pg.D3Store.test_s4_replayed_attestation_refused) ... ok
+test_s5_stale_identifier_set (tests.test_d3_pg.D3Store.test_s5_stale_identifier_set) ... ok
+test_s6_quarantine_needs_an_attestation (tests.test_d3_pg.D3Store.test_s6_quarantine_needs_an_attestation) ... ok
+test_s7_quarantine_scanned_below_the_identifier_set_is_removed (tests.test_d3_pg.D3Store.test_s7_quarantine_scanned_below_the_identifier_set_is_removed) ... ok
+test_s8_seal_keys_are_private (tests.test_d3_pg.D3Store.test_s8_seal_keys_are_private)
+Every login role of the deployment, wp_verifier, wp_sealer and wp_broker included (review J M6): none reads ... ok
+test_s9_unknown_inactive_key_and_bad_mac (tests.test_d3_pg.D3Store.test_s9_unknown_inactive_key_and_bad_mac) ... ok
+
+======================================================================
+FAIL: test_n1a2_zombie_row_naming_an_erased_subject_refused (tests.test_d3_pg.D3Store.test_n1a2_zombie_row_naming_an_erased_subject_refused)
+The same with X declared at sealing time (mentions = [X]) and erased before the quarantine insert.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/xb-5811368-testsHEAD/tests/test_d3_pg.py", line 1139, in test_n1a2_zombie_row_naming_an_erased_subject_refused
+    self.assertEqual(self.insert(self.app, "quarantine", self.qrow(r)), "WPS18",
+AssertionError: 'ok' != 'WPS18'
+- ok
++ WPS18
+ : a row naming an erased subject was quarantined
+
+======================================================================
+FAIL: test_n1a_zombie_row_scanned_before_the_identifier_refused_after_erasure (tests.test_d3_pg.D3Store.test_n1a_zombie_row_scanned_before_the_identifier_refused_after_erasure)
+A row sealed at version v, before X's identifier existed; X declared and fully erased; the paused writer's
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/xb-5811368-testsHEAD/tests/test_d3_pg.py", line 1123, in test_n1a_zombie_row_scanned_before_the_identifier_refused_after_erasure
+    self.assertEqual(self.insert(self.app, "quarantine", self.qrow(r)), "WPS17",
+AssertionError: 'ok' != 'WPS17'
+- ok
++ WPS17
+ : a row scanned below the identifier set was quarantined after the erasure
+
+======================================================================
+FAIL: test_n1b_removed_quarantine_row_cannot_come_back (tests.test_d3_pg.D3Store.test_n1b_removed_quarantine_row_cannot_come_back)
+A sealed quarantine row naming X; the cascade removes it; the identical row inserted again (wp_app kept a
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/xb-5811368-testsHEAD/tests/test_d3_pg.py", line 1157, in test_n1b_removed_quarantine_row_cannot_come_back
+    self.assertEqual(self.insert(self.app, "quarantine", self.qrow(r)), "WPS42",
+AssertionError: 'ok' != 'WPS42'
+- ok
++ WPS42
+ : a quarantine row the erasure removed was inserted again
+
+======================================================================
+FAIL: test_n1c_held_unscanned_quarantine_row_blocks_completion (tests.test_d3_pg.D3Store.test_n1c_held_unscanned_quarantine_row_blocks_completion)
+A quarantine row scanned below the job's identifier-set version, kept because its speaker is held: the
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/xb-5811368-testsHEAD/tests/test_d3_pg.py", line 1176, in test_n1c_held_unscanned_quarantine_row_blocks_completion
+    self.assertFalse(done.get("done"), "the erasure was reported done while an unscanned quarantine row remained")
+AssertionError: True is not false : the erasure was reported done while an unscanned quarantine row remained
+
+======================================================================
+FAIL: test_s10_an_attestation_is_valid_in_one_table (tests.test_d3_pg.D3Store.test_s10_an_attestation_is_valid_in_one_table)
+Review J M2: the target table is attested. A row sealed for events is refused in quarantine and a row sealed
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/xb-5811368-testsHEAD/tests/test_d3_pg.py", line 1090, in test_s10_an_attestation_is_valid_in_one_table
+    self.assertEqual(self.insert(self.app, "quarantine", self.qrow(ev)), "WPS41", "an events attestation was accepted in quarantine")
+AssertionError: 'ok' != 'WPS41'
+- ok
++ WPS41
+ : an events attestation was accepted in quarantine
+
+----------------------------------------------------------------------
+Ran 42 tests in 7.824s
+
+FAILED (failures=5)

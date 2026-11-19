@@ -1,0 +1,21 @@
+setUpClass (tests.test_d3_pg.D3Store) ... ERROR
+
+======================================================================
+ERROR: setUpClass (tests.test_d3_pg.D3Store)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-778bc42/tests/test_d3_pg.py", line 95, in setUpClass
+    cls.app = db.connect(db=cls.name, application_name="wp-d3-app")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/wphard/wp/src-778bc42/wp/db.py", line 22, in connect
+    return psycopg.connect(host=config.PG_HOST, port=config.PG_PORT, dbname=db or config.EVENTS_DB, user=role,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/wphard/wp/venv/lib/python3.12/site-packages/psycopg/connection.py", line 119, in connect
+    raise last_ex.with_traceback(None)
+psycopg.OperationalError: connection failed: connection to server at "127.0.0.1", port 25770 failed: FATAL:  password authentication failed for user "wp_app"
+password retrieved from file "~/emlab2-16096/wphard/wp/secrets/pgpass.wp_app"
+
+----------------------------------------------------------------------
+Ran 0 tests in 0.225s
+
+FAILED (errors=1)

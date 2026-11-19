@@ -1,0 +1,8 @@
+lock taken 2026-11-18T23:50:37Z head 88b6f59 seal0 179412e h0 6ddeca3 free_kib 16835928
+P0 setup ok reset 
+  P0 seconds=1 watermark_lines 0
+G2 exit=0 Ran 42 tests in 7.804s OK 
+  G2 seconds=7 watermark_lines 0
+dropped leaked test databases 0
+free_kib_end 16834884 chain done 2026-11-18T23:50:46Z
+lock released 2026-11-18T23:50:46Z

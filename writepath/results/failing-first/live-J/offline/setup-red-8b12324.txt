@@ -1,0 +1,14 @@
+# offline modules from a working-tree copy (setup-red-8b12324), run 2026-11-18T23:48:36Z: python -m unittest tests.test_setup_roles
+F.
+======================================================================
+FAIL: test_s_role1_new_cluster_gets_fresh_passwords (tests.test_setup_roles.SetupRoles.test_s_role1_new_cluster_gets_fresh_passwords)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/setup-red-8b12324.2Ttm/writepath/tests/test_setup_roles.py", line 66, in test_s_role1_new_cluster_gets_fresh_passwords
+    self.assertTrue(a.password_set(r), f"{r} created without a password")
+AssertionError: False is not true : wp_app created without a password
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.005s
+
+FAILED (failures=1)

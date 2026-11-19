@@ -1227,9 +1227,13 @@ replay rows" without these qualifiers over-claims and is not used.
   key. Any Postgres superuser, any physical or base backup, any pg_dump of wp_seal and any replica can mint valid
   attestations; the lab's superuser is the docker host. A client deployment needs an asymmetric signature verified in
   the store (the database holds only a public key) or an HSM/KMS-held key with backups and replicas treated as signing
-  material. Server logging of the pads at install (wp_seal.install binds them as parameters): the lab server's
-  log_statement and log_parameter_max_length are read in the next live window and recorded in packet J; with
-  log_statement = all or mod and log_parameter_max_length = -1 the log would print them.
+  material. Server logging of the pads at install, TESTED (window A at 1ffbfa1, 2026-11-19, step M3,
+  results/failing-first/live-J/windows-1ffbfa1/A/M3.out): throwaway pads in two install calls that fail on purpose;
+  the node's log searched by pad hash: the code's path (parameters sent apart) 0 of 2 pads found, the positive
+  control (values inlined into the statement) 2 of 2, 2 errors logged. On this server (log_statement none,
+  log_parameter_max_length_on_error 0, log_min_error_statement error) the pads do not reach the log. A server with
+  log_statement all or mod and log_parameter_max_length -1, or with log_parameter_max_length_on_error -1 and a
+  failing install, would print them: a deployment must keep those settings for the installing session.
 - M4: see the CORRECTION under H10: about 28 s for one admitted event, about 32 s per call, more with retries.
 - M7: the default role-key mode (WP_BROKER unset) has NO tenant isolation; only broker-minted keys are tenant- and
   epoch-scoped; a broker-mode deployment must not mint or place the role keys where the application runs.
@@ -1238,8 +1242,16 @@ replay rows" without these qualifiers over-claims and is not used.
   rests on the greens (H16a, H16b).
 - M10: the PG disk grep finds plaintext stored uncompressed, in line or out of line; a value Postgres compresses
   (about 2 KB and more, pglz) is visible only in its literal runs, so a repeated or long compressible plaintext can be
-  missed. Measured in the next window by registry_marker's toast_control (one table compressed, one storage
-  external); reported, not judged.
+  missed. MEASURED (window B at 1ffbfa1, P1 toast_control, reported, not judged): a 20 KB compressible value stored
+  in 251 bytes with default storage was NOT found by the grep (one copy or three copies of the pattern); the same
+  value with storage external (20000 bytes) was found. The grep is blind to compressed plaintext.
+- write_refusals (the gate's question, 2026-11-19): no guard triggers BY DESIGN. Counts only (code checked to
+  WPM01 to WPM03; no content, subject or event id); no login role may write it; the only writer is
+  wp_write_refused, SECURITY DEFINER, owned by wp_owner, search_path pinned, EXECUTE to wp_app alone (public revoked).
+  Its upsert needs UPDATE, so a no-update trigger would break it; a no-delete trigger would bind only the owner, who
+  can drop triggers. wp_verifier's SELECT on it is the schema's rule that the verifier reads EVERY table in public
+  (schema.sql "grant select on all tables in schema public to wp_verifier"): the erasure verifier's residue and
+  registry checks must be able to read any table that could hold a mention; the table holds no mention.
 - M12 (hypothesis, recorded, not changed): the rescan treats an event that fails authentication (InvalidTag) as
   unscannable and removes it whole. A key service returning a wrong key of valid length (a restore, a bug) would make
   every event of that speaker fail and be removed. Refusing instead when every event of a speaker fails would block

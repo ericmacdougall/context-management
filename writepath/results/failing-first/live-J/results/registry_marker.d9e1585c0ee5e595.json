@@ -1,0 +1,3699 @@
+{
+ "at": "2026-11-19T01:32:24Z",
+ "env": {
+  "argv": "~/emlab2-16096/wphard/wp/src-1ffbfa1/exp/registry_marker.py",
+  "code_commit": "1ffbfa1",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19570",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   3.86474609375,
+   19.5390625,
+   23.01123046875
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "postgres_settings": {
+   "archive_mode": "off",
+   "autovacuum": "on",
+   "default_statistics_target": "100",
+   "effective_cache_size": "5242888kB",
+   "fsync": "on",
+   "idle_in_transaction_session_timeout": "5000ms",
+   "jit": "on",
+   "maintenance_work_mem": "65536kB",
+   "max_connections": "200",
+   "max_wal_size": "256MB",
+   "plan_cache_mode": "auto",
+   "random_page_cost": "4",
+   "shared_buffers": "163848kB",
+   "statement_timeout": "30000ms",
+   "synchronous_commit": "on",
+   "wal_keep_size": "0MB",
+   "wal_recycle": "off",
+   "work_mem": "4096kB"
+  },
+  "python": "3.12.3"
+ },
+ "name": "registry_marker",
+ "result": {
+  "R": 10,
+  "arms": {
+   "ctl_key_kept": [
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 2,
+      "keydb_disk_paths_keyhex": [
+       "/var/lib/postgresql/data/base/16407/25112",
+       "/var/lib/postgresql/data/pg_wal/000000010000000000000037"
+      ],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_key_kept",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {},
+      "toast_control": {
+       "one_copy": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       },
+       "stored_bytes": {
+        "pc_toast_c": 251,
+        "pc_toast_x": 20000
+       },
+       "three_copies": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       }
+      }
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "controls_reported_m5": {
+      "data_stream": true,
+      "ds_backing_index": true,
+      "large_object": true,
+      "wp_app_temp_table": "42501"
+     },
+     "controls_setup": {
+      "ds": 200,
+      "ds_template": 200,
+      "lo": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "keys:subject_keys",
+      "verify": {
+       "es:copy_unverified": 0,
+       "es:events": 0,
+       "es:facts": 0,
+       "es:placeholder_content": 0,
+       "es:placeholder_missing": 0,
+       "es:placeholder_version": 0,
+       "es:soft_deleted": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 1,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifier_proposals": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:quarantine_unscanned": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 2
+     },
+     "stores_registered": 40,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:identifier_proposals",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 2,
+      "keydb_disk_paths_keyhex": [
+       "/var/lib/postgresql/data/base/16407/25112",
+       "/var/lib/postgresql/data/pg_wal/000000010000000000000037"
+      ],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_key_kept",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {},
+      "toast_control": {
+       "one_copy": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       },
+       "stored_bytes": {
+        "pc_toast_c": 251,
+        "pc_toast_x": 20000
+       },
+       "three_copies": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       }
+      }
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "controls_reported_m5": {
+      "data_stream": true,
+      "ds_backing_index": true,
+      "large_object": true,
+      "wp_app_temp_table": "42501"
+     },
+     "controls_setup": {
+      "ds": 200,
+      "ds_template": 200,
+      "lo": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "keys:subject_keys",
+      "verify": {
+       "es:copy_unverified": 0,
+       "es:events": 0,
+       "es:facts": 0,
+       "es:placeholder_content": 0,
+       "es:placeholder_missing": 0,
+       "es:placeholder_version": 0,
+       "es:soft_deleted": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 1,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifier_proposals": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:quarantine_unscanned": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 2
+     },
+     "stores_registered": 40,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:identifier_proposals",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 2,
+      "keydb_disk_paths_keyhex": [
+       "/var/lib/postgresql/data/base/16407/25112",
+       "/var/lib/postgresql/data/pg_wal/000000010000000000000037"
+      ],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_key_kept",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {},
+      "toast_control": {
+       "one_copy": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       },
+       "stored_bytes": {
+        "pc_toast_c": 251,
+        "pc_toast_x": 20000
+       },
+       "three_copies": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       }
+      }
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "controls_reported_m5": {
+      "data_stream": true,
+      "ds_backing_index": true,
+      "large_object": true,
+      "wp_app_temp_table": "42501"
+     },
+     "controls_setup": {
+      "ds": 200,
+      "ds_template": 200,
+      "lo": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "keys:subject_keys",
+      "verify": {
+       "es:copy_unverified": 0,
+       "es:events": 0,
+       "es:facts": 0,
+       "es:placeholder_content": 0,
+       "es:placeholder_missing": 0,
+       "es:placeholder_version": 0,
+       "es:soft_deleted": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 1,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifier_proposals": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:quarantine_unscanned": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 2
+     },
+     "stores_registered": 40,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:identifier_proposals",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 2,
+      "keydb_disk_paths_keyhex": [
+       "/var/lib/postgresql/data/base/16407/25112",
+       "/var/lib/postgresql/data/pg_wal/000000010000000000000037"
+      ],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_key_kept",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {},
+      "toast_control": {
+       "one_copy": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       },
+       "stored_bytes": {
+        "pc_toast_c": 251,
+        "pc_toast_x": 20000
+       },
+       "three_copies": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       }
+      }
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "controls_reported_m5": {
+      "data_stream": true,
+      "ds_backing_index": true,
+      "large_object": true,
+      "wp_app_temp_table": "42501"
+     },
+     "controls_setup": {
+      "ds": 200,
+      "ds_template": 200,
+      "lo": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "keys:subject_keys",
+      "verify": {
+       "es:copy_unverified": 0,
+       "es:events": 0,
+       "es:facts": 0,
+       "es:placeholder_content": 0,
+       "es:placeholder_missing": 0,
+       "es:placeholder_version": 0,
+       "es:soft_deleted": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 1,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifier_proposals": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:quarantine_unscanned": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 2
+     },
+     "stores_registered": 40,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:identifier_proposals",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 2,
+      "keydb_disk_paths_keyhex": [
+       "/var/lib/postgresql/data/base/16407/25112",
+       "/var/lib/postgresql/data/pg_wal/000000010000000000000037"
+      ],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_key_kept",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {},
+      "toast_control": {
+       "one_copy": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       },
+       "stored_bytes": {
+        "pc_toast_c": 251,
+        "pc_toast_x": 20000
+       },
+       "three_copies": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       }
+      }
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "controls_reported_m5": {
+      "data_stream": true,
+      "ds_backing_index": true,
+      "large_object": true,
+      "wp_app_temp_table": "42501"
+     },
+     "controls_setup": {
+      "ds": 200,
+      "ds_template": 200,
+      "lo": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "keys:subject_keys",
+      "verify": {
+       "es:copy_unverified": 0,
+       "es:events": 0,
+       "es:facts": 0,
+       "es:placeholder_content": 0,
+       "es:placeholder_missing": 0,
+       "es:placeholder_version": 0,
+       "es:soft_deleted": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 1,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifier_proposals": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:quarantine_unscanned": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 2
+     },
+     "stores_registered": 40,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:identifier_proposals",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 2,
+      "keydb_disk_paths_keyhex": [
+       "/var/lib/postgresql/data/base/16407/25112",
+       "/var/lib/postgresql/data/pg_wal/000000010000000000000037"
+      ],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_key_kept",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {},
+      "toast_control": {
+       "one_copy": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       },
+       "stored_bytes": {
+        "pc_toast_c": 251,
+        "pc_toast_x": 20000
+       },
+       "three_copies": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       }
+      }
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "controls_reported_m5": {
+      "data_stream": true,
+      "ds_backing_index": true,
+      "large_object": true,
+      "wp_app_temp_table": "42501"
+     },
+     "controls_setup": {
+      "ds": 200,
+      "ds_template": 200,
+      "lo": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "keys:subject_keys",
+      "verify": {
+       "es:copy_unverified": 0,
+       "es:events": 0,
+       "es:facts": 0,
+       "es:placeholder_content": 0,
+       "es:placeholder_missing": 0,
+       "es:placeholder_version": 0,
+       "es:soft_deleted": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 1,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifier_proposals": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:quarantine_unscanned": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 2
+     },
+     "stores_registered": 40,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:identifier_proposals",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 2,
+      "keydb_disk_paths_keyhex": [
+       "/var/lib/postgresql/data/base/16407/25112",
+       "/var/lib/postgresql/data/pg_wal/000000010000000000000037"
+      ],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_key_kept",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {},
+      "toast_control": {
+       "one_copy": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       },
+       "stored_bytes": {
+        "pc_toast_c": 251,
+        "pc_toast_x": 20000
+       },
+       "three_copies": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       }
+      }
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "controls_reported_m5": {
+      "data_stream": true,
+      "ds_backing_index": true,
+      "large_object": true,
+      "wp_app_temp_table": "42501"
+     },
+     "controls_setup": {
+      "ds": 200,
+      "ds_template": 200,
+      "lo": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "keys:subject_keys",
+      "verify": {
+       "es:copy_unverified": 0,
+       "es:events": 0,
+       "es:facts": 0,
+       "es:placeholder_content": 0,
+       "es:placeholder_missing": 0,
+       "es:placeholder_version": 0,
+       "es:soft_deleted": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 1,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifier_proposals": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:quarantine_unscanned": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 2
+     },
+     "stores_registered": 40,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:identifier_proposals",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 2,
+      "keydb_disk_paths_keyhex": [
+       "/var/lib/postgresql/data/base/16407/25112",
+       "/var/lib/postgresql/data/pg_wal/000000010000000000000037"
+      ],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_key_kept",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {},
+      "toast_control": {
+       "one_copy": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       },
+       "stored_bytes": {
+        "pc_toast_c": 251,
+        "pc_toast_x": 20000
+       },
+       "three_copies": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       }
+      }
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "controls_reported_m5": {
+      "data_stream": true,
+      "ds_backing_index": true,
+      "large_object": true,
+      "wp_app_temp_table": "42501"
+     },
+     "controls_setup": {
+      "ds": 200,
+      "ds_template": 200,
+      "lo": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "keys:subject_keys",
+      "verify": {
+       "es:copy_unverified": 0,
+       "es:events": 0,
+       "es:facts": 0,
+       "es:placeholder_content": 0,
+       "es:placeholder_missing": 0,
+       "es:placeholder_version": 0,
+       "es:soft_deleted": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 1,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifier_proposals": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:quarantine_unscanned": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 2
+     },
+     "stores_registered": 40,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:identifier_proposals",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 2,
+      "keydb_disk_paths_keyhex": [
+       "/var/lib/postgresql/data/base/16407/25112",
+       "/var/lib/postgresql/data/pg_wal/000000010000000000000037"
+      ],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_key_kept",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {},
+      "toast_control": {
+       "one_copy": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       },
+       "stored_bytes": {
+        "pc_toast_c": 251,
+        "pc_toast_x": 20000
+       },
+       "three_copies": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       }
+      }
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "controls_reported_m5": {
+      "data_stream": true,
+      "ds_backing_index": true,
+      "large_object": true,
+      "wp_app_temp_table": "42501"
+     },
+     "controls_setup": {
+      "ds": 200,
+      "ds_template": 200,
+      "lo": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "keys:subject_keys",
+      "verify": {
+       "es:copy_unverified": 0,
+       "es:events": 0,
+       "es:facts": 0,
+       "es:placeholder_content": 0,
+       "es:placeholder_missing": 0,
+       "es:placeholder_version": 0,
+       "es:soft_deleted": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 1,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifier_proposals": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:quarantine_unscanned": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 2
+     },
+     "stores_registered": 40,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:identifier_proposals",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 2,
+      "keydb_disk_paths_keyhex": [
+       "/var/lib/postgresql/data/base/16407/25112",
+       "/var/lib/postgresql/data/pg_wal/000000010000000000000037"
+      ],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_key_kept",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {},
+      "toast_control": {
+       "one_copy": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       },
+       "stored_bytes": {
+        "pc_toast_c": 251,
+        "pc_toast_x": 20000
+       },
+       "three_copies": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       }
+      }
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "controls_reported_m5": {
+      "data_stream": true,
+      "ds_backing_index": true,
+      "large_object": true,
+      "wp_app_temp_table": "42501"
+     },
+     "controls_setup": {
+      "ds": 200,
+      "ds_template": 200,
+      "lo": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "keys:subject_keys",
+      "verify": {
+       "es:copy_unverified": 0,
+       "es:events": 0,
+       "es:facts": 0,
+       "es:placeholder_content": 0,
+       "es:placeholder_missing": 0,
+       "es:placeholder_version": 0,
+       "es:soft_deleted": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 1,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifier_proposals": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:quarantine_unscanned": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 2
+     },
+     "stores_registered": 40,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:identifier_proposals",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    }
+   ],
+   "ctl_no_placeholders": [
+    {
+     "after": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_no_placeholders",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {},
+      "toast_control": {
+       "one_copy": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       },
+       "stored_bytes": {
+        "pc_toast_c": 251,
+        "pc_toast_x": 20000
+       },
+       "three_copies": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       }
+      }
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "controls_reported_m5": {
+      "data_stream": true,
+      "ds_backing_index": true,
+      "large_object": true,
+      "wp_app_temp_table": "42501"
+     },
+     "controls_setup": {
+      "ds": 200,
+      "ds_template": 200,
+      "lo": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "es:facts,es:events,es:placeholder_content,es:placeholder_version",
+      "verify": {
+       "es:copy_unverified": 0,
+       "es:events": 3,
+       "es:facts": 1,
+       "es:placeholder_content": 4,
+       "es:placeholder_missing": 0,
+       "es:placeholder_version": 4,
+       "es:soft_deleted": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifier_proposals": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:quarantine_unscanned": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 2,
+      "es_api_X": 4,
+      "keyhex_files": 0
+     },
+     "stores_registered": 40,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:identifier_proposals",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_no_placeholders",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {},
+      "toast_control": {
+       "one_copy": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       },
+       "stored_bytes": {
+        "pc_toast_c": 251,
+        "pc_toast_x": 20000
+       },
+       "three_copies": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       }
+      }
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "controls_reported_m5": {
+      "data_stream": true,
+      "ds_backing_index": true,
+      "large_object": true,
+      "wp_app_temp_table": "42501"
+     },
+     "controls_setup": {
+      "ds": 200,
+      "ds_template": 200,
+      "lo": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "es:facts,es:events,es:placeholder_content,es:placeholder_version",
+      "verify": {
+       "es:copy_unverified": 0,
+       "es:events": 3,
+       "es:facts": 1,
+       "es:placeholder_content": 4,
+       "es:placeholder_missing": 0,
+       "es:placeholder_version": 4,
+       "es:soft_deleted": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifier_proposals": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:quarantine_unscanned": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 2,
+      "es_api_X": 4,
+      "keyhex_files": 0
+     },
+     "stores_registered": 40,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:identifier_proposals",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_no_placeholders",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {},
+      "toast_control": {
+       "one_copy": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       },
+       "stored_bytes": {
+        "pc_toast_c": 251,
+        "pc_toast_x": 20000
+       },
+       "three_copies": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       }
+      }
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "controls_reported_m5": {
+      "data_stream": true,
+      "ds_backing_index": true,
+      "large_object": true,
+      "wp_app_temp_table": "42501"
+     },
+     "controls_setup": {
+      "ds": 200,
+      "ds_template": 200,
+      "lo": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "es:facts,es:events,es:placeholder_content,es:placeholder_version",
+      "verify": {
+       "es:copy_unverified": 0,
+       "es:events": 3,
+       "es:facts": 1,
+       "es:placeholder_content": 4,
+       "es:placeholder_missing": 0,
+       "es:placeholder_version": 4,
+       "es:soft_deleted": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifier_proposals": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:quarantine_unscanned": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 2,
+      "es_api_X": 4,
+      "keyhex_files": 0
+     },
+     "stores_registered": 40,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:identifier_proposals",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_no_placeholders",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {},
+      "toast_control": {
+       "one_copy": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       },
+       "stored_bytes": {
+        "pc_toast_c": 251,
+        "pc_toast_x": 20000
+       },
+       "three_copies": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       }
+      }
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "controls_reported_m5": {
+      "data_stream": true,
+      "ds_backing_index": true,
+      "large_object": true,
+      "wp_app_temp_table": "42501"
+     },
+     "controls_setup": {
+      "ds": 200,
+      "ds_template": 200,
+      "lo": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "es:facts,es:events,es:placeholder_content,es:placeholder_version",
+      "verify": {
+       "es:copy_unverified": 0,
+       "es:events": 3,
+       "es:facts": 1,
+       "es:placeholder_content": 4,
+       "es:placeholder_missing": 0,
+       "es:placeholder_version": 4,
+       "es:soft_deleted": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifier_proposals": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:quarantine_unscanned": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 2,
+      "es_api_X": 4,
+      "keyhex_files": 0
+     },
+     "stores_registered": 40,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:identifier_proposals",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_no_placeholders",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {},
+      "toast_control": {
+       "one_copy": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       },
+       "stored_bytes": {
+        "pc_toast_c": 251,
+        "pc_toast_x": 20000
+       },
+       "three_copies": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       }
+      }
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "controls_reported_m5": {
+      "data_stream": true,
+      "ds_backing_index": true,
+      "large_object": true,
+      "wp_app_temp_table": "42501"
+     },
+     "controls_setup": {
+      "ds": 200,
+      "ds_template": 200,
+      "lo": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "es:facts,es:events,es:placeholder_content,es:placeholder_version",
+      "verify": {
+       "es:copy_unverified": 0,
+       "es:events": 3,
+       "es:facts": 1,
+       "es:placeholder_content": 4,
+       "es:placeholder_missing": 0,
+       "es:placeholder_version": 4,
+       "es:soft_deleted": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifier_proposals": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:quarantine_unscanned": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 2,
+      "es_api_X": 4,
+      "keyhex_files": 0
+     },
+     "stores_registered": 40,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:identifier_proposals",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_no_placeholders",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {},
+      "toast_control": {
+       "one_copy": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       },
+       "stored_bytes": {
+        "pc_toast_c": 251,
+        "pc_toast_x": 20000
+       },
+       "three_copies": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       }
+      }
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "controls_reported_m5": {
+      "data_stream": true,
+      "ds_backing_index": true,
+      "large_object": true,
+      "wp_app_temp_table": "42501"
+     },
+     "controls_setup": {
+      "ds": 200,
+      "ds_template": 200,
+      "lo": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "es:facts,es:events,es:placeholder_content,es:placeholder_version",
+      "verify": {
+       "es:copy_unverified": 0,
+       "es:events": 3,
+       "es:facts": 1,
+       "es:placeholder_content": 4,
+       "es:placeholder_missing": 0,
+       "es:placeholder_version": 4,
+       "es:soft_deleted": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifier_proposals": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:quarantine_unscanned": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 2,
+      "es_api_X": 4,
+      "keyhex_files": 0
+     },
+     "stores_registered": 40,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:identifier_proposals",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_no_placeholders",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {},
+      "toast_control": {
+       "one_copy": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       },
+       "stored_bytes": {
+        "pc_toast_c": 251,
+        "pc_toast_x": 20000
+       },
+       "three_copies": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       }
+      }
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "controls_reported_m5": {
+      "data_stream": true,
+      "ds_backing_index": true,
+      "large_object": true,
+      "wp_app_temp_table": "42501"
+     },
+     "controls_setup": {
+      "ds": 200,
+      "ds_template": 200,
+      "lo": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "es:facts,es:events,es:placeholder_content,es:placeholder_version",
+      "verify": {
+       "es:copy_unverified": 0,
+       "es:events": 3,
+       "es:facts": 1,
+       "es:placeholder_content": 4,
+       "es:placeholder_missing": 0,
+       "es:placeholder_version": 4,
+       "es:soft_deleted": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifier_proposals": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:quarantine_unscanned": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 2,
+      "es_api_X": 4,
+      "keyhex_files": 0
+     },
+     "stores_registered": 40,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:identifier_proposals",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_no_placeholders",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {},
+      "toast_control": {
+       "one_copy": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       },
+       "stored_bytes": {
+        "pc_toast_c": 251,
+        "pc_toast_x": 20000
+       },
+       "three_copies": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       }
+      }
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "controls_reported_m5": {
+      "data_stream": true,
+      "ds_backing_index": true,
+      "large_object": true,
+      "wp_app_temp_table": "42501"
+     },
+     "controls_setup": {
+      "ds": 200,
+      "ds_template": 200,
+      "lo": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "es:facts,es:events,es:placeholder_content,es:placeholder_version",
+      "verify": {
+       "es:copy_unverified": 0,
+       "es:events": 3,
+       "es:facts": 1,
+       "es:placeholder_content": 4,
+       "es:placeholder_missing": 0,
+       "es:placeholder_version": 4,
+       "es:soft_deleted": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifier_proposals": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:quarantine_unscanned": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 2,
+      "es_api_X": 4,
+      "keyhex_files": 0
+     },
+     "stores_registered": 40,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:identifier_proposals",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_no_placeholders",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {},
+      "toast_control": {
+       "one_copy": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       },
+       "stored_bytes": {
+        "pc_toast_c": 251,
+        "pc_toast_x": 20000
+       },
+       "three_copies": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       }
+      }
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "controls_reported_m5": {
+      "data_stream": true,
+      "ds_backing_index": true,
+      "large_object": true,
+      "wp_app_temp_table": "42501"
+     },
+     "controls_setup": {
+      "ds": 200,
+      "ds_template": 200,
+      "lo": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "es:facts,es:events,es:placeholder_content,es:placeholder_version",
+      "verify": {
+       "es:copy_unverified": 0,
+       "es:events": 3,
+       "es:facts": 1,
+       "es:placeholder_content": 4,
+       "es:placeholder_missing": 0,
+       "es:placeholder_version": 4,
+       "es:soft_deleted": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifier_proposals": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:quarantine_unscanned": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 2,
+      "es_api_X": 4,
+      "keyhex_files": 0
+     },
+     "stores_registered": 40,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:identifier_proposals",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_no_placeholders",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {},
+      "toast_control": {
+       "one_copy": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       },
+       "stored_bytes": {
+        "pc_toast_c": 251,
+        "pc_toast_x": 20000
+       },
+       "three_copies": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       }
+      }
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "controls_reported_m5": {
+      "data_stream": true,
+      "ds_backing_index": true,
+      "large_object": true,
+      "wp_app_temp_table": "42501"
+     },
+     "controls_setup": {
+      "ds": 200,
+      "ds_template": 200,
+      "lo": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "es:facts,es:events,es:placeholder_content,es:placeholder_version",
+      "verify": {
+       "es:copy_unverified": 0,
+       "es:events": 3,
+       "es:facts": 1,
+       "es:placeholder_content": 4,
+       "es:placeholder_missing": 0,
+       "es:placeholder_version": 4,
+       "es:soft_deleted": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifier_proposals": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:quarantine_unscanned": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 2,
+      "es_api_X": 4,
+      "keyhex_files": 0
+     },
+     "stores_registered": 40,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:identifier_proposals",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    }
+   ],
+   "fenced": [
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "fenced",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 2,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {},
+      "toast_control": {
+       "one_copy": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       },
+       "stored_bytes": {
+        "pc_toast_c": 251,
+        "pc_toast_x": 20000
+       },
+       "three_copies": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       }
+      }
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "controls_reported_m5": {
+      "data_stream": true,
+      "ds_backing_index": true,
+      "large_object": true,
+      "wp_app_temp_table": "42501"
+     },
+     "controls_setup": {
+      "ds": 200,
+      "ds_template": 200,
+      "lo": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": true,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": true,
+      "error_type": null,
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": null,
+      "verify": {
+       "es:copy_unverified": 0,
+       "es:events": 0,
+       "es:facts": 0,
+       "es:placeholder_content": 0,
+       "es:placeholder_missing": 0,
+       "es:placeholder_version": 0,
+       "es:soft_deleted": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifier_proposals": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:quarantine_unscanned": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 0
+     },
+     "stores_registered": 40,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:identifier_proposals",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "fenced",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {},
+      "toast_control": {
+       "one_copy": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       },
+       "stored_bytes": {
+        "pc_toast_c": 251,
+        "pc_toast_x": 20000
+       },
+       "three_copies": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       }
+      }
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "controls_reported_m5": {
+      "data_stream": true,
+      "ds_backing_index": true,
+      "large_object": true,
+      "wp_app_temp_table": "42501"
+     },
+     "controls_setup": {
+      "ds": 200,
+      "ds_template": 200,
+      "lo": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": true,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": true,
+      "error_type": null,
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": null,
+      "verify": {
+       "es:copy_unverified": 0,
+       "es:events": 0,
+       "es:facts": 0,
+       "es:placeholder_content": 0,
+       "es:placeholder_missing": 0,
+       "es:placeholder_version": 0,
+       "es:soft_deleted": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifier_proposals": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:quarantine_unscanned": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 0
+     },
+     "stores_registered": 40,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:identifier_proposals",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "fenced",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {},
+      "toast_control": {
+       "one_copy": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       },
+       "stored_bytes": {
+        "pc_toast_c": 251,
+        "pc_toast_x": 20000
+       },
+       "three_copies": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       }
+      }
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "controls_reported_m5": {
+      "data_stream": true,
+      "ds_backing_index": true,
+      "large_object": true,
+      "wp_app_temp_table": "42501"
+     },
+     "controls_setup": {
+      "ds": 200,
+      "ds_template": 200,
+      "lo": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": true,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": true,
+      "error_type": null,
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": null,
+      "verify": {
+       "es:copy_unverified": 0,
+       "es:events": 0,
+       "es:facts": 0,
+       "es:placeholder_content": 0,
+       "es:placeholder_missing": 0,
+       "es:placeholder_version": 0,
+       "es:soft_deleted": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifier_proposals": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:quarantine_unscanned": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 0
+     },
+     "stores_registered": 40,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:identifier_proposals",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "fenced",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {},
+      "toast_control": {
+       "one_copy": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       },
+       "stored_bytes": {
+        "pc_toast_c": 251,
+        "pc_toast_x": 20000
+       },
+       "three_copies": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       }
+      }
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "controls_reported_m5": {
+      "data_stream": true,
+      "ds_backing_index": true,
+      "large_object": true,
+      "wp_app_temp_table": "42501"
+     },
+     "controls_setup": {
+      "ds": 200,
+      "ds_template": 200,
+      "lo": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": true,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": true,
+      "error_type": null,
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": null,
+      "verify": {
+       "es:copy_unverified": 0,
+       "es:events": 0,
+       "es:facts": 0,
+       "es:placeholder_content": 0,
+       "es:placeholder_missing": 0,
+       "es:placeholder_version": 0,
+       "es:soft_deleted": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifier_proposals": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:quarantine_unscanned": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 0
+     },
+     "stores_registered": 40,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:identifier_proposals",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "fenced",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {},
+      "toast_control": {
+       "one_copy": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       },
+       "stored_bytes": {
+        "pc_toast_c": 251,
+        "pc_toast_x": 20000
+       },
+       "three_copies": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       }
+      }
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "controls_reported_m5": {
+      "data_stream": true,
+      "ds_backing_index": true,
+      "large_object": true,
+      "wp_app_temp_table": "42501"
+     },
+     "controls_setup": {
+      "ds": 200,
+      "ds_template": 200,
+      "lo": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": true,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": true,
+      "error_type": null,
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": null,
+      "verify": {
+       "es:copy_unverified": 0,
+       "es:events": 0,
+       "es:facts": 0,
+       "es:placeholder_content": 0,
+       "es:placeholder_missing": 0,
+       "es:placeholder_version": 0,
+       "es:soft_deleted": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifier_proposals": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:quarantine_unscanned": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 0
+     },
+     "stores_registered": 40,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:identifier_proposals",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "fenced",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {},
+      "toast_control": {
+       "one_copy": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       },
+       "stored_bytes": {
+        "pc_toast_c": 251,
+        "pc_toast_x": 20000
+       },
+       "three_copies": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       }
+      }
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "controls_reported_m5": {
+      "data_stream": true,
+      "ds_backing_index": true,
+      "large_object": true,
+      "wp_app_temp_table": "42501"
+     },
+     "controls_setup": {
+      "ds": 200,
+      "ds_template": 200,
+      "lo": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": true,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": true,
+      "error_type": null,
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": null,
+      "verify": {
+       "es:copy_unverified": 0,
+       "es:events": 0,
+       "es:facts": 0,
+       "es:placeholder_content": 0,
+       "es:placeholder_missing": 0,
+       "es:placeholder_version": 0,
+       "es:soft_deleted": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifier_proposals": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:quarantine_unscanned": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 0
+     },
+     "stores_registered": 40,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:identifier_proposals",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "fenced",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {},
+      "toast_control": {
+       "one_copy": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       },
+       "stored_bytes": {
+        "pc_toast_c": 251,
+        "pc_toast_x": 20000
+       },
+       "three_copies": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       }
+      }
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "controls_reported_m5": {
+      "data_stream": true,
+      "ds_backing_index": true,
+      "large_object": true,
+      "wp_app_temp_table": "42501"
+     },
+     "controls_setup": {
+      "ds": 200,
+      "ds_template": 200,
+      "lo": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": true,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": true,
+      "error_type": null,
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": null,
+      "verify": {
+       "es:copy_unverified": 0,
+       "es:events": 0,
+       "es:facts": 0,
+       "es:placeholder_content": 0,
+       "es:placeholder_missing": 0,
+       "es:placeholder_version": 0,
+       "es:soft_deleted": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifier_proposals": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:quarantine_unscanned": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 0
+     },
+     "stores_registered": 40,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:identifier_proposals",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "fenced",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {},
+      "toast_control": {
+       "one_copy": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       },
+       "stored_bytes": {
+        "pc_toast_c": 251,
+        "pc_toast_x": 20000
+       },
+       "three_copies": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       }
+      }
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "controls_reported_m5": {
+      "data_stream": true,
+      "ds_backing_index": true,
+      "large_object": true,
+      "wp_app_temp_table": "42501"
+     },
+     "controls_setup": {
+      "ds": 200,
+      "ds_template": 200,
+      "lo": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": true,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": true,
+      "error_type": null,
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": null,
+      "verify": {
+       "es:copy_unverified": 0,
+       "es:events": 0,
+       "es:facts": 0,
+       "es:placeholder_content": 0,
+       "es:placeholder_missing": 0,
+       "es:placeholder_version": 0,
+       "es:soft_deleted": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifier_proposals": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:quarantine_unscanned": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 0
+     },
+     "stores_registered": 40,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:identifier_proposals",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "fenced",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {},
+      "toast_control": {
+       "one_copy": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       },
+       "stored_bytes": {
+        "pc_toast_c": 251,
+        "pc_toast_x": 20000
+       },
+       "three_copies": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       }
+      }
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "controls_reported_m5": {
+      "data_stream": true,
+      "ds_backing_index": true,
+      "large_object": true,
+      "wp_app_temp_table": "42501"
+     },
+     "controls_setup": {
+      "ds": 200,
+      "ds_template": 200,
+      "lo": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": true,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": true,
+      "error_type": null,
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": null,
+      "verify": {
+       "es:copy_unverified": 0,
+       "es:events": 0,
+       "es:facts": 0,
+       "es:placeholder_content": 0,
+       "es:placeholder_missing": 0,
+       "es:placeholder_version": 0,
+       "es:soft_deleted": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifier_proposals": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:quarantine_unscanned": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 0
+     },
+     "stores_registered": 40,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:identifier_proposals",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "fenced",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {},
+      "toast_control": {
+       "one_copy": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       },
+       "stored_bytes": {
+        "pc_toast_c": 251,
+        "pc_toast_x": 20000
+       },
+       "three_copies": {
+        "pc_toast_c": false,
+        "pc_toast_x": true
+       }
+      }
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "controls_reported_m5": {
+      "data_stream": true,
+      "ds_backing_index": true,
+      "large_object": true,
+      "wp_app_temp_table": "42501"
+     },
+     "controls_setup": {
+      "ds": 200,
+      "ds_template": 200,
+      "lo": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": true,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": true,
+      "error_type": null,
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": null,
+      "verify": {
+       "es:copy_unverified": 0,
+       "es:events": 0,
+       "es:facts": 0,
+       "es:placeholder_content": 0,
+       "es:placeholder_missing": 0,
+       "es:placeholder_version": 0,
+       "es:soft_deleted": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifier_proposals": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:quarantine_unscanned": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 0
+     },
+     "stores_registered": 40,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:identifier_proposals",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    }
+   ]
+  },
+  "control_violated": {
+   "ctl_key_kept": 10,
+   "ctl_no_placeholders": 10
+  },
+  "fenced_holds": 10,
+  "pass": true
+ }
+}

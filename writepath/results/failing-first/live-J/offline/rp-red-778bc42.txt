@@ -1,0 +1,17 @@
+# offline modules from a working-tree copy (rp-red-778bc42), run 2026-11-18T22:38:18Z: python -m unittest tests.test_live_chain_disk.ChainDisk.test_dr7_rp_rotates_inside_the_window
+F
+======================================================================
+FAIL: test_dr7_rp_rotates_inside_the_window (tests.test_live_chain_disk.ChainDisk.test_dr7_rp_rotates_inside_the_window)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/rp-red-778bc42.Cxk0/writepath/tests/test_live_chain_disk.py", line 138, in test_dr7_rp_rotates_inside_the_window
+    self.assertEqual(rc, 0, out)
+AssertionError: 2 != 0 : lock taken 2026-11-18T22:38:18Z head new seal0 seal0 h0 h0 free_kib 12582912
+~/emlab2-16096/wphard/scratch/rp-red-778bc42.Cxk0/writepath/results/failing-first/harness/live_chain.sh: 111: ROT_OLD: ROT_OLD names the old key-id hash list
+lock released 2026-11-18T22:38:18Z
+
+
+----------------------------------------------------------------------
+Ran 1 test in 5.021s
+
+FAILED (failures=1)

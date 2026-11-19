@@ -1,0 +1,6 @@
+# offline modules from a working-tree copy (setup-green), run 2026-11-18T23:46:59Z: python -m unittest tests.test_setup_roles tests.test_store_tmpfs tests.test_live_chain_disk tests.test_disk_gate tests.test_es_keys_output
+..............................................
+----------------------------------------------------------------------
+Ran 46 tests in 95.418s
+
+OK
