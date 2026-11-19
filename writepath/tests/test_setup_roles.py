@@ -132,14 +132,18 @@ class SetupRoles(unittest.TestCase):
         # review 42cfd11 R7: a SUCCESSFUL install under log_min_duration_statement >= 0 would log the pads as bind
         # parameters; the install runs in one transaction that first switches statement and parameter logging off
         # (superuser SET LOCAL), then takes wp_owner for that transaction only
+        import contextlib
+        import io
         from wp import sealer
-        d = tempfile.mkdtemp()
+        td = tempfile.TemporaryDirectory()               # the throwaway key file is removed with it
+        self.addCleanup(td.cleanup)
         old = os.environ.get("WP_SECRETS_DIR")
-        os.environ["WP_SECRETS_DIR"] = d
+        os.environ["WP_SECRETS_DIR"] = td.name
         try:
             a = FakeAdmin(roles=["wp"])
             a.execute = lambda q, *x, _r=a.execute: (_r(q, *x), types_ns(fetchone=lambda: None))[1]
-            setup._seal_key(a)
+            with contextlib.redirect_stdout(io.StringIO()):   # _seal_key prints the key id: keep it out of receipts
+                setup._seal_key(a)
         finally:
             if old is None:
                 os.environ.pop("WP_SECRETS_DIR", None)

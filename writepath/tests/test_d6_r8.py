@@ -12,6 +12,8 @@
         cross-tenant read (the live D6 at c6d3e85 refused the control's search of B, 403).
   D6R6  the key's validity is observed (an own write right after the five): a refused own write fails C14c, and any
         401 among the five makes C14c INVALID-REQUEST.
+  D6R8  (amendment H6h) C1 B_read's 403 counts only with an operator witness that B's read alias exists (admin
+        search 200 before the child): no witness, or a witness other than 200, is INVALID-REQUEST in the fenced arm.
   D6R7  the operator's existence check: 404 False, 200 True, any other status or an exception None (never raises, so
         one failed HEAD cannot lose the run's rows)."""
 import inspect
@@ -113,6 +115,18 @@ class D6R8(unittest.TestCase):
         self.assertIs(f("n", HeadES(200)), True)
         self.assertIsNone(f("n", HeadES(500)))
         self.assertIsNone(f("n", HeadES(exc=OSError("refused"))))
+
+
+    def test_d6r8_b_read_needs_an_existence_witness(self):
+        row = {"own_write": [201, None], "C1": {"B_read": [403, "security_exception"]}}
+        _, inv = H.judge("fenced", dict(row), {})
+        self.assertIn("C1 B_read", inv, "a 403 with no witness that B's read alias exists counted as a refusal")
+        _, inv = H.judge("fenced", dict(row, C1_B_read_witness=[404, "index_not_found_exception"]), {})
+        self.assertIn("C1 B_read", inv)
+        _, inv = H.judge("fenced", dict(row, C1_B_read_witness=[200, None]), {})
+        self.assertNotIn("C1 B_read", inv)
+        src = inspect.getsource(H.once)
+        self.assertIn("C1_B_read_witness", src, "the operator does not record the witness")
 
 
 if __name__ == "__main__":

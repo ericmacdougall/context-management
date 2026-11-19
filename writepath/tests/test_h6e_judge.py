@@ -28,7 +28,7 @@ def holding():
         files.setdefault(n, "EACCES")
     return {
         "own_write": [201, None], "files": files, "invalid": {},
-        "C1": {"B_w": REF, "B_read": REF, "B_x": REF}, "C2": {"A_base": REF}, "C3": {"A_x": REF},
+        "C1": {"B_w": REF, "B_read": REF, "B_x": REF}, "C1_B_read_witness": [200, None], "C2": {"A_base": REF}, "C3": {"A_x": REF},
         "C4": {"add_next": REF, "remove_own": REF, "add_on_B": REF},
         "C14": {"a": {"request": 200, "own": [201, None], "B": REF}, "b": [403, "security_exception", None],
                 # H6g (review 42cfd11 R8): C14c runs with the still-valid key; the operator found no such index after
