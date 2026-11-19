@@ -1,0 +1,105 @@
+free 13913856 KiB at 2026-11-19T01:02:04Z
+RUNLOCK taken 2026-11-19T01:02:04Z
+PINNED /home/eric/emlab2-16096/gatefix/wp/runs/dcd4bab4814b-20261119T010204Z head dcd4bab4814b
+## guard check at 2026-11-19T01:02:11Z
+guard_check integ-end PASS {}
+RESULT guard_check_integ-end sha256=e30dce06fce421265e53df6a1d4fb976f672a48d8149a31b5c97d8b649ac2a3d file=/home/eric/emlab2-16096/gatefix/wp/results/guard_check_integ-end.e30dce06fce42126.json
+guard exit 0
+disk_gate stops: none open
+secrets dir entries 21 listing sha256 382bcd34336faac1
+free 13893608 KiB at 2026-11-19T01:02:13Z
+## launch integ-i1-ok exp.live_probe ok at 2026-11-19T01:02:13Z
+gate_version=disk_gate v6 sha256 1a573764fc5a5ba5344d7da183b223dce61a4ff16f4790abd130892cc6dc40dd
+disk_gate start run r-37f28ab89e1809187100b9993a8180bc label integ-i1-ok commit dcd4bab4814b free 13.2 GiB es d095812623f7 tmpfs 16.50 GiB limit 6.00 peak 1.77 free 16.50; pg 25d8d5f9be76 tmpfs 4.50 GiB limit 4.00 peak 0.36 free 4.42
+disk_gate end free 13.2 GiB es d095812623f7 tmpfs 16.50 GiB limit 6.00 peak 1.78 free 16.50; pg 25d8d5f9be76 tmpfs 4.50 GiB limit 4.00 peak 0.36 free 4.42
+disk_gate VALID run r-37f28ab89e1809187100b9993a8180bc window_end 2026-11-19T01:02:16Z disk_gate v6 sha256 1a573764fc5a5ba5 LIMITS v6 (GATE-DESIGN 9.4, 8.4, 6.4): not detected, the operator trust boundary: tampering by the same OS user with the gate, its tree, state, ledger, lock or manifest; root on the host; a process that leaves the run's process group or cgroup on purpose; rows written outside the run directory (never staged); a docker pause and unpause, an ES disk or allocation setting chan
+exit 0 (0 VALID, 3 VOID, 2 BLOCKED)
+verdict r-37f28ab89e1809187100b9993a8180bc: disk_gate VALID run r-37f28ab89e1809187100b9993a8180bc window_end 2026-11-19T01:02:16Z disk_gate v6 sha256 1a573764fc5a5ba5 LIMITS v6 (GATE-DESIGN 9.4, 8.4, 6.4): not detected, the operator trust boundary: tampering by the same OS user with the gate, its tree, state, ledger, lock or manifest; root o (exit 0)
+secrets dir entries 21 listing sha256 382bcd34336faac1
+free 13903176 KiB at 2026-11-19T01:02:26Z
+crafted link made in dcd4bab4814b-20261119T010226Z/exp
+## launch integ-i4-crafted-link exp.live_probe ok at 2026-11-19T01:02:26Z
+gate_version=disk_gate v6 sha256 1a573764fc5a5ba5344d7da183b223dce61a4ff16f4790abd130892cc6dc40dd
+disk_gate BLOCKED: an untracked file in the pinned tree: exp/x
+disk_gate BLOCKED: fixture exp/x
+disk_gate BLOCKED disk_gate v6 sha256 1a573764fc5a5ba5
+exit 2 (0 VALID, 3 VOID, 2 BLOCKED)
+disk_gate stops: none open
+free 13900664 KiB at 2026-11-19T01:02:27Z
+## chain at 2026-11-19T01:02:27Z
+chain start 2026-11-19T01:02:27Z head dcd4bab4814b spec integ-i7.spec.1258807 records /home/eric/emlab2-16096/gatefix/wp/results/chains/20261119T010227Z-1258818
+integ-i7-a: gate exit 0 (0 VALID, 3 VOID, 2 BLOCKED); record /home/eric/emlab2-16096/gatefix/wp/results/chains/20261119T010227Z-1258818/2.integ-i7-a.gate.out
+integ-i7-b: gate exit 0 (0 VALID, 3 VOID, 2 BLOCKED); record /home/eric/emlab2-16096/gatefix/wp/results/chains/20261119T010227Z-1258818/4.integ-i7-b.gate.out
+integ-i7-c: gate exit 0 (0 VALID, 3 VOID, 2 BLOCKED); record /home/eric/emlab2-16096/gatefix/wp/results/chains/20261119T010227Z-1258818/6.integ-i7-c.gate.out
+chain end 2026-11-19T01:02:44Z stamped 3
+chain exit 0
+disk_gate stops: none open
+free 14002856 KiB at 2026-11-19T01:02:45Z
+PUT _index_template/wp16096-zz-integ-i3: 200
+## launch integ-i3a-template exp.live_probe ok at 2026-11-19T01:02:45Z
+gate_version=disk_gate v6 sha256 1a573764fc5a5ba5344d7da183b223dce61a4ff16f4790abd130892cc6dc40dd
+disk_gate BLOCKED: stores not clean before the run: 1 unregistered: es-template:wp16096-zz-integ-i3
+disk_gate BLOCKED disk_gate v6 sha256 1a573764fc5a5ba5
+exit 2 (0 VALID, 3 VOID, 2 BLOCKED)
+DELETE _index_template/wp16096-zz-integ-i3: 200
+disk_gate stops: none open
+## I4 raw output check: the crafted name splits the BLOCKED reason across lines (see receipt)
+free 13933180 KiB at 2026-11-19T01:03:13Z
+run directory appeared after 2 s; PUT _index_template/wp16096-zz-integ-i3b at 2026-11-19T01:03:20Z: 200
+gate_version=disk_gate v6 sha256 1a573764fc5a5ba5344d7da183b223dce61a4ff16f4790abd130892cc6dc40dd
+disk_gate start run r-7cff931f9fa036c10405affc20cabd0b label integ-i3b-template-during commit dcd4bab4814b free 13.2 GiB es d095812623f7 tmpfs 16.50 GiB limit 6.00 peak 1.81 free 16.50; pg 25d8d5f9be76 tmpfs 4.50 GiB limit 4.00 peak 0.36 free 4.41
+disk_gate end free 13.2 GiB es d095812623f7 tmpfs 16.50 GiB limit 6.00 peak 1.81 free 16.50; pg 25d8d5f9be76 tmpfs 4.50 GiB limit 4.00 peak 0.36 free 4.41
+exit 0 (0 VALID, 3 VOID, 2 BLOCKED)
+template after the end: 200
+DELETE _index_template/wp16096-zz-integ-i3b: 200
+disk_gate stops: none open
+free 13849516 KiB at 2026-11-19T01:04:03Z
+## launch integ-i9a-selfkill exp.live_probe selfkill at 2026-11-19T01:04:03Z
+gate_version=disk_gate v6 sha256 1a573764fc5a5ba5344d7da183b223dce61a4ff16f4790abd130892cc6dc40dd
+disk_gate start run r-94844dbc210c053c2ff8cd3c785cc9d0 label integ-i9a-selfkill commit dcd4bab4814b free 13.2 GiB es d095812623f7 tmpfs 16.50 GiB limit 6.00 peak 1.81 free 16.50; pg 25d8d5f9be76 tmpfs 4.50 GiB limit 4.00 peak 0.36 free 4.41
+disk_gate end free 13.2 GiB es d095812623f7 tmpfs 16.50 GiB limit 6.00 peak 1.81 free 16.50; pg 25d8d5f9be76 tmpfs 4.50 GiB limit 4.00 peak 0.36 free 4.41
+disk_gate VOID: the experiment was killed by signal 9 (SIGKILL), which the gate did not send: an OOM kill, a memory or CPU limit, or another process
+exit 3 (0 VALID, 3 VOID, 2 BLOCKED)
+disk_gate stops: none open
+free 13865476 KiB at 2026-11-19T01:04:13Z
+## launch integ-i6-linger exp.live_probe linger at 2026-11-19T01:04:13Z
+gate_version=disk_gate v6 sha256 1a573764fc5a5ba5344d7da183b223dce61a4ff16f4790abd130892cc6dc40dd
+disk_gate start run r-2ced6734128f7dac84c7aad7f68f71dd label integ-i6-linger commit dcd4bab4814b free 13.2 GiB es d095812623f7 tmpfs 16.50 GiB limit 6.00 peak 1.81 free 16.50; pg 25d8d5f9be76 tmpfs 4.50 GiB limit 4.00 peak 0.36 free 4.41
+disk_gate end free 13.2 GiB es d095812623f7 tmpfs 16.50 GiB limit 6.00 peak 1.81 free 16.50; pg 25d8d5f9be76 tmpfs 4.50 GiB limit 4.00 peak 0.36 free 4.41
+disk_gate VOID: 1 process(es) of the run outlived the experiment (pids [1280343]): killed
+exit 3 (0 VALID, 3 VOID, 2 BLOCKED)
+lingering sleep 120 of this user still alive: 0
+disk_gate stops: none open
+free 13927424 KiB at 2026-11-19T01:04:24Z
+## launch integ-i9b-grant exp.live_probe grant at 2026-11-19T01:04:25Z
+gate_version=disk_gate v6 sha256 1a573764fc5a5ba5344d7da183b223dce61a4ff16f4790abd130892cc6dc40dd
+disk_gate start run r-2e38fd27a1b5fc76f42d7abdeaaf3d03 label integ-i9b-grant commit dcd4bab4814b free 13.3 GiB es d095812623f7 tmpfs 16.50 GiB limit 6.00 peak 1.82 free 16.50; pg 25d8d5f9be76 tmpfs 4.50 GiB limit 4.00 peak 0.36 free 4.41
+disk_gate end free 13.3 GiB es d095812623f7 tmpfs 16.50 GiB limit 6.00 peak 1.82 free 16.50; pg 25d8d5f9be76 tmpfs 4.50 GiB limit 4.00 peak 0.36 free 4.41
+disk_gate VOID: G2 wp_app on events: ['DELETE', 'INSERT', 'SELECT'] (committed ['INSERT', 'SELECT'])
+disk_gate VOID: catalog wp_events.app_privs changed during the run: 1 row(s) new, 0 gone (e.g. ["events", "DELETE"])
+disk_gate VOID: catalog wp_events.relations changed during the run: 1 row(s) new, 1 gone (e.g. ["events", "22119", "r", "wp_owner", "{wp_owner=arwdDxt/wp_owner,wp_verifier=r/wp_owner,wp_app=ard/wp_owner}", "False", "False"])
+exit 3 (0 VALID, 3 VOID, 2 BLOCKED)
+disk_gate stops: none open
+free 13949112 KiB at 2026-11-19T01:04:30Z
+## launch integ-reset-ok exp.live_probe ok at 2026-11-19T01:04:30Z
+gate_version=disk_gate v6 sha256 1a573764fc5a5ba5344d7da183b223dce61a4ff16f4790abd130892cc6dc40dd
+disk_gate start run r-04e5897a7f8c0c35643f09bf34d0bd6a label integ-reset-ok commit dcd4bab4814b free 13.3 GiB es d095812623f7 tmpfs 16.50 GiB limit 6.00 peak 1.82 free 16.50; pg 25d8d5f9be76 tmpfs 4.50 GiB limit 4.00 peak 0.36 free 4.41
+disk_gate end free 13.3 GiB es d095812623f7 tmpfs 16.50 GiB limit 6.00 peak 1.82 free 16.50; pg 25d8d5f9be76 tmpfs 4.50 GiB limit 4.00 peak 0.36 free 4.41
+exit 0 (0 VALID, 3 VOID, 2 BLOCKED)
+disk_gate stops: none open
+## guard check at 2026-11-19T01:04:41Z
+guard_check integ-end PASS {}
+RESULT guard_check_integ-end sha256=390f8a3f09939f05aaf286f938efc1bc2ab54392305ebf4a5d8b20ce118eb8db file=/home/eric/emlab2-16096/gatefix/wp/results/guard_check_integ-end.390f8a3f09939f05.json
+guard exit 0
+secrets dir entries 21 listing sha256 382bcd34336faac1
+free 13957056 KiB
+RUNLOCK: gatefix-integ af1a90667f3f5e147 2026-11-19T01:02:04Z integ l
+/emlab2-wphard-pg 25d8d5f9be76 mem=4294967296 swap=4294967296 tmpfs={"/var/lib/postgresql/data":"rw,size=4831838208,nr_inodes=0,mode=1777"}
+/emlab2-wphard-es d095812623f7 mem=6442450944 swap=6442450944 tmpfs={"/usr/share/elasticsearch/data":"rw,size=17716740096,nr_inodes=0,mode=1777"}
+stream containers (label): emlab2-wphard-es emlab2-wphard-pg 
+stream containers (name): emlab2-wphard-es emlab2-wphard-pg 
+ES security: 400 (_security/_authenticate without credentials)
+templates wp16096-zz-integ-i3/i3b: 404 404
+own sleep 120 processes: 0
+RUNLOCK released 2026-11-19T01:04:43Z
+ls: cannot access '/home/eric/emlab2-16096/RUNLOCK': No such file or directory

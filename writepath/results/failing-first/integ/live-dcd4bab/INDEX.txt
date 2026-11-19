@@ -1,0 +1,35 @@
+Live items of integ/gate-on-hardening at dcd4bab on t2-dev, 2026-11-19 01:02Z to 01:04Z (GoodQA #16096).
+RUNLOCK ~/emlab2-16096/RUNLOCK taken 01:02:04Z, released 01:04:43Z. Free disk at every start >= 13.8e6 KiB (10 GiB
+start rule, answer 3335a07a). Own home ~/emlab2-16096/gatefix/wp (synced dcd4bab4814b, manifest sha256 74b13e15...),
+pinned tree runs/dcd4bab4814b-20261119T010204Z; stores emlab2-wphard-pg (25d8d5f9be76) and emlab2-wphard-es
+(d095812623f7), not recreated, credentials and ES security untouched (ES security off: _authenticate 400).
+Full offline suite of dcd4bab on t2-dev: Ran 630, OK (skipped=47, expected failures=2).
+
+Before the lock (no run): watch_smoke.py ran the gate's container-event watcher against the real Docker 29.1.3: at
+321ba9b the CLI exit 143 on SIGTERM voided an empty window (fixed in da13a59); at dcd4bab an empty window gave no
+reason, and a throwaway container under a smoke-only prefix was judged from its real create event and inspect.
+creds_precheck.py: every login role has its credential file and a cluster password (PRECHECK CLEAN), so the gate's
+reset writes no credential.
+
+session.log (integ_live.sh, sent over stdin):
+  baseline guard_check PASS; no open stops; secrets dir 21 entries, listing hash 382bcd34336faac1
+  I1  integ-i1-ok          VALID (exit 0, ledger verdict VALID); secrets listing unchanged after it
+  I4  crafted link "x\n -> GIT_HEAD" in a second pinned tree of this home: BLOCKED (exit 2), untracked file and
+      unregistered fixture. FINDING: the name was printed raw, so the reason split across two output lines
+      (raw capture: "disk_gate BLOCKED: an untracked file in the pinned tree: exp/x" then " -> GIT_HEAD (not a file
+      of commit dcd4bab4814b)"); a name can print a forged "disk_gate VALID" line (red receipt
+      ../integ-oneline-dcd4bab.red.out). Fixed after the session (every reason printed as one line); the live
+      retest of I4 on the fixed head was NOT RUN (the lock was released to the write-path owner).
+  I7  chain of 3 (ok, sleep 5, ok): 3 VALID, chain exit 0, stamped 3, no false BLOCKED
+  I3a template wp16096-zz-integ-i3 made before the run: BLOCKED "1 unregistered: es-template:..."; deleted (200)
+  I3b template made 7 s after admission, during the run: VALID (exit 0), the template still there at the end: the
+      stated limit (templates are inspected at admission only, LIMITS); deleted (200)
+  I9a selfkill (F-2): VOID "killed by signal 9 (SIGKILL), which the gate did not send"
+  I6  linger: VOID "1 process(es) of the run outlived the experiment ... killed"; no sleep 120 left
+  I9b grant DELETE to wp_app (F-3): VOID on G2, app_privs and relations catalog change
+  reset run integ-reset-ok: VALID (the admission's reset removed the grant)
+  no stop opened by any run; final guard_check PASS; templates 404; only the two stores carry the stream name or
+  label; secrets listing unchanged
+leak-scan-live-dcd4bab.out: runkit/leak_scan.py v4 over these receipts and the own home's results: 33 files, 0
+  entries with a secret value, exit 0, with --no-keystore (the key store's psql read was refused: psql exit 1).
+guard_check_integ-end.*.json: the baseline and final guard results.

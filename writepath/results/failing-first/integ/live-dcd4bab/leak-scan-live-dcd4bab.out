@@ -1,0 +1,30 @@
+leak_scan version 4 sha256 5e5930ef880fd28a5fc2d089551366b89a465c221543f72eabbeed118d1f9f94
+self-test: 32/32 planted representations found, 0 control hit(s), damaged input listed
+source source #1: 2 value(s)
+source source #2: 2 value(s)
+source source #3: 2 value(s)
+source source #4: 2 value(s)
+source source #5: 1 value(s)
+source source #6: 1 value(s)
+source source #7: 1 value(s)
+source source #8: 1 value(s)
+source source #9: 1 value(s)
+source source #10: 1 value(s)
+source source #11: 1 value(s)
+source source #12: 1 value(s)
+source source #13: 1 value(s)
+source source #14: 1 value(s)
+source source #15: 1 value(s)
+source source #16: 1 value(s)
+source source #17: 1 value(s)
+source source #18: 1 value(s)
+source source #19: 1 value(s)
+source source #23: 0 value(s)
+key store and derived chain keys: NOT COVERED (--no-keystore given; its reason is not printed)
+seal key: 1 key(s) with their ipad and opad
+creation sites: 30 listed; NOT COVERED (memory only, never written by the stream): PG SCRAM verifier, SCRAM client and server keys, broker-minted writer API keys, probe API keys; values rotated or destroyed before this scan
+candidate values: 23 from files, 3 from the key store and derived; inventory ids v1 to v26
+size limit: 536870912 bytes per file and per decompressed stream
+files scanned: 33 not scanned: 0 entries with a secret value: 0
+LIMITS v4 (GATE-DESIGN 7.5): found = 16 consecutive characters of one listed representation of a file-held secret (fragment class), or one complete representation of a key-store or derived key or of an encoded API key (complete class), in one view; views are the original bytes, NUL-free bytes, and unescape, percent-decode and whitespace removal in any order to depth 3, and gzip to depth 3. Not found: pieces shorter than 16 characters (of a complete-class value: anything short of the whole), encrypted content, compression other than gzip, gzip inside another encoding, deeper nesting, unlisted encodings, and values outside the inventory (memory-only keys, SCRAM internals, rotated or destroyed values). Clearance rests on teardown (runkit/clearance.py), not on this scan.
+exit 0
