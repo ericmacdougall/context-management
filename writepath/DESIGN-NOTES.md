@@ -1199,7 +1199,9 @@ replay rows" without these qualifiers over-claims and is not used.
   and a deadline from its first byte (idle connections between requests have none), sends replies under the same
   deadline, and caps live connections per peer uid and in all; over a cap the accept loop answers busy before a
   thread starts. Authority: 8 MiB lines (6 x call_bytes for the worst JSON escaping plus 1 KiB per event, asserted),
-  30 s, 8 per uid, 32 in all, so request buffers hold at most 256 MiB; key service and broker: 2 MiB, 30 s, 32, 128,
+  30 s, 8 per uid, 32 in all. CORRECTED by review 42cfd11 R2a: "request buffers hold at most 256 MiB" was wrong
+  (raw bytes only; a parsed line of empty objects costs about 28 times its size and stayed referenced while the
+  connection idled: 1.1 GB with 8 such requests). Superseded by "Review 42cfd11 / R2" below. Key service and broker: 2 MiB, 30 s, 32, 128,
   and the client splits tenant_hmac_many and keys under 1 MiB per request. A per-uid cap still lets one allowed uid
   occupy its own slots (and, through the authority's CPU, every tenant: M4); there is no per-tenant rate limit.
 - M11: every client (key service, broker, authority) times out after 120 s (purge: plus its own timeout), closes the
@@ -1319,3 +1321,46 @@ quarantined it. A fenced writer has no liveness claim; the content is still the 
 lease. log.append also refuses (SealError, nothing stored) an authority row that lacks either attestation or a retry
 whose mentions are not a superset of the earlier scan's, so a mismatched authority build fails loudly instead of
 silently dropping fenced writes or forgetting a mention.
+
+### R2. Transport memory, slots and idle connections (review 42cfd11 R2a, R2b, R2c)
+Measured offline on t2-dev with the real wp/keysvc.py Server and the authority's bounds (tests/r2_mem_probe.py, one
+process per scenario, peak RSS from getrusage; receipts r2-red-42cfd11 and r2-wt*):
+
+| scenario (review probe) | 42cfd11 (8 MiB lines, no slots) | after |
+|---|---|---|
+| PC1: one line of empty objects | +217 MiB | +54 MiB |
+| PD: 8 such lines one after another, each connection then idle | over 1 GiB (capped) | +62 MiB |
+| PC8: 8 at once, dispatch holding each 0.5 s | over 1 GiB (capped) | +96 MiB |
+| all 32 connections at once (four uids) | not run | 285 MiB peak RSS |
+
+What changed (wp/keysvc.py Server, wp/sealer.py):
+- Nothing of a served request stays referenced while the connection waits: parse, dispatch and reply encoding run
+  in one method whose locals end with it, and the handler drops the raw line and the encoded reply.
+- Work slots (WORK_SLOTS = 1 for the authority): at most one request is parsed, dispatched and encoded at a time; a
+  request waits up to QUEUE_WAIT_S = 60 s for the slot, then gets busy (60 s plus the worst admitted call, about
+  32 s, stays under the clients' 120 s). The authority is one GIL-bound process, so this costs little throughput; its
+  store lookups no longer overlap.
+- Idle deadline (IDLE_TIMEOUT_S = 60 s for the authority): a connection that sends no first byte for 60 s, before
+  its first request or between requests, is closed without a reply. An append opens its own connection and closes it.
+- Line limit 2 MiB, from need: content travels base64-encoded (content_b64), so a call costs 4 x ceil(call_bytes/3)
+  = 1,398,104 bytes of content whatever it holds, plus 256 bytes per event (keys, 32-hex event id, subject id up to
+  about 160 bytes) for 1,000 events, plus 256 KiB for a WPS17 retry's prior mentions, plus 4 KiB: 1,920,344 bytes,
+  asserted at import and checked by TB6 with the real request line. As JSON text, control characters cost 6 bytes
+  each, which is what forced the 8 MiB line.
+- Containers: 512 MiB (exp/h_d2_uids.py CONTAINER_MEMORY), sized from the measured bound: 285 MiB transport peak
+  with every connection busy plus under 40 MB for the worst admitted call (H10). TB9d asserts that sum stays under 75%
+  of 512 MiB. NOT RUN in the container yet (live disk floor); owed: the 512 MiB container test.
+- Restart: none, decided. A dead authority fails closed (SealUnavailable: nothing stored) and the run must see it;
+  the chain judges oom_kill per step. A client deployment must supervise it with restart and alerting.
+
+Stated limits (not fixed):
+- R2b: idle connections still hold slots for up to 60 s each, so eight connections of the app uid, renewed every
+  60 s, keep every other writer of that uid at busy; in the lab every tenant shares the app uid, so its slots are
+  every tenant's. A client deployment needs a per-tenant identity at the authority and a per-tenant limit.
+- R2c: more than 8 concurrent appends from one uid get busy at once (SealUnavailable), and the listen backlog is 5,
+  so a burst of connects past it is refused by the kernel; there is no client retry or backoff.
+- The key service and the broker share the transport but keep no idle deadline (their clients hold long-lived
+  connections) and no work slots (purge can run 60 s). They gain the release of served requests (an idle connection
+  pins nothing), but concurrent parses are bounded only by the 2 MiB line, about 57 MiB each at worst: one allowed
+  uid with its 32 connections could hold about 1.8 GB, over their 512 MiB containers. Computed from the authority's
+  measurement, not measured for them; OPEN, not changed here (same shape as R2a; for main to rate).
