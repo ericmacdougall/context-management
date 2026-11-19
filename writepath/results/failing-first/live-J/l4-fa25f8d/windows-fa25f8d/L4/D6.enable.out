@@ -1,0 +1,1 @@
+security on; key id fingerprints {'projector': 'sha256:cfd005cbe72d6ac1', 'eraser': 'sha256:f5da0a4de3fd6516', 'verifier': 'sha256:e6f4ee16fe994290', 'admin': 'sha256:a85c926f5f2171ab'} rotation (invalidated, error) {'projector': [0, None], 'eraser': [0, None], 'verifier': [0, None], 'admin': [0, None]}

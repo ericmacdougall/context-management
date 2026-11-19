@@ -1,0 +1,36 @@
+steps (14): EW G1 P0 G2 G3 XB RS RH M3 SS SU D6 RP LS
+lock taken 2026-11-19T04:41:06Z head fa25f8d seal0 179412e h0 6ddeca3 free_kib 71490672
+store_fs pg=tmpfs es=tmpfs (timings on tmpfs stores are not comparable with disk-backed receipts; correctness results are)
+EW exit=0 watermark.low=10gb watermark.high=9gb watermark.flood_stage=8gb 
+  EW seconds=29 watermark_lines 0 oom_kill emlab2-wphard-pg=25d8d5f9be76c30efd82e9f17409ee68d7575eff32dd1d47a8854e0f5d0a5f86:0 emlab2-wphard-es=67f0ef043bac54a842921ba5ca6b34fc03fe833cd8b6026193bbcc36472c4de4:0  expected pass observed pass
+G1 exit=0 Ran 78 tests in 42.238s OK 
+  G1 seconds=43 watermark_lines 0 oom_kill emlab2-wphard-pg=25d8d5f9be76c30efd82e9f17409ee68d7575eff32dd1d47a8854e0f5d0a5f86:0 emlab2-wphard-es=67f0ef043bac54a842921ba5ca6b34fc03fe833cd8b6026193bbcc36472c4de4:0  expected pass observed pass
+P0 setup ok reset 
+  P0 seconds=0 watermark_lines 0 oom_kill emlab2-wphard-pg=25d8d5f9be76c30efd82e9f17409ee68d7575eff32dd1d47a8854e0f5d0a5f86:0 emlab2-wphard-es=67f0ef043bac54a842921ba5ca6b34fc03fe833cd8b6026193bbcc36472c4de4:0  expected pass observed pass
+G2 exit=0 Ran 47 tests in 12.625s OK 
+  G2 seconds=13 watermark_lines 0 oom_kill emlab2-wphard-pg=25d8d5f9be76c30efd82e9f17409ee68d7575eff32dd1d47a8854e0f5d0a5f86:0 emlab2-wphard-es=67f0ef043bac54a842921ba5ca6b34fc03fe833cd8b6026193bbcc36472c4de4:0  expected pass observed pass
+G3 exit=0 Ran 3 tests in 0.244s OK 
+  G3 seconds=1 watermark_lines 0 oom_kill emlab2-wphard-pg=25d8d5f9be76c30efd82e9f17409ee68d7575eff32dd1d47a8854e0f5d0a5f86:0 emlab2-wphard-es=67f0ef043bac54a842921ba5ca6b34fc03fe833cd8b6026193bbcc36472c4de4:0  expected pass observed pass
+XB exit=1 tree 5811368+tests/test_d3_pg.py@8b12324 Ran 42 tests in 8.114s FAILED (failures=5) 
+  XB seconds=8 watermark_lines 0 oom_kill emlab2-wphard-pg=25d8d5f9be76c30efd82e9f17409ee68d7575eff32dd1d47a8854e0f5d0a5f86:0 emlab2-wphard-es=67f0ef043bac54a842921ba5ca6b34fc03fe833cd8b6026193bbcc36472c4de4:0  expected red observed red
+RS exit=1 Ran 47 tests in 21.734s FAILED (failures=16, errors=3) 
+  RS seconds=22 watermark_lines 0 oom_kill emlab2-wphard-pg=25d8d5f9be76c30efd82e9f17409ee68d7575eff32dd1d47a8854e0f5d0a5f86:0 emlab2-wphard-es=67f0ef043bac54a842921ba5ca6b34fc03fe833cd8b6026193bbcc36472c4de4:0  expected red observed red
+RH exit=1 Ran 47 tests in 10.505s FAILED (failures=20, errors=9) 
+  RH seconds=11 watermark_lines 0 oom_kill emlab2-wphard-pg=25d8d5f9be76c30efd82e9f17409ee68d7575eff32dd1d47a8854e0f5d0a5f86:0 emlab2-wphard-es=67f0ef043bac54a842921ba5ca6b34fc03fe833cd8b6026193bbcc36472c4de4:0  expected red observed red
+M3 exit=0 m3_pad_log {"client_pad_hits": 2, "client_sqlstate": "22023", "errors_logged": 2, "holds": true, "log_read": true, "sample_rate_after_quiet": "1", "sampled_control_pad_hits": 2, "sampled_control_result": 128, "sampled_quiet_pad_hits": 0, "sampled_quiet_result": 128, "server_pad_hits": 0, "server_sqlstate": "22023", "settings": {"log_destination": "stderr", "log_min_duration_statement": "-1", "log_min_error_statement": "error", "log_parameter_max_length": "-1", "log_parameter_max_length_on_error": "0", "log_statement": "none", "logging_collector": "off"}, "statement_lines": 9, "success_control_pad_hits": 2, "success_control_result": 128, "success_quiet_pad_hits": 0, "success_quiet_result": 12
+  M3 seconds=1 watermark_lines 0 oom_kill emlab2-wphard-pg=25d8d5f9be76c30efd82e9f17409ee68d7575eff32dd1d47a8854e0f5d0a5f86:0 emlab2-wphard-es=67f0ef043bac54a842921ba5ca6b34fc03fe833cd8b6026193bbcc36472c4de4:0  expected pass observed pass
+SS exit=0 seal_socket_e2e {"E1": {"accepted": 1, "row_attested": [true, true]}, "E2": {"raised": "SealUnavailable", "stored": 0}, "E3": {"raised": "SealUnavailable", "stored": 0}, "same_uid_limit": true} PASS
+  SS seconds=3 watermark_lines 0 oom_kill emlab2-wphard-pg=25d8d5f9be76c30efd82e9f17409ee68d7575eff32dd1d47a8854e0f5d0a5f86:0 emlab2-wphard-es=67f0ef043bac54a842921ba5ca6b34fc03fe833cd8b6026193bbcc36472c4de4:0  expected pass observed pass
+SU exit=0 seal_uids_e2e {"K7": "SealUnavailable the seal authority refused this peer uid", "down": {"K6": "SealUnavailable", "phase": "down", "stored_delta": 0, "uid": 20001}, "limits": ["docker access on the host is root-equivalent: separation of service identities on one host, not host isolation", "one host, one Postgres", "the authority trusts every allowed peer uid for every tenant"], "uids": {"app": 20001, "keysvc": 20003, "peer": 20002, "sealer": 20005}, "up": {"K1_pgpass.wp_sealer": "PermissionError errno=13", "K1_seal_key": "PermissionError errno=13", "K2": "SealUnavailable", "K3": {"accepted": 1, "key_id_present": true, "mac_hex64": true}, "K4": "WPS40", "K5": "WPS41", "phase": "up", "stored_delta": 1, "uid": 20001}, "verdict": "PASS"}
+  SU seconds=6 watermark_lines 0 oom_kill emlab2-wphard-pg=25d8d5f9be76c30efd82e9f17409ee68d7575eff32dd1d47a8854e0f5d0a5f86:0 emlab2-wphard-es=67f0ef043bac54a842921ba5ca6b34fc03fe833cd8b6026193bbcc36472c4de4:0  expected pass observed pass
+D6 enable exit=0 licence 200 basic active h_d6_broker {"fenced_holds": "5/5", "control_violated": "5/5", "invalid_request_cases": [], "void": false, "feasible": true} exit=0 
+  D6 seconds=246 watermark_lines 0 oom_kill emlab2-wphard-pg=25d8d5f9be76c30efd82e9f17409ee68d7575eff32dd1d47a8854e0f5d0a5f86:0 emlab2-wphard-es=7a8d5084b00d48f0df32bad44719c91c347faac064bb409299f854c78509b1ab:0  expected pass observed pass
+RP in-window old ids hashed 4 before {"files": 4, "ids_changed": false, "valid_per_name": {"projector": 1, "eraser": 1, "verifier": 1, "admin": 1}, "old_ids_valid": 4} created keys; id fingerprints {'projector': 'sha256:a3422728888650d5', 'eraser': 'sha256:970095b7e520fa8a', 'verifier': 'sha256:ad39e64cb565715a', 'admin': 'sha256:f705f2cc2dd00580'} rotation (invalidated, error) {'projector': [1, None], 'eraser': [1, None], 'verifier': [1, None], 'admin': [1, None]} after {"files": 4, "ids_changed": true, "valid_per_name": {"projector": 1, "eraser": 1, "verifier": 1, "admin": 1}, "old_ids_valid": 0} 
+  RP seconds=8 watermark_lines 0 oom_kill emlab2-wphard-pg=25d8d5f9be76c30efd82e9f17409ee68d7575eff32dd1d47a8854e0f5d0a5f86:0 emlab2-wphard-es=7a8d5084b00d48f0df32bad44719c91c347faac064bb409299f854c78509b1ab:0  expected pass observed pass
+LS candidate secret values loaded: 34 files scanned: 49 files with a secret value: 0 
+  LS seconds=1 watermark_lines 0 oom_kill emlab2-wphard-pg=25d8d5f9be76c30efd82e9f17409ee68d7575eff32dd1d47a8854e0f5d0a5f86:0 emlab2-wphard-es=7a8d5084b00d48f0df32bad44719c91c347faac064bb409299f854c78509b1ab:0  expected pass observed pass
+dropped leaked test databases 0
+free_kib_end 78452620 chain done 2026-11-19T04:47:39Z
+steps expected/observed: EW:pass/pass G1:pass/pass P0:pass/pass G2:pass/pass G3:pass/pass XB:red/red RS:red/red RH:red/red M3:pass/pass SS:pass/pass SU:pass/pass D6:pass/pass RP:pass/pass LS:pass/pass
+CHAIN OK: every step as declared
+lock released 2026-11-19T04:47:39Z

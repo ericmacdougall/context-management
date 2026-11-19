@@ -1,0 +1,14 @@
+# offline modules from a working-tree copy (h6h-red-933c688), run 2026-11-19T04:34:15Z: python -m unittest tests.test_d6_r8 tests.test_h6e_judge tests.test_setup_roles
+.......F.............
+======================================================================
+FAIL: test_d6r8_b_read_needs_an_existence_witness (tests.test_d6_r8.D6R8.test_d6r8_b_read_needs_an_existence_witness)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/dev/shm/wphard-offline/h6h-red-933c688.pMoR/writepath/tests/test_d6_r8.py", line 123, in test_d6r8_b_read_needs_an_existence_witness
+    self.assertIn("C1 B_read", inv, "a 403 with no witness that B's read alias exists counted as a refusal")
+AssertionError: 'C1 B_read' not found in {} : a 403 with no witness that B's read alias exists counted as a refusal
+
+----------------------------------------------------------------------
+Ran 21 tests in 0.061s
+
+FAILED (failures=1)

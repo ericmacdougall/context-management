@@ -1,0 +1,18 @@
+emlab2-wphard-pg id=25d8d5f9be76c30efd82e9f17409ee68d7575eff32dd1d47a8854e0f5d0a5f86 started=2026-11-18T23:45:13.396467649Z running=true oomkilled=false restarts=0
+  memory.max=4294967296 memory.swap.max=0 memory.swap.current=0 memory.current=267718656 memory.peak=432717824
+  memory.events low 0 high 0 max 0 oom 0 oom_kill 0 oom_group_kill 0 
+  shmem shmem 172093440
+emlab2-wphard-es id=7a8d5084b00d48f0df32bad44719c91c347faac064bb409299f854c78509b1ab started=2026-11-19T04:43:25.630322787Z running=true oomkilled=false restarts=0
+  memory.max=6442450944 memory.swap.max=0 memory.swap.current=0 memory.current=2305527808 memory.peak=2307112960
+  memory.events low 0 high 0 max 0 oom 0 oom_kill 0 oom_group_kill 0 
+  shmem shmem 3837952
+/var/lib/postgresql/data tmpfs 4831838208 76222464 4755615744
+/usr/share/elasticsearch/data tmpfs 17716740096 3837952 17712902144
+log_destination=stderr (default)
+logging_collector=off (default)
+log_min_duration_statement=-1 (default)
+log_min_error_statement=error (default)
+log_parameter_max_length=-1 (default)
+log_parameter_max_length_on_error=0 (default)
+log_statement=none (default)
+host free_kib 78450904 mem_avail_kib 40467336 at 2026-11-19T04:47:39Z

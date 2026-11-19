@@ -1,0 +1,457 @@
+test_a1_app_has_no_path_to_subject_identifiers (tests.test_d3_pg.D3Store.test_a1_app_has_no_path_to_subject_identifiers) ... ok
+test_a2_no_self_approval (tests.test_d3_pg.D3Store.test_a2_no_self_approval) ... ok
+test_a3_binding_rule_version_and_state (tests.test_d3_pg.D3Store.test_a3_binding_rule_version_and_state) ... ok
+test_b1_refused_write_leaves_no_row_and_is_recorded (tests.test_d3_pg.D3Store.test_b1_refused_write_leaves_no_row_and_is_recorded) ... ok
+test_b2_store_bounds_ciphertext_size (tests.test_d3_pg.D3Store.test_b2_store_bounds_ciphertext_size) ... ok
+test_b3_rescan_finds_a_mention_under_the_budget (tests.test_d3_pg.D3Store.test_b3_rescan_finds_a_mention_under_the_budget) ... ok
+test_b4_over_budget_legacy_event_is_removed_as_unscannable (tests.test_d3_pg.D3Store.test_b4_over_budget_legacy_event_is_removed_as_unscannable)
+Review H H3 (main's decision, Class B): an event the rescan cannot scan within budget is treated as a ... ERROR
+test_b5_planted_over_budget_event_through_the_app (tests.test_d3_pg.D3Store.test_b5_planted_over_budget_event_through_the_app)
+reviewH F14 after the authority (A4 MISSING): a wp_app writer can no longer plant. The validly encrypted, ... FAIL
+test_b6_garbage_ciphertext (tests.test_d3_pg.D3Store.test_b6_garbage_ciphertext)
+Through the app: garbage ciphertext has no attestation (WPS40). As legacy rows (owner fixture): ciphertext ... FAIL
+test_b7_app_cannot_update_events (tests.test_d3_pg.D3Store.test_b7_app_cannot_update_events) ... ok
+test_b8_hold_still_withholds_an_unscannable_event (tests.test_d3_pg.D3Store.test_b8_hold_still_withholds_an_unscannable_event) ... ERROR
+test_c1_app_has_no_redaction_path (tests.test_d3_pg.D3Store.test_c1_app_has_no_redaction_path) ... ok
+test_c2_proposal_cannot_commit_after_the_erasure (tests.test_d3_pg.D3Store.test_c2_proposal_cannot_commit_after_the_erasure)
+Reviewer's schedule: propose reads erased=false and pauses; the mark and the whole cascade finish; then the ... ok
+test_c3_approval_after_mark_refused (tests.test_d3_pg.D3Store.test_c3_approval_after_mark_refused) ... ok
+test_c4_matcher_stored_and_enforced (tests.test_d3_pg.D3Store.test_c4_matcher_stored_and_enforced) ... ok
+test_c5_null_content_needs_tombstone_and_job (tests.test_d3_pg.D3Store.test_c5_null_content_needs_tombstone_and_job) ... ok
+test_e1_rescan_link_waits_for_an_inflight_removal (tests.test_d3_pg.D3Store.test_e1_rescan_link_waits_for_an_inflight_removal)
+Review E F4, the reviewer's schedule: A's batch removes e (written by B); C's rescan links e to C; a hold on ... ERROR
+test_e2_hold_on_the_speaker_waits_and_reports_the_removal (tests.test_d3_pg.D3Store.test_e2_hold_on_the_speaker_waits_and_reports_the_removal) ... ERROR
+test_e3_hold_on_a_rescan_linked_subject_waits_and_reports (tests.test_d3_pg.D3Store.test_e3_hold_on_a_rescan_linked_subject_waits_and_reports) ... ERROR
+test_e4_hold_first_withholds_and_release_waits (tests.test_d3_pg.D3Store.test_e4_hold_first_withholds_and_release_waits) ... ok
+test_e5_hold_on_the_subject_itself (tests.test_d3_pg.D3Store.test_e5_hold_on_the_subject_itself) ... ERROR
+test_e6_repeated_mark_during_a_batch_does_not_deadlock (tests.test_d3_pg.D3Store.test_e6_repeated_mark_during_a_batch_does_not_deadlock)
+Review E F12: a batch holds the subject FOR SHARE and later updates the job cursor; a repeated mark took the ... ok
+test_e7_hold_against_mark (tests.test_d3_pg.D3Store.test_e7_hold_against_mark)
+Hold x mark, both orders. A hold placed first refuses the mark (WPS16). A hold placed while a mark is paused ... ok
+test_e8_hold_waits_for_the_final_pass (tests.test_d3_pg.D3Store.test_e8_hold_waits_for_the_final_pass)
+Hold x the cascade's final pass (facts, inbox, quarantine, proposals, identifiers of the subject), which no ... ok
+test_h16a_large_footprint (tests.test_d3_pg.D3Store.test_h16a_large_footprint) ... FAIL
+test_h16b_report_failure_keeps_the_hold (tests.test_d3_pg.D3Store.test_h16b_report_failure_keeps_the_hold) ... FAIL
+test_h6_receipt_lists_are_bounded (tests.test_d3_pg.D3Store.test_h6_receipt_lists_are_bounded) ... FAIL
+test_h_size_constraints (tests.test_d3_pg.D3Store.test_h_size_constraints) ... FAIL
+test_n1a2_zombie_row_naming_an_erased_subject_refused (tests.test_d3_pg.D3Store.test_n1a2_zombie_row_naming_an_erased_subject_refused)
+The same with X declared at sealing time (mentions = [X]) and erased before the quarantine insert. ... FAIL
+test_n1a_zombie_row_scanned_before_the_identifier_refused_after_erasure (tests.test_d3_pg.D3Store.test_n1a_zombie_row_scanned_before_the_identifier_refused_after_erasure)
+A row sealed at version v, before X's identifier existed; X declared and fully erased; the paused writer's ... FAIL
+test_n1b_removed_quarantine_row_cannot_come_back (tests.test_d3_pg.D3Store.test_n1b_removed_quarantine_row_cannot_come_back)
+A sealed quarantine row naming X; the cascade removes it; the identical row inserted again (wp_app kept a ... ERROR
+test_n1c2_released_hold_lets_the_blocked_erasure_finish (tests.test_d3_pg.D3Store.test_n1c2_released_hold_lets_the_blocked_erasure_finish)
+Review 42cfd11 R4: the n1c erasure, blocked by a held speaker's stale quarantine row, is re-driven after the ... FAIL
+test_n1c_held_unscanned_quarantine_row_blocks_completion (tests.test_d3_pg.D3Store.test_n1c_held_unscanned_quarantine_row_blocks_completion)
+A quarantine row scanned below the job's identifier-set version, kept because its speaker is held: the ... ERROR
+test_n1d_fenced_writer_resumed_after_done_stores_nothing (tests.test_d3_pg.D3Store.test_n1d_fenced_writer_resumed_after_done_stores_nothing)
+R1, n1a2 shape: X declared; the writer's seal finds X; it pauses; its lease is taken over and X's erasure ... FAIL
+test_n1e_fenced_writer_sealed_before_declaration_stores_nothing (tests.test_d3_pg.D3Store.test_n1e_fenced_writer_sealed_before_declaration_stores_nothing)
+R1, n1a shape: the writer seals before X is declared (mentions []), pauses; X is declared and erased to ... FAIL
+test_n1f_valid_writer_retry_keeps_the_erased_mention (tests.test_d3_pg.D3Store.test_n1f_valid_writer_retry_keeps_the_erased_mention)
+R1, events path (log.py WPS17 retry): a writer with a VALID lease seals content naming X; it pauses; X is ... FAIL
+test_n1g_fenced_writer_control_still_quarantines (tests.test_d3_pg.D3Store.test_n1g_fenced_writer_control_still_quarantines)
+Control for n1d to n1f: a fenced writer whose content names nobody erased is quarantined (one row, under ... FAIL
+test_s10_an_attestation_is_valid_in_one_table (tests.test_d3_pg.D3Store.test_s10_an_attestation_is_valid_in_one_table)
+Review J M2: the target table is attested. A row sealed for events is refused in quarantine and a row sealed ... FAIL
+test_s1_valid_attestation_accepted (tests.test_d3_pg.D3Store.test_s1_valid_attestation_accepted) ... ok
+test_s2_forged_claims_refused (tests.test_d3_pg.D3Store.test_s2_forged_claims_refused) ... FAIL
+test_s3_missing_attestation_refused (tests.test_d3_pg.D3Store.test_s3_missing_attestation_refused) ... FAIL
+test_s4_replayed_attestation_refused (tests.test_d3_pg.D3Store.test_s4_replayed_attestation_refused) ... FAIL
+test_s5_stale_identifier_set (tests.test_d3_pg.D3Store.test_s5_stale_identifier_set) ... FAIL
+test_s6_quarantine_needs_an_attestation (tests.test_d3_pg.D3Store.test_s6_quarantine_needs_an_attestation) ... FAIL
+test_s7_quarantine_scanned_below_the_identifier_set_is_removed (tests.test_d3_pg.D3Store.test_s7_quarantine_scanned_below_the_identifier_set_is_removed) ... ERROR
+test_s8_seal_keys_are_private (tests.test_d3_pg.D3Store.test_s8_seal_keys_are_private)
+Every login role of the deployment, wp_verifier, wp_sealer and wp_broker included (review J M6): none reads ... ok
+test_s9_unknown_inactive_key_and_bad_mac (tests.test_d3_pg.D3Store.test_s9_unknown_inactive_key_and_bad_mac) ... FAIL
+
+======================================================================
+ERROR: test_b4_over_budget_legacy_event_is_removed_as_unscannable (tests.test_d3_pg.D3Store.test_b4_over_budget_legacy_event_is_removed_as_unscannable)
+Review H H3 (main's decision, Class B): an event the rescan cannot scan within budget is treated as a
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 728, in test_b4_over_budget_legacy_event_is_removed_as_unscannable
+    erasure.rescan(self.app, FixedKS(), j)
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/wp/erasure.py", line 212, in rescan
+    conn.execute("select wp_erasure_add_unscannable(%s, %s)", (jid, sorted(uns)))
+  File "~/emlab2-16096/wphard/wp/venv/lib/python3.12/site-packages/psycopg/connection.py", line 251, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedFunction: function wp_erasure_add_unscannable(unknown, unknown) does not exist
+LINE 1: select wp_erasure_add_unscannable($1, $2)
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+
+======================================================================
+ERROR: test_b8_hold_still_withholds_an_unscannable_event (tests.test_d3_pg.D3Store.test_b8_hold_still_withholds_an_unscannable_event)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 805, in test_b8_hold_still_withholds_an_unscannable_event
+    erasure.rescan(self.app, FixedKS(), j)
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/wp/erasure.py", line 212, in rescan
+    conn.execute("select wp_erasure_add_unscannable(%s, %s)", (jid, sorted(uns)))
+  File "~/emlab2-16096/wphard/wp/venv/lib/python3.12/site-packages/psycopg/connection.py", line 251, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedFunction: function wp_erasure_add_unscannable(unknown, unknown) does not exist
+LINE 1: select wp_erasure_add_unscannable($1, $2)
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+
+======================================================================
+ERROR: test_e1_rescan_link_waits_for_an_inflight_removal (tests.test_d3_pg.D3Store.test_e1_rescan_link_waits_for_an_inflight_removal)
+Review E F4, the reviewer's schedule: A's batch removes e (written by B); C's rescan links e to C; a hold on
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 460, in test_e1_rescan_link_waits_for_an_inflight_removal
+    self.assertNotIn("e1e", self.report_ids(out, "h-e1"), "the hold on C did not cover e")
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 840, in report_ids
+    return self.report(hid).get("linked_removed_ids") or []
+           ^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 832, in report
+    return lg.execute("select wp_hold_report(%s)", (hid,)).fetchone()[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/wphard/wp/venv/lib/python3.12/site-packages/psycopg/connection.py", line 251, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedFunction: function wp_hold_report(unknown) does not exist
+LINE 1: select wp_hold_report($1)
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+
+======================================================================
+ERROR: test_e2_hold_on_the_speaker_waits_and_reports_the_removal (tests.test_d3_pg.D3Store.test_e2_hold_on_the_speaker_waits_and_reports_the_removal)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 480, in test_e2_hold_on_the_speaker_waits_and_reports_the_removal
+    self.assertIn("e2e", self.report_ids(out, "h-e2"), "the hold did not record the removal")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 840, in report_ids
+    return self.report(hid).get("linked_removed_ids") or []
+           ^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 832, in report
+    return lg.execute("select wp_hold_report(%s)", (hid,)).fetchone()[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/wphard/wp/venv/lib/python3.12/site-packages/psycopg/connection.py", line 251, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedFunction: function wp_hold_report(unknown) does not exist
+LINE 1: select wp_hold_report($1)
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+
+======================================================================
+ERROR: test_e3_hold_on_a_rescan_linked_subject_waits_and_reports (tests.test_d3_pg.D3Store.test_e3_hold_on_a_rescan_linked_subject_waits_and_reports)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 500, in test_e3_hold_on_a_rescan_linked_subject_waits_and_reports
+    self.assertIn("e3e", self.report_ids(out, "h-e3"))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 840, in report_ids
+    return self.report(hid).get("linked_removed_ids") or []
+           ^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 832, in report
+    return lg.execute("select wp_hold_report(%s)", (hid,)).fetchone()[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/wphard/wp/venv/lib/python3.12/site-packages/psycopg/connection.py", line 251, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedFunction: function wp_hold_report(unknown) does not exist
+LINE 1: select wp_hold_report($1)
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+
+======================================================================
+ERROR: test_e5_hold_on_the_subject_itself (tests.test_d3_pg.D3Store.test_e5_hold_on_the_subject_itself)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 551, in test_e5_hold_on_the_subject_itself
+    self.assertIn("e5b", self.report_ids(out, "h-e5s"))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 840, in report_ids
+    return self.report(hid).get("linked_removed_ids") or []
+           ^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 832, in report
+    return lg.execute("select wp_hold_report(%s)", (hid,)).fetchone()[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/wphard/wp/venv/lib/python3.12/site-packages/psycopg/connection.py", line 251, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedFunction: function wp_hold_report(unknown) does not exist
+LINE 1: select wp_hold_report($1)
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+
+======================================================================
+ERROR: test_n1b_removed_quarantine_row_cannot_come_back (tests.test_d3_pg.D3Store.test_n1b_removed_quarantine_row_cannot_come_back)
+A sealed quarantine row naming X; the cascade removes it; the identical row inserted again (wp_app kept a
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 1156, in test_n1b_removed_quarantine_row_cannot_come_back
+    self.assertEqual(self.one("select count(*) from quarantine where tenant_id=%s and event_id='n1c-e'", (t,)), (0,))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 173, in one
+    return self.ev.execute(sql, args).fetchone()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/wphard/wp/venv/lib/python3.12/site-packages/psycopg/connection.py", line 251, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedColumn: column "event_id" does not exist
+LINE 1: ...t count(*) from quarantine where tenant_id=$1 and event_id='...
+                                                             ^
+HINT:  Perhaps you meant to reference the column "quarantine.tenant_id".
+
+======================================================================
+ERROR: test_n1c_held_unscanned_quarantine_row_blocks_completion (tests.test_d3_pg.D3Store.test_n1c_held_unscanned_quarantine_row_blocks_completion)
+A quarantine row scanned below the job's identifier-set version, kept because its speaker is held: the
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 1175, in test_n1c_held_unscanned_quarantine_row_blocks_completion
+    self.assertEqual(self.one("select count(*) from quarantine where tenant_id=%s and event_id='n1d-held'", (t,)), (1,))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 173, in one
+    return self.ev.execute(sql, args).fetchone()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/wphard/wp/venv/lib/python3.12/site-packages/psycopg/connection.py", line 251, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedColumn: column "event_id" does not exist
+LINE 1: ...t count(*) from quarantine where tenant_id=$1 and event_id='...
+                                                             ^
+HINT:  Perhaps you meant to reference the column "quarantine.tenant_id".
+
+======================================================================
+ERROR: test_s7_quarantine_scanned_below_the_identifier_set_is_removed (tests.test_d3_pg.D3Store.test_s7_quarantine_scanned_below_the_identifier_set_is_removed)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 1042, in test_s7_quarantine_scanned_below_the_identifier_set_is_removed
+    left = sorted(r[0] for r in self.ev.execute("select event_id from quarantine where tenant_id=%s", (t,)).fetchall())
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/wphard/wp/venv/lib/python3.12/site-packages/psycopg/connection.py", line 251, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedColumn: column "event_id" does not exist
+LINE 1: select event_id from quarantine where tenant_id=$1
+               ^
+HINT:  Perhaps you meant to reference the column "quarantine.tenant_id".
+
+======================================================================
+FAIL: test_b5_planted_over_budget_event_through_the_app (tests.test_d3_pg.D3Store.test_b5_planted_over_budget_event_through_the_app)
+reviewH F14 after the authority (A4 MISSING): a wp_app writer can no longer plant. The validly encrypted,
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 768, in test_b5_planted_over_budget_event_through_the_app
+    self.assertEqual(self.plant(t, "b5s", "b5e", "B5Y", K.seal(FixedKS.SUBJ_KEY, t, "B5Y", "b5e", over)), "WPS40")
+AssertionError: 'ok' != 'WPS40'
+- ok
++ WPS40
+
+
+======================================================================
+FAIL: test_b6_garbage_ciphertext (tests.test_d3_pg.D3Store.test_b6_garbage_ciphertext)
+Through the app: garbage ciphertext has no attestation (WPS40). As legacy rows (owner fixture): ciphertext
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 781, in test_b6_garbage_ciphertext
+    self.assertEqual(self.plant(t, "b6s", "b6p", "B6Y", bytes(range(60))), "WPS40")
+AssertionError: 'ok' != 'WPS40'
+- ok
++ WPS40
+
+
+======================================================================
+FAIL: test_h16a_large_footprint (tests.test_d3_pg.D3Store.test_h16a_large_footprint)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 852, in test_h16a_large_footprint
+    self.assertEqual(placed.get("report_state"), "pending")
+AssertionError: None != 'pending'
+
+======================================================================
+FAIL: test_h16b_report_failure_keeps_the_hold (tests.test_d3_pg.D3Store.test_h16b_report_failure_keeps_the_hold)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 869, in test_h16b_report_failure_keeps_the_hold
+    self.assertEqual(self.state(lg, "select wp_hold_report(%s)", ("h-h16b",)), "57014")
+AssertionError: '42883' != '57014'
+- 42883
++ 57014
+
+
+======================================================================
+FAIL: test_h6_receipt_lists_are_bounded (tests.test_d3_pg.D3Store.test_h6_receipt_lists_are_bounded)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 921, in test_h6_receipt_lists_are_bounded
+    self.assertEqual(len(m["other_speakers_removed"]), 1000)
+AssertionError: 1200 != 1000
+
+======================================================================
+FAIL: test_h_size_constraints (tests.test_d3_pg.D3Store.test_h_size_constraints)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 926, in test_h_size_constraints
+    self.assertEqual(self.owner_state("insert into identifier_proposals(tenant_id, proposal_id, subject_id, ident_hmac, ident_enc, rule_version, proposed_by) "
+AssertionError: 'ok' != '23514'
+- ok
++ 23514
+
+
+======================================================================
+FAIL: test_n1a2_zombie_row_naming_an_erased_subject_refused (tests.test_d3_pg.D3Store.test_n1a2_zombie_row_naming_an_erased_subject_refused)
+The same with X declared at sealing time (mentions = [X]) and erased before the quarantine insert.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 1139, in test_n1a2_zombie_row_naming_an_erased_subject_refused
+    self.assertEqual(self.insert(self.app, "quarantine", self.qrow(r)), "WPS18",
+AssertionError: 'ok' != 'WPS18'
+- ok
++ WPS18
+ : a row naming an erased subject was quarantined
+
+======================================================================
+FAIL: test_n1a_zombie_row_scanned_before_the_identifier_refused_after_erasure (tests.test_d3_pg.D3Store.test_n1a_zombie_row_scanned_before_the_identifier_refused_after_erasure)
+A row sealed at version v, before X's identifier existed; X declared and fully erased; the paused writer's
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 1123, in test_n1a_zombie_row_scanned_before_the_identifier_refused_after_erasure
+    self.assertEqual(self.insert(self.app, "quarantine", self.qrow(r)), "WPS17",
+AssertionError: 'ok' != 'WPS17'
+- ok
++ WPS17
+ : a row scanned below the identifier set was quarantined after the erasure
+
+======================================================================
+FAIL: test_n1c2_released_hold_lets_the_blocked_erasure_finish (tests.test_d3_pg.D3Store.test_n1c2_released_hold_lets_the_blocked_erasure_finish)
+Review 42cfd11 R4: the n1c erasure, blocked by a held speaker's stale quarantine row, is re-driven after the
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 1195, in test_n1c2_released_hold_lets_the_blocked_erasure_finish
+    self.assertEqual((d1.get("done"), d2.get("done")), (False, False), (d1, d2))
+AssertionError: Tuples differ: (True, True) != (False, False)
+
+First differing element 0:
+True
+False
+
+- (True, True)
++ (False, False) : ({'done': True, 'holds': [], 'scope': {'note': 'test', 'timing': "no completion-time bound under concurrent writes: the erasure mark waits for every in-flight share lock on the subject row (appends by or mentioning the subject, other subjects' cascade batches, identifier declares), and new share locks are granted ahead of the waiting mark, so a sustained overlap of such writes delays it without bound; each attempt is cut by the role statement_timeout and the job stays open for the next sweep (exp/lock_order MS)", 'speaker': "the subject's own events, facts and analyst jobs derived from them, inbox and quarantine items, the subject key", 'mentions': {'rule': "every event that mentions the subject is removed whole, whoever wrote it: original content nulled in Postgres, placeholder in ES, derived facts and jobs deleted (D3; decision R1: no span redaction, decided by the coordinator on the user's delegation, 2026-11-17)", 'matcher': 'm5:ucd15.0.0:di24e2227db9c3:cf93b569e499e5:b512.131072.5000000.65536.1000.1048576.5000000.64', 'over_match': ['confusable variants of a declared identifier (Kim and Kirn share a key): such events of other speakers are removed too', 'a capital I (or a look-alike of it) in text is read as i and as l, so text in capitals also matches a name that differs by i and l (DELIA also matches Della, NEIL also matches Nell, HAILEY also matches Halley; AIEX KIM matches Alex Kim)', 'a digit 1 or 0 inside a word in text is read as the letters too (Ne1l matches Neil and Nell; J0hn matches John; maria1 matches a declared Marial)', 'one text window can hit several subjects (EIIa Moreno hits both Elia Moreno and Ella Moreno)'], 'not_covered': ['identifiers that were never declared (nicknames, misspellings, initials, inflected forms)', 'pronouns and indirect references', 'look-alikes outside UTS 39 confusables.txt 18.0.0 (transliterations, homophones)', 'a small l written for i or a small i for l (Allson or Aiison for Alison): distinct letters are never read as each other', 'a look-alike of small l or small i from another script written for the other letter (Cyrillic palochka, Hebrew vav or Arabic alef for i; Cyrillic small i for l): read as one letter only', 'a letter written for a digit (XQ-l00l for XQ-1001); digits written for letters in a word with no more letters than digits (A11s0n for Alison)', 'a digit of another script that looks like 0 or 1 (read as the letter its prototype names)', 'a capital of another script used as the look-alike of a Latin capital when its small form looks like another letter (Greek capital Beta, Nu; Latin capital I with stroke; matcher not_closed list)', 'look-alikes that are punctuation or symbols (| for l): they end the token', 'words of the subject quoted by others that contain no declared identifier', 'names in scripts written without spaces (refused at declaration)', 'mentions inside inbox payloads and analyst-job results', 'content outside this store (ES snapshots, backups, logs: see store_registry ext:*)'], 'matcher_rule': 'm5: whole-token-sequence match of the one identity key of each reviewed, declared identifier against every reading of each text window (UTS 39 prototypes, case folded, default ignorables removed; in text a capital I is read as i and l, a digit 1 inside a word as 1, l and i, a digit 0 inside a word as 0 and o; at most 4096 readings per window, identifiers that could need more are refused; Unicode tables pinned by version: wp/mentions.py)', 'found_at_write': 0, 'matcher_budget': 'm5 b1 (ASSUMPTION): event content at most 65,536 bytes; window keys per event at most 512 per token, at least 131,072, at most 5,000,000; per call at most 1,000 events, 1,048,576 bytes and 5,000,000 keys; writes over these are refused (WPM01, WPM02, WPM03) and never stored. The erasure rescan runs under the same budget: an event admitted under another matcher that is over it stops the rescan, and such an erasure CANNOT COMPLETE until a matcher migration re-admits that event; no migration exists yet. Worst admitted event about 14.5 s of matcher CPU (measured on a Mac; store lookups not measured); there is no per-tenant rate limit.', 'found_by_rescan': 0, 'rescan_coverage': 'store-checked: every candidate event was examined (erasure_rescanned, WPS24)', 'declared_identifiers': 1, 'identifier_set_version': 9, 'other_speakers_removed': [], 'rescan_covered_version': 9, 'rescan_match_attested_by': 'erasure runner (the store cannot decrypt the examined events)'}}, 'verify': {'pg:facts': 0, 'pg:inbox': 0, 'pg:quarantine': 0, 'pg:identifiers': 0, 'pg:analyst_jobs': 0, 'pg:content_present': 0, 'pg:withheld_by_hold': 0, 'pg:mentions_unscanned': 0, 'pg:subject_not_marked': 0, 'pg:events_untombstoned': 0, 'pg:quarantine_mentions': 0, 'pg:identifier_proposals': 0}, 'delay_s': 0.612, 'logical_at': '2026-11-19T04:43:10.962277+00:00', 'completed_at': '2026-11-19T04:43:10.962277+00:00', 'requested_at': '2026-11-19T04:43:10.350194+00:00', 'receipt_state': 'done', 'physical_deadline_met': True}, {'done': True, 'holds': [], 'scope': {'note': 'test', 'timing': "no completion-time bound under concurrent writes: the erasure mark waits for every in-flight share lock on the subject row (appends by or mentioning the subject, other subjects' cascade batches, identifier declares), and new share locks are granted ahead of the waiting mark, so a sustained overlap of such writes delays it without bound; each attempt is cut by the role statement_timeout and the job stays open for the next sweep (exp/lock_order MS)", 'speaker': "the subject's own events, facts and analyst jobs derived from them, inbox and quarantine items, the subject key", 'mentions': {'rule': "every event that mentions the subject is removed whole, whoever wrote it: original content nulled in Postgres, placeholder in ES, derived facts and jobs deleted (D3; decision R1: no span redaction, decided by the coordinator on the user's delegation, 2026-11-17)", 'matcher': 'm5:ucd15.0.0:di24e2227db9c3:cf93b569e499e5:b512.131072.5000000.65536.1000.1048576.5000000.64', 'over_match': ['confusable variants of a declared identifier (Kim and Kirn share a key): such events of other speakers are removed too', 'a capital I (or a look-alike of it) in text is read as i and as l, so text in capitals also matches a name that differs by i and l (DELIA also matches Della, NEIL also matches Nell, HAILEY also matches Halley; AIEX KIM matches Alex Kim)', 'a digit 1 or 0 inside a word in text is read as the letters too (Ne1l matches Neil and Nell; J0hn matches John; maria1 matches a declared Marial)', 'one text window can hit several subjects (EIIa Moreno hits both Elia Moreno and Ella Moreno)'], 'not_covered': ['identifiers that were never declared (nicknames, misspellings, initials, inflected forms)', 'pronouns and indirect references', 'look-alikes outside UTS 39 confusables.txt 18.0.0 (transliterations, homophones)', 'a small l written for i or a small i for l (Allson or Aiison for Alison): distinct letters are never read as each other', 'a look-alike of small l or small i from another script written for the other letter (Cyrillic palochka, Hebrew vav or Arabic alef for i; Cyrillic small i for l): read as one letter only', 'a letter written for a digit (XQ-l00l for XQ-1001); digits written for letters in a word with no more letters than digits (A11s0n for Alison)', 'a digit of another script that looks like 0 or 1 (read as the letter its prototype names)', 'a capital of another script used as the look-alike of a Latin capital when its small form looks like another letter (Greek capital Beta, Nu; Latin capital I with stroke; matcher not_closed list)', 'look-alikes that are punctuation or symbols (| for l): they end the token', 'words of the subject quoted by others that contain no declared identifier', 'names in scripts written without spaces (refused at declaration)', 'mentions inside inbox payloads and analyst-job results', 'content outside this store (ES snapshots, backups, logs: see store_registry ext:*)'], 'matcher_rule': 'm5: whole-token-sequence match of the one identity key of each reviewed, declared identifier against every reading of each text window (UTS 39 prototypes, case folded, default ignorables removed; in text a capital I is read as i and l, a digit 1 inside a word as 1, l and i, a digit 0 inside a word as 0 and o; at most 4096 readings per window, identifiers that could need more are refused; Unicode tables pinned by version: wp/mentions.py)', 'found_at_write': 0, 'matcher_budget': 'm5 b1 (ASSUMPTION): event content at most 65,536 bytes; window keys per event at most 512 per token, at least 131,072, at most 5,000,000; per call at most 1,000 events, 1,048,576 bytes and 5,000,000 keys; writes over these are refused (WPM01, WPM02, WPM03) and never stored. The erasure rescan runs under the same budget: an event admitted under another matcher that is over it stops the rescan, and such an erasure CANNOT COMPLETE until a matcher migration re-admits that event; no migration exists yet. Worst admitted event about 14.5 s of matcher CPU (measured on a Mac; store lookups not measured); there is no per-tenant rate limit.', 'found_by_rescan': 0, 'rescan_coverage': 'store-checked: every candidate event was examined (erasure_rescanned, WPS24)', 'declared_identifiers': 1, 'identifier_set_version': 10, 'other_speakers_removed': [], 'rescan_covered_version': 10, 'rescan_match_attested_by': 'erasure runner (the store cannot decrypt the examined events)'}}, 'verify': {'pg:facts': 0, 'pg:inbox': 0, 'pg:quarantine': 0, 'pg:identifiers': 0, 'pg:analyst_jobs': 0, 'pg:content_present': 0, 'pg:withheld_by_hold': 0, 'pg:mentions_unscanned': 0, 'pg:subject_not_marked': 0, 'pg:events_untombstoned': 0, 'pg:quarantine_mentions': 0, 'pg:identifier_proposals': 0}, 'delay_s': 0.6, 'logical_at': '2026-11-19T04:43:11.565449+00:00', 'completed_at': '2026-11-19T04:43:11.565448+00:00', 'requested_at': '2026-11-19T04:43:10.965128+00:00', 'receipt_state': 'done', 'physical_deadline_met': True})
+
+======================================================================
+FAIL: test_n1d_fenced_writer_resumed_after_done_stores_nothing (tests.test_d3_pg.D3Store.test_n1d_fenced_writer_resumed_after_done_stores_nothing)
+R1, n1a2 shape: X declared; the writer's seal finds X; it pauses; its lease is taken over and X's erasure
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 1255, in test_n1d_fenced_writer_resumed_after_done_stores_nothing
+    self.assertIsInstance(res, dict, res)
+AssertionError: UndefinedColumn('column "seal_key_id" of relation "events" does not exist\nLINE 1: ...urce_event_id,lease_scope,lease_epoch,secret_scan,seal_key_i...\n                                                             ^') is not an instance of <class 'dict'> : column "seal_key_id" of relation "events" does not exist
+LINE 1: ...urce_event_id,lease_scope,lease_epoch,secret_scan,seal_key_i...
+                                                             ^
+
+======================================================================
+FAIL: test_n1e_fenced_writer_sealed_before_declaration_stores_nothing (tests.test_d3_pg.D3Store.test_n1e_fenced_writer_sealed_before_declaration_stores_nothing)
+R1, n1a shape: the writer seals before X is declared (mentions []), pauses; X is declared and erased to
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 1273, in test_n1e_fenced_writer_sealed_before_declaration_stores_nothing
+    self.assertIsInstance(res, dict, res)
+AssertionError: UndefinedColumn('column "seal_key_id" of relation "events" does not exist\nLINE 1: ...urce_event_id,lease_scope,lease_epoch,secret_scan,seal_key_i...\n                                                             ^') is not an instance of <class 'dict'> : column "seal_key_id" of relation "events" does not exist
+LINE 1: ...urce_event_id,lease_scope,lease_epoch,secret_scan,seal_key_i...
+                                                             ^
+
+======================================================================
+FAIL: test_n1f_valid_writer_retry_keeps_the_erased_mention (tests.test_d3_pg.D3Store.test_n1f_valid_writer_retry_keeps_the_erased_mention)
+R1, events path (log.py WPS17 retry): a writer with a VALID lease seals content naming X; it pauses; X is
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 1294, in test_n1f_valid_writer_retry_keeps_the_erased_mention
+    self.assertIsInstance(res, self.LG.MentionsErased, f"the retry stored content naming the erased X: {res}")
+AssertionError: UndefinedColumn('column "seal_key_id" of relation "events" does not exist\nLINE 1: ...urce_event_id,lease_scope,lease_epoch,secret_scan,seal_key_i...\n                                                             ^') is not an instance of <class 'wp.log.MentionsErased'> : the retry stored content naming the erased X: column "seal_key_id" of relation "events" does not exist
+LINE 1: ...urce_event_id,lease_scope,lease_epoch,secret_scan,seal_key_i...
+                                                             ^
+
+======================================================================
+FAIL: test_n1g_fenced_writer_control_still_quarantines (tests.test_d3_pg.D3Store.test_n1g_fenced_writer_control_still_quarantines)
+Control for n1d to n1f: a fenced writer whose content names nobody erased is quarantined (one row, under
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 1305, in test_n1g_fenced_writer_control_still_quarantines
+    self.assertIsInstance(res, dict, res)
+AssertionError: UndefinedColumn('column "seal_key_id" of relation "events" does not exist\nLINE 1: ...urce_event_id,lease_scope,lease_epoch,secret_scan,seal_key_i...\n                                                             ^') is not an instance of <class 'dict'> : column "seal_key_id" of relation "events" does not exist
+LINE 1: ...urce_event_id,lease_scope,lease_epoch,secret_scan,seal_key_i...
+                                                             ^
+
+======================================================================
+FAIL: test_s10_an_attestation_is_valid_in_one_table (tests.test_d3_pg.D3Store.test_s10_an_attestation_is_valid_in_one_table)
+Review J M2: the target table is attested. A row sealed for events is refused in quarantine and a row sealed
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 1090, in test_s10_an_attestation_is_valid_in_one_table
+    self.assertEqual(self.insert(self.app, "quarantine", self.qrow(ev)), "WPS41", "an events attestation was accepted in quarantine")
+AssertionError: 'ok' != 'WPS41'
+- ok
++ WPS41
+ : an events attestation was accepted in quarantine
+
+======================================================================
+FAIL: test_s2_forged_claims_refused (tests.test_d3_pg.D3Store.test_s2_forged_claims_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 962, in test_s2_forged_claims_refused
+    self.assertEqual(self.put(r, **over), "WPS41", f"forged claim accepted: {what}")
+AssertionError: 'ok' != 'WPS41'
+- ok
++ WPS41
+ : forged claim accepted: mentions dropped
+
+======================================================================
+FAIL: test_s3_missing_attestation_refused (tests.test_d3_pg.D3Store.test_s3_missing_attestation_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 968, in test_s3_missing_attestation_refused
+    self.assertEqual(self.plant(t, "s3a", "s3e", "S3Y", b"opaque"), "WPS40", "an event without an attestation was stored (F14)")
+AssertionError: 'ok' != 'WPS40'
+- ok
++ WPS40
+ : an event without an attestation was stored (F14)
+
+======================================================================
+FAIL: test_s4_replayed_attestation_refused (tests.test_d3_pg.D3Store.test_s4_replayed_attestation_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 980, in test_s4_replayed_attestation_refused
+    self.assertEqual(self.put(r, event_id="s4copy", idem_key="s4copy"), "WPS41", "replayed onto another event id")
+AssertionError: 'ok' != 'WPS41'
+- ok
++ WPS41
+ : replayed onto another event id
+
+======================================================================
+FAIL: test_s5_stale_identifier_set (tests.test_d3_pg.D3Store.test_s5_stale_identifier_set)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 995, in test_s5_stale_identifier_set
+    self.assertEqual(self.put(r, mention_scan_upto=r["mention_scan_upto"] + 1), "WPS41", "a rewritten scan version was accepted")
+AssertionError: 'ok' != 'WPS41'
+- ok
++ WPS41
+ : a rewritten scan version was accepted
+
+======================================================================
+FAIL: test_s6_quarantine_needs_an_attestation (tests.test_d3_pg.D3Store.test_s6_quarantine_needs_an_attestation)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 1016, in test_s6_quarantine_needs_an_attestation
+    self.assertEqual(self.insert(self.app, "quarantine", bare), "WPS40", "a quarantine row without an attestation was stored")
+AssertionError: 'ok' != 'WPS40'
+- ok
++ WPS40
+ : a quarantine row without an attestation was stored
+
+======================================================================
+FAIL: test_s9_unknown_inactive_key_and_bad_mac (tests.test_d3_pg.D3Store.test_s9_unknown_inactive_key_and_bad_mac)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-fa25f8d/tests/test_d3_pg.py", line 1069, in test_s9_unknown_inactive_key_and_bad_mac
+    self.assertEqual(self.put(r, seal_key_id="no-such-key"), "WPS41")
+AssertionError: 'ok' != 'WPS41'
+- ok
++ WPS41
+
+
+----------------------------------------------------------------------
+Ran 47 tests in 10.505s
+
+FAILED (failures=20, errors=9)

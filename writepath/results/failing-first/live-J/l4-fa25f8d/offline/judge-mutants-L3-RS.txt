@@ -1,0 +1,4 @@
+mutant (s9 text WPS41->WPS40): red-without-signature(missing 0 extra 0 wrong-text 1)
+unchanged: red
+mutant (s9 line dropped): red-without-signature(missing 0 extra 1 wrong-text 0)
+green status: green
