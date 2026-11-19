@@ -148,6 +148,12 @@ def _witness(script):
 CLEAR = "find /h/svc /h/run -mindepth 1 -delete"
 
 
+def layout(run_uid):
+    """The first lines of every PREP script (h_d2, h_d6_broker, seal_uids_e2e): empty svc and run, svc root-owned 755,
+    run owned by `run_uid` 755. Callers append their per-service directories."""
+    return ["set -e", CLEAR, "chown 0:0 /h/svc", "chmod 755 /h/svc", f"chown {run_uid}:{run_uid} /h/run", "chmod 755 /h/run"]
+
+
 def prepare(arm):
     """Credential directories for an arm, copied from the operator's own files (never printed)."""
     from wp import config
@@ -159,7 +165,7 @@ def prepare(arm):
              "verifier": (UIDS["verifier"], ["pgpass.wp_verifier", es_files["verifier"]]),
              "keysvc": (UIDS["keysvc"], ["pgpass.wp_kms"])})
     ks_uid = UIDS["app"] if arm == "control" else UIDS["keysvc"]
-    lines = ["set -e", CLEAR, "chown 0:0 /h/svc", "chmod 755 /h/svc", f"chown {ks_uid}:{ks_uid} /h/run", "chmod 755 /h/run"]
+    lines = layout(ks_uid)
     for d, (uid, files) in sets.items():
         lines.append(f"install -d -o {uid} -g {uid} -m 700 /h/svc/{d}")
         for f in files:

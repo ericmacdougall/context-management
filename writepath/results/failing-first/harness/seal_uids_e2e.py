@@ -126,9 +126,8 @@ def main():
     if missing:
         print("seal_uids_e2e SETUP missing secret files", missing)
         return 2
-    lines = ["set -e", "rm -rf /h/svc /h/run", "install -d -m 755 /h/svc",
-             f"install -d -o {UIDS['keysvc']} -g {UIDS['keysvc']} -m 755 /h/run",
-             f"install -d -o {UIDS['sealer']} -g {UIDS['sealer']} -m 755 /h/run/s"]
+    # the named PREP helper of amendment H2a (secrets read-only, only svc and run writable)
+    lines = H2.layout(UIDS["keysvc"]) + [f"install -d -o {UIDS['sealer']} -g {UIDS['sealer']} -m 755 /h/run/s"]
     for d, (uid, files) in need.items():
         lines.append(f"install -d -o {uid} -g {uid} -m 700 /h/svc/{d}")
         lines += [f"install -o {uid} -g {uid} -m 600 /h/secrets/{f} /h/svc/{d}/{f}" for f in files]
@@ -137,7 +136,7 @@ def main():
            "uids": UIDS}
     stop_all()
     try:
-        H2._root("\n".join(lines))
+        H2._prep("\n".join(lines))
         H2._docker(*H2._run_args(names[0], UIDS["keysvc"], "keysvc",
                                  ["-d", *extra_env, "-e", f"WP_KEYSVC_ALLOW_UIDS={UIDS['app']},{UIDS['sealer']}"]),
                    "-m", "wp.keysvc", "serve", KS_SOCK)
@@ -158,7 +157,7 @@ def main():
         out["up"], out["down"] = up, down
     finally:
         stop_all()
-        H2._root("rm -rf /h/svc /h/run")
+        H2._prep(H2.CLEAR)
     ok = (up.get("K1_seal_key", "").startswith("PermissionError") and up.get("K1_pgpass.wp_sealer", "").startswith("PermissionError")
           and up.get("K2") == "SealUnavailable" and up.get("K3") == {"accepted": 1, "key_id_present": True, "mac_hex64": True}
           and up.get("K4") == "WPS40" and up.get("K5") == "WPS41" and up.get("stored_delta") == 1

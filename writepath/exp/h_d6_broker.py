@@ -345,19 +345,19 @@ def prepare(arm):
     sets = {"app": (UIDS["app"], ["pgpass.wp_app"] + (["es_api_key.projector.json"] if arm == "control" else [])),
             "keysvc": (UIDS["keysvc"], ["pgpass.wp_kms"]),
             "broker": (UIDS["broker"], ["es_broker_password", "pgpass.wp_broker"])}
-    lines = ["set -e", "rm -rf /h/svc /h/run", "install -d -m 755 /h/svc",
-             f"install -d -o {UIDS['keysvc']} -g {UIDS['keysvc']} -m 755 /h/run",
-             f"install -d -o {UIDS['broker']} -g {UIDS['broker']} -m 755 /h/run/b", "install -d -m 0777 /h/run/c12"]   # not sticky: the operator clears the child's phase files
+    # the named PREP helper of amendment H2a (secrets read-only, only svc and run writable)
+    lines = H2.layout(UIDS["keysvc"]) + [
+        f"install -d -o {UIDS['broker']} -g {UIDS['broker']} -m 755 /h/run/b", "install -d -m 0777 /h/run/c12"]   # not sticky: the operator clears the child's phase files
     for d, (uid, files) in sets.items():
         lines.append(f"install -d -o {uid} -g {uid} -m 700 /h/svc/{d}")
         lines += [f"install -o {uid} -g {uid} -m 600 /h/secrets/{f} /h/svc/{d}/{f}" for f in files if f in have]
-    H2._root("\n".join(lines))
+    H2._prep("\n".join(lines))
     return {d: [f for f in files if f in have] for d, (_, files) in sets.items()}
 
 
 def witness():
     paths = {n: p.replace("/svc/", "/h/svc/").replace("/operator/secrets/", "/h/secrets/") for n, p in PROBE_FILES.items()}
-    out = _h2()._root("; ".join(f"[ -s {p} ] && echo {n}=yes || echo {n}=no" for n, p in paths.items()))
+    out = _h2()._witness("; ".join(f"[ -s {p} ] && echo {n}=yes || echo {n}=no" for n, p in paths.items()))
     return dict(ln.split("=") for ln in out.split())
 
 
@@ -625,7 +625,7 @@ def main(r=5):
             stop_services()
     finally:
         stop_services()
-        _h2()._root("rm -rf /h/svc /h/run")
+        _h2()._prep(_h2().CLEAR)
     f_ok = sum(x["holds"] for x in res["fenced"])
     c_ok = sum(x["violated"] for x in res["control"])
     inv = sorted({k for x in res["fenced"] for k in x["invalid_request"]})

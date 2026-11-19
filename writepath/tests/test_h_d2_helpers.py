@@ -110,6 +110,30 @@ class Helpers(unittest.TestCase):
         self.assertEqual(len(self.helper_runs(PREP)), 3, self.runs)
         self.assertEqual(len(self.helper_runs(WITNESS)), 2, self.runs)
 
+    def test_h2h5_d6_uses_the_named_helpers(self):
+        # exp/h_d6_broker reuses these helpers for its own credential layout and witness (H6, H6c, H6e)
+        from exp import h_d6_broker as D
+        D.prepare("fenced")
+        D.witness()
+        self.assertEqual([_opt(r, "--name")[:1] for r in self.runs], [[PREP], [WITNESS]], self.runs)
+        for r in self.runs:
+            for h, c, mode in _mounts(r):
+                self.assertNotEqual(os.path.realpath(h), os.path.realpath(self.home), r)
+                if mode != "ro":
+                    self.assertIn(h, (str(self.home / "svc"), str(self.home / "run")), r)
+        script = self.runs[0][-1]
+        self.assertIn("install -d -m 0777 /h/run/c12", script)     # D6's phase-file directory is still made
+
+    def test_h2h6_every_h2_attribute_the_orchestrators_use_exists(self):
+        # 35eee02 removed _root while exp/h_d6_broker.py and seal_uids_e2e.py still called it: a static check, since
+        # neither orchestrator's main runs offline
+        import re
+        for f in ("exp/h_d6_broker.py", "results/failing-first/harness/seal_uids_e2e.py"):
+            src = (HERE / f).read_text()
+            used = set(re.findall(r"\b(?:H2|_h2\(\))\.([A-Za-z_]\w*)", src))
+            self.assertTrue(used, f)
+            self.assertEqual(sorted(a for a in used if not hasattr(H, a)), [], f)
+
     def test_h2h4_mount_points_are_emptied_not_removed(self):
         H.prepare("control")
         script = self.helper_runs(PREP)[0][-1]
