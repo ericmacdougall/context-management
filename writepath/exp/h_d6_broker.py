@@ -637,8 +637,9 @@ def main(r=5):
                       "identity", "a key already issued writes until the next CAS or its 1 h expiry (C12 a)",
                       "the operator directory is mounted into the app container for this test only",
                       "H6e, H6g: the default role-key mode (WP_BROKER unset) has no tenant isolation: the projector role "
-                      "key writes through any tenant's existing write alias (control C1 B_w), reads any tenant (C1 "
-                      "B_read) and updates another tenant's mapping (C14_reported d); alias add and re-point were REFUSED "
+                      "key writes through any tenant's existing write alias (control C1 B_w) and updates another tenant's "
+                      "mapping (C14_reported d); reading another tenant is NOT claimed (C1 B_read records it: refused "
+                      "403 at c6d3e85); alias add and re-point were REFUSED "
                       "(403, control C4 and the fence CAS), so re-pointing is not demonstrated; only broker-minted keys "
                       "are tenant- and epoch-scoped; a broker-mode deployment must not mint or place the role keys where "
                       "the application runs",
