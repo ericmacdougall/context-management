@@ -96,11 +96,11 @@ class Transport(unittest.TestCase):
             s.shutdown()
             s.server_close()
 
-    def server(self, allow=(UID_A,), uid_of=None, **bounds):
+    def server(self, allow=(UID_A,), uid_of=None, dispatch_fn=echo, **bounds):
         path = os.path.join(self.tmp, "t%d.sock" % len(self.servers))
         log = []
         srv = self.S.Server(path, set(allow), make_store=lambda: types.SimpleNamespace(conn=None),
-                            uid_of=uid_of or (lambda s: UID_A), log=log.append, ops=("echo",), dispatch_fn=echo)
+                            uid_of=uid_of or (lambda s: UID_A), log=log.append, ops=("echo",), dispatch_fn=dispatch_fn)
         for k, v in bounds.items():
             setattr(srv, k, v)            # a tree without the bounds ignores these: red by assertion below
         threading.Thread(target=srv.serve_forever, daemon=True).start()
@@ -258,11 +258,14 @@ class Transport(unittest.TestCase):
         SL = self.sealer()
         M = importlib.import_module("wp.mentions")
         n, per = M.BUDGET.call_events, M.BUDGET.call_bytes // M.BUDGET.call_events
-        req = {"op": "seal", "args": {"tenant": "t" * 64, "lease_scope": "session:" + "s" * 64, "lease_epoch": 2**31,
-                                      "batch_id": uuid.uuid4().hex, "purpose": "quarantine",
-                                      "events": [{"event_id": uuid.uuid4().hex, "subject_id": "S" * 64, "content": "\x01" * per}
-                                                 for _ in range(n)]}}
-        size = len((json.dumps(req) + "\n").encode())
+        evs = [{"event_id": uuid.uuid4().hex, "subject_id": "S" * 160, "content": "\x01" * per} for _ in range(n)]
+        args = ("t" * 64, "session:" + "s" * 64, 2**31, uuid.uuid4().hex, evs, "quarantine")
+        if hasattr(SL, "request_line"):     # the line the Client sends, with a retry's prior mentions at their allowance
+            per_ev = SL.MENTIONS_ALLOWANCE // n // 40
+            size = len(SL.request_line(*args, [[uuid.uuid4().hex[:4] + "-" * 32] * per_ev for _ in range(n)]))
+        else:
+            req = {"op": "seal", "args": dict(zip(("tenant", "lease_scope", "lease_epoch", "batch_id", "events", "purpose"), args))}
+            size = len((json.dumps(req) + "\n").encode())
         lim = getattr(SL, "LINE_LIMIT", None)
         self.assertIsNotNone(lim, "the seal authority states no request line limit")
         self.assertLessEqual(size, lim, f"the largest admitted call ({size} bytes) is over the authority's limit")
@@ -295,8 +298,9 @@ class Transport(unittest.TestCase):
                     os.environ[k] = v
         self.assertIsNotNone(seen.get("line_limit"), "serve() did not set the line limit")
         self.assertEqual(seen.get("line_limit"), getattr(SL, "LINE_LIMIT", None), "serve() set another line limit")
-        for k in ("request_timeout_s", "max_per_uid", "max_conn"):
-            self.assertIsNotNone(seen.get(k), f"serve() did not set {k}")
+        for k in ("request_timeout_s", "max_per_uid", "max_conn", "idle_timeout_s", "work_slots", "queue_wait_s"):
+            self.assertIsNotNone(seen.get(k), f"serve() did not set {k} (review 42cfd11 R2a)")
+        self.assertEqual(seen.get("work_slots"), 1, "the authority parses more than one request at once")
 
     # ------------------------------------------------------------------ TB7: client timeouts (M11)
     def silent_peer(self):
@@ -354,6 +358,100 @@ class Transport(unittest.TestCase):
         self.assertEqual(calls, [], "the server chmods the socket by path after binding")
         if sys.platform.startswith("linux"):
             self.assertEqual(os.stat(path).st_mode & 0o777, 0o666, "the socket is not mode 0666")
+
+    # ------------------------------------------------------------------ TB9: memory (review 42cfd11 R2a; PC1, PD, PC8)
+    def probe(self, scenario, n):
+        self.sealer()
+        if not os.path.exists("/proc/self/statm"):
+            self.skipTest("needs /proc (Linux)")
+        import subprocess
+        r = subprocess.run([sys.executable, str(HERE / "tests" / "r2_mem_probe.py"), scenario, str(n)], cwd=str(HERE),
+                           capture_output=True, text=True, timeout=600)
+        lines = [x for x in r.stdout.splitlines() if x.startswith("{")]
+        self.assertTrue(lines, f"the probe printed no result (rc {r.returncode}): {r.stderr[-400:]}")
+        out = json.loads(lines[-1])
+        print(f"\n{scenario.upper()} {json.dumps(out)}", file=sys.stderr)
+        self.assertFalse(out["capped"], f"{scenario}: the server passed 1 GiB of RSS")
+        return out
+
+    def test_tb9a_pc1_one_request_parse_is_bounded(self):
+        out = self.probe("pc1", 1)
+        self.assertLess(out["growth_mib"], 96, f"one request line grew the authority by {out['growth_mib']} MiB")
+
+    def test_tb9b_pd_idle_connections_pin_nothing(self):
+        out = self.probe("pd", 8)
+        self.assertEqual(out["served"], 8)
+        self.assertLess(out["growth_mib"], 128, f"8 sequential requests, then idle: {out['growth_mib']} MiB held")
+
+    def test_tb9c_pc8_concurrent_requests_parse_one_at_a_time(self):
+        out = self.probe("pc8", 8)
+        self.assertEqual(out["served"], 8, "a request was not answered")
+        self.assertLess(out["growth_mib"], 128, f"8 concurrent requests: {out['growth_mib']} MiB")
+
+    def test_tb9d_every_slot_at_once_fits_the_container(self):
+        SL = self.sealer()
+        out = self.probe("pc8", SL.MAX_CONN)
+        self.assertEqual(out["served"], SL.MAX_CONN, "a request was not answered")
+        # the authority's container is 512 MiB (exp/h_d2_uids.py CONTAINER_MEMORY); the worst admitted call's own working
+        # set was measured under 40 MB RSS (DESIGN-NOTES H10). Transport peak plus that call must stay under 75% of it.
+        self.assertLess(out["peak_mib"] + 40, 0.75 * 512, f"{SL.MAX_CONN} concurrent requests: peak {out['peak_mib']} MiB")
+
+    # ------------------------------------------------------------------ TB10: the idle deadline (review 42cfd11 R2)
+    def test_tb10_idle_connection_is_closed(self):
+        SL = self.sealer()
+        idle = getattr(SL, "IDLE_TIMEOUT_S", None)
+        self.assertIsNotNone(idle, "the seal authority sets no idle deadline")
+        self.assertLess(idle, SL.CLIENT_TIMEOUT_S)
+        path, log = self.server(idle_timeout_s=1.0, request_timeout_s=5.0)
+        c = self.conn(path)
+        self.assertEqual(self.roundtrip(c), {"ok": 1})
+        got, closed = self.lines(c, wait=4.0)
+        c.close()
+        self.assertEqual((got, closed), ([], True), "an idle connection was kept past the idle deadline")
+        c = self.conn(path)                         # connected, never sends
+        got, closed = self.lines(c, wait=4.0)
+        c.close()
+        self.assertEqual((got, closed), ([], True), "a silent connection was kept past the idle deadline")
+        self.assertIn("idle_timeout", "\n".join(log))
+
+    # ------------------------------------------------------------------ TB11: work slots (review 42cfd11 R2a)
+    def test_tb11_work_slots_serialise_and_queue(self):
+        st, lk = {"now": 0, "max": 0}, threading.Lock()
+
+        def slow(hold):
+            def d(ks, op, a):
+                with lk:
+                    st["now"] += 1
+                    st["max"] = max(st["max"], st["now"])
+                time.sleep(hold)
+                with lk:
+                    st["now"] -= 1
+                return {"ok": 1}
+            return d
+        path, _ = self.server(dispatch_fn=slow(0.3), work_slots=1, queue_wait_s=5.0)
+        res = []
+
+        def go():
+            c = self.conn(path, timeout=10.0)
+            res.append(self.roundtrip(c))
+            c.close()
+        ths = [threading.Thread(target=go) for _ in range(4)]
+        for t in ths:
+            t.start()
+        for t in ths:
+            t.join(10)
+        self.assertEqual(res, [{"ok": 1}] * 4, "a queued request was not served")
+        self.assertEqual(st["max"], 1, "two requests were parsed and dispatched at once with one work slot")
+        path, _ = self.server(dispatch_fn=slow(1.5), work_slots=1, queue_wait_s=0.2)
+        res.clear()
+        ths = [threading.Thread(target=go) for _ in range(2)]
+        for t in ths:
+            t.start()
+            time.sleep(0.1)
+        for t in ths:
+            t.join(10)
+        self.assertEqual(sorted(json.dumps(r) for r in res), ['{"error": "busy"}', '{"ok": 1}'],
+                         "a request past the queue wait was not answered busy")
 
 
 if __name__ == "__main__":

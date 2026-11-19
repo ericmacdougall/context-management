@@ -307,6 +307,9 @@ class SealerOffline(unittest.TestCase):
         evs = [{"event_id": "e1", "subject_id": "SY", "content": "I met " + NAME},
                {"event_id": "e2", "subject_id": "SY", "content": "nobody named"}]
         req = {"tenant": "t1", "lease_scope": "session:s1", "lease_epoch": 7, "batch_id": "b1", "events": evs}
+        if hasattr(S, "request_line"):          # the wire form the Client sends (review 42cfd11 R2a: content as base64)
+            req = json.loads(S.request_line("t1", "session:s1", 7, "b1", evs))["args"]
+            req.pop("prior_mentions")
         n_scans = sum(1 for s in conn.sql if "subject_identifiers" in s)
         out = S.dispatch(a, "seal", dict(req, prior_mentions=[["SQ"], ["SY", "SP"]]))
         self.assertEqual(sum(1 for s in conn.sql if "subject_identifiers" in s) - n_scans, 1, "more than one scan for one seal")
