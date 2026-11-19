@@ -153,7 +153,14 @@ T_POLICY = {"events": "SI", "quarantine": "SI", "inbox": "SIU", "analyst_jobs": 
             "erasure_mentions": "S", "legal_holds": "S", "erasure_withheld": "S", "erasure_rescanned": "S",
             # integ: the hardening tables (no app privilege; written through SECURITY DEFINER functions)
             "write_refusals": "", "identifier_proposals": "", "quarantine_removed": ""}
-T_UNGUARDED = {"write_refusals"}                # schema.sql gives it no guard triggers (exp/guard_policy.py exemption)
+T_UNGUARDED = {"write_refusals"}
+T_WRITER = "wp_write_refused"
+# integ: the service containers (the owner's spec; exp/h_d2_uids.py _run_args), written out here as the scenario
+T_SERVICE_UIDS = {"keysvc": 20003, "sealer": 20005, "broker": 20004, "app": 20001, "peer": 20002, "verifier": 20002,
+                  "app12": 20001}
+T_SERVICE_MOUNTS = [("/usr", "/usr", False), ("HOME/venv", "/venv", False), ("TREE", "/src", False),
+                    ("HOME/conf", "/wp/conf", False), ("HOME/logs", "/wp/logs", False), ("HOME/svc", "/svc", False),
+                    ("HOME/run", "/run/wphard", True)]                # schema.sql gives it no guard triggers (exp/guard_policy.py exemption)
 T_PRIV = {"S": "SELECT", "I": "INSERT", "U": "UPDATE"}
 T_LOGIN = ["wp_app", "wp_broker", "wp_kms", "wp_legal", "wp_rev1", "wp_rev2", "wp_sealer", "wp_verifier", "wp_watchdog"]
 T_GROUP = ["wp_reviewer"]
@@ -205,7 +212,10 @@ def good_catalog():
                               for t in guarded] + [[t, f"{t}_no_truncate", str(T_BEFORE | T_TRUNC), "A", "wp_guard"]
                                                    for t in guarded]),
           "functions": [["wp_guard", "", "wp_owner", "False", "", "0" * 32, ""]]
-                       + [[f, "x text", "wp_owner", "True", "", "1" * 32, ""] for f in definer],
+                       + [[f, "x text", "wp_owner", "True", "", "1" * 32, ""] for f in definer if f != T_WRITER]
+                       # as the live cluster shows it (t2-dev 2026-11-18): EXECUTE to wp_app alone, search_path pinned
+                       + [[T_WRITER, "t tenant_t, c text", "wp_owner", "True", "{wp_owner=X/wp_owner,wp_app=X/wp_owner}",
+                           "1" * 32, "search_path=public, pg_temp"]],
           "constraints": [["events", "events_pkey", "PRIMARY KEY (id)"], ["facts", "facts_pkey", "PRIMARY KEY (id)"]],
           "indexes": [["decision_source_once", "True", "True", "CREATE UNIQUE INDEX decision_source_once ..."],
                       ["erasure_one_open", "True", "True", "CREATE UNIQUE INDEX erasure_one_open ..."]],
@@ -224,7 +234,9 @@ def good_catalog():
                                + [[r, f"public.{t}", "SELECT"] for r, ts in T_ROLE_TABLES.items() for t in ts]),
           "role_schema": sorted([r, "public", "USAGE"] for r in
                                 ["wp_app", "wp_broker", "wp_legal", "wp_sealer", "wp_verifier"] + T_REVIEWERS),
-          "role_execute": sorted([f, r] for f, rs in T_EXECUTE.items() for r in rs)}
+          "role_execute": sorted([f, r] for f, rs in T_EXECUTE.items() for r in rs),
+          # integ R1: login roles' effective privileges on write_refusals (schema.sql's verifier-wide SELECT)
+          "unguarded_privs": [["write_refusals", "wp_verifier", "SELECT"]]}
     ks = {"schema": [["public", "2201", "wp_kms", ""]],
           "relations": [["subject_keys", "18000", "r", "wp_kms", "", "False", "False"],
                         ["tenant_keys", "18001", "r", "wp_kms", "", "False", "False"]],
@@ -364,6 +376,39 @@ class Fake:
         """docker rm of a container that is not a store (integ: a service container an experiment removes)."""
         self.locked(lambda st: st["c"][cid].update(gone=True, running=False))
 
+    def service(self, suffix, home, tree, uid=None, image="ubuntu:24.04", mem=512 * 1024 ** 2, network="host",
+                mounts=None, labels=None, extra_mounts=(), gone=False):
+        """integ: a service container as exp/h_d2_uids.py _run_args starts one (docker run: create, then start), with
+        the committed spec unless a keyword changes it; its create event carries name, image and labels. A suffix
+        starting with '=' is the whole name."""
+        uid = T_SERVICE_UIDS.get(suffix, 20001) if uid is None else uid
+        if mounts is None:
+            mounts = [{"Type": "bind", "Source": src.replace("HOME", str(home)).replace("TREE", str(tree)),
+                       "Destination": d, "RW": rw} for src, d, rw in T_SERVICE_MOUNTS]
+        mounts = list(mounts) + list(extra_mounts)
+        labels = {"emlab2.stream": "wphard"} if labels is None else labels
+        name = suffix[1:] if suffix.startswith("=") else "emlab2-wphard-" + suffix
+        cid = os.urandom(32).hex()
+
+        def f(st):
+            st["c"][cid] = {"name": name, "started": self.ts(st), "running": True, "paused": False, "restarts": 0,
+                            "gone": gone, "logcfg": {"Type": "json-file", "Config": {}}, "tty": False, "du": {},
+                            "kept": 0, "drop": [], "pid": 0, "oom": False, "node": "", "mem": mem, "env": [],
+                            "mounts": mounts, "statfs": {}, "eph": "", "files": {}, "links": [], "inodes": [0, 0],
+                            "mi": [], "pgsrv": {"sysid": "0", "dd": None, "ts": [], "su": False}, "labels": labels,
+                            "image": image, "user": f"{uid}:{uid}" if uid != "" else "", "network": network}
+            self._event(st, cid, "create")
+            self._event(st, cid, "start")
+        self.locked(f)
+        return cid
+
+    def rename(self, cid, new):
+        def f(st):
+            old = st["c"][cid]["name"]
+            st["c"][cid]["name"] = new
+            self._event(st, cid, "rename", oldName="/" + old)
+        self.locked(f)
+
     def setflag(self, name, value):
         self.flag(**{name: value})
 
@@ -408,10 +453,11 @@ class Fake:
         with open(path, "a") as f:
             f.write(json.dumps(obj) + "\n")
 
-    def _event(self, st, cid, action, typ="container"):
+    def _event(self, st, cid, action, typ="container", **attrs):
+        c = st["c"][cid]
+        at = dict(c.get("labels") or {}, name=c["name"], image=c.get("image", ""), **attrs)
         self._append(self.root / "events", {"Type": typ, "Action": action, "status": action, "id": cid,
-                                            "Actor": {"ID": cid, "Attributes": {"name": st["c"][cid]["name"]}},
-                                            "time": int(time.time())})
+                                            "Actor": {"ID": cid, "Attributes": at}, "time": int(time.time())})
 
     # --- cgroup v2 files and /proc/<pid>/cgroup, as real files
     def cgdir(self, cid):
@@ -502,6 +548,7 @@ class Fake:
                                                                 "mode=1777,inode64"]],
                             "pgsrv": {"sysid": str(int.from_bytes(os.urandom(7), "big")), "dd": None, "ts": [],
                                       "su": True}}
+            self._event(st, cid, "create")
         self.locked(f)
         (self.root / f"log.{cid}").touch()
         self.cg(cid, max=mem, swap=0, peak=peak, oom_kill=0, swap_cur=0)
@@ -703,8 +750,10 @@ def fake_main(argv):
                                         "Pid": c["pid"] if c["running"] else 0, "OOMKilled": c["oom"]},
                                        **({} if st["flags"].get("no_started") else {"StartedAt": c["started"]})),
                          "Mounts": c["mounts"],
-                         "HostConfig": {"LogConfig": c["logcfg"], "Memory": c["mem"]},
-                         "Config": {"Tty": c["tty"], "Env": c.get("env", []), "Labels": c.get("labels") or {}},
+                         "HostConfig": {"LogConfig": c["logcfg"], "Memory": c["mem"],
+                                        "NetworkMode": c.get("network", "bridge"), "Privileged": False},
+                         "Config": {"Tty": c["tty"], "Env": c.get("env", []), "Labels": c.get("labels") or {},
+                                    "Image": c.get("image", ""), "User": c.get("user", "")},
                          "NetworkSettings": {"Ports": c.get("ports") or {}}})
         print(json.dumps(objs))
         return 0
@@ -823,23 +872,32 @@ def fake_main(argv):
                 return 0
             time.sleep(0.02)
     if cmd == "events":
-        ids, i = set(), 0
+        ids, types, acts, since, i = set(), set(), set(), None, 0
         while i < len(args):
             if args[i] == "--filter":
                 k, _, v = args[i + 1].partition("=")
                 if k == "container":
                     ids.add(F.resolve(F.st(), v) or v)
+                types |= {v} if k == "type" else set()
+                acts |= {v} if k == "event" else set()
                 i += 2
+            elif args[i] == "--since":
+                since, i = int(args[i + 1]), i + 2
             else:
                 i += 2 if args[i] == "--format" else 1
-        pos = len(F.events())
+        if since is not None and F.st()["flags"].get("events_rc"):      # integ: the event stream fails at once
+            print("Error response from daemon: events", file=sys.stderr)
+            return 1
+        evs = F.events()
+        pos = len(evs) if since is None else next((k for k, e in enumerate(evs) if e["time"] >= since), len(evs))
         while True:
             st = F.st()
             if st["flags"].get("kill_followers"):
                 return 0
             evs = F.events()
             for e in evs[pos:]:
-                if e["Actor"]["ID"] in ids:
+                if ((not ids or e["Actor"]["ID"] in ids) and (not types or e["Type"] in types)
+                        and (not acts or e["Action"] in acts) and (ids or types or acts)):
                     sys.stdout.write(json.dumps(e) + "\n")
                     sys.stdout.flush()
             pos = len(evs)
@@ -2367,6 +2425,19 @@ class Gate(unittest.TestCase):
         for what in ("schema", "all tables in schema", "all functions in schema"):
             self.assertIn(f"revoke all on {what} {s} from public;", sql)
         self.assertFalse([g for g in grants if f" {s}." in g or f"schema {s} " in g], "a grant on the seal schema")
+        # write_refusals R1-R4 (the owner's conditions) as schema.sql builds them
+        for t, spec in GP.UNGUARDED.items():
+            w = spec["writer"]
+            m = re.search(rf"^create function {w}\([^)]*\) returns \w+ language plpgsql (security definer)? ?"
+                          r"set search_path = ([\w, ]+) as", sql, re.M)
+            self.assertTrue(m and m.group(1), f"{w} is not created SECURITY DEFINER with a pinned search_path")
+            self.assertEqual(f"search_path={m.group(2)}", spec["config"])
+            self.assertEqual(set(spec["execute"]), ex.get(f"public.{w}", set()))
+            self.assertIn("revoke all on all functions in schema public from public;", sql)
+            self.assertIn(f"create table {t} (", sql)
+            self.assertNotIn(t, " ".join(g for g in grants if "all tables" not in g),
+                             f"a grant naming {t} (R1: none but the verifier's schema-wide SELECT)")
+            self.assertEqual(GP.UNGUARDED_READ[t], {GP.VERIFIER_READS_PUBLIC: {"SELECT"}})
 
     # ---- integ/gate-on-hardening: the hardening objects named and held (exp/guard_policy.py); red on the plain merge
     def assertExactly(self, rc, out, code, *why):
@@ -2531,8 +2602,8 @@ class Gate(unittest.TestCase):
     def test_integ_write_refusals_writer_not_security_definer_blocks(self):
         row = next(r for r in self.F.st()["catalog"]["wp_events"]["functions"] if r[0] == "wp_write_refused")
         self.F.cat("wp_events", "functions", "set", *row[:3], "False", *row[4:])
-        self.assertExactly(*self.call("start"), 2, "G3 table write_refusals has no guard triggers and its writer "
-                           "wp_write_refused is not a SECURITY DEFINER function")
+        self.assertExactly(*self.call("start"), 2, "G3 write_refusals (no guard triggers) R2: its writer "
+                           "wp_write_refused is not a SECURITY DEFINER function owned by wp_owner")
 
     def test_integ_trigger_disabled_on_seal_keys_blocks(self):
         self.F.cat("wp_events", "seal_triggers", "add", "seal_keys", "seal_keys_x", str(T_BEFORE | T_ROW | T_UPD),
@@ -2543,7 +2614,7 @@ class Gate(unittest.TestCase):
     def test_integ_key_service_container_before_the_run_blocks(self):
         self.F.add("emlab2-wphard-keysvc", "/svc", GIB // 8, GIB, GIB // 2, GIB // 8)
         self.assertExactly(*self.call("start"), 2, "a container of this stream other than the run's stores before "
-                           "the run: emlab2-wphard-keysvc (the key service)")
+                           "the run: emlab2-wphard-keysvc (the key service (SU, D6, h_d2))")
 
     def test_integ_stream_labelled_container_before_the_run_blocks(self):
         c = self.F.add("helper-x", "/svc", GIB // 8, GIB, GIB // 2, GIB // 8)
@@ -2553,15 +2624,172 @@ class Gate(unittest.TestCase):
 
     def test_integ_service_container_left_at_the_end_voids(self):
         self.start()
-        self.F.add("emlab2-wphard-sealer", "/svc", GIB // 8, GIB, GIB // 2, GIB // 8)
+        self.svc("sealer")
         self.assertExactly(*self.call("end"), 3, "a container of this stream other than the run's stores at the end "
                            "of the run (an experiment removes the service containers it starts): emlab2-wphard-sealer")
 
     def test_integ_service_container_removed_within_the_run_is_valid(self):
         self.start()
-        c = self.F.add("emlab2-wphard-keysvc", "/svc", GIB // 8, GIB, GIB // 2, GIB // 8)
-        self.F.remove(c)
+        for n in ("keysvc", "sealer", "broker", "app", "peer", "verifier", "app12"):
+            self.F.remove(self.svc(n))
         self.assertValid(*self.call("end"))
+
+    # ---- integ: service containers during the run (the owner's spec, exp/guard_policy.py SERVICE_CONTAINERS)
+    def svc(self, suffix, **kw):
+        """A service container created during the run; returns once the gate's watcher has judged its events (a
+        container is inspected when Docker reports its creation, before the experiment can remove it)."""
+        w = self._run.get("watch")   # a gate without a watcher (the red receipt's older tree) runs to its verdict
+        cid = self.F.service(suffix, self.home, self.tree, **kw)
+        t0 = time.monotonic()
+        while w is not None and cid not in w.seen and time.monotonic() - t0 < 10:      # its create event, judged
+            time.sleep(0.02)
+        time.sleep(0.05)
+        return cid
+
+    def svc_void(self, *why, suffix="keysvc", **kw):
+        self.start()
+        self.F.remove(self.svc(suffix, **kw))
+        self.assertExactly(*self.call("end"), 3, *why)
+
+    def test_integ_service_container_not_in_the_committed_set_voids(self):
+        self.svc_void("not a committed service container was created during the run: 'emlab2-wphard-keysvc2'",
+                      suffix="keysvc2")
+
+    def test_integ_unnamed_container_with_the_stream_label_voids(self):
+        # exp/h_d2_uids.py _root: a root helper with the label, no name of the set, all of WP_HOME read-write
+        self.svc_void("not a committed service container was created during the run: 'zealous_turing'",
+                      suffix="=zealous_turing", uid="", network="none",
+                      mounts=[{"Type": "bind", "Source": str(self.home), "Destination": "/h", "RW": True}])
+
+    def test_integ_service_container_under_another_uid_voids(self):
+        self.svc_void("service container emlab2-wphard-keysvc (the key service (SU, D6, h_d2)) created during the "
+                      "run: user '20001:20001', committed '20003:20003'", uid=20001)
+
+    def test_integ_service_container_as_root_voids(self):
+        self.svc_void("emlab2-wphard-sealer (the seal authority (SU)) created during the run: user '', committed "
+                      "'20005:20005'", suffix="sealer", uid="")
+
+    def test_integ_service_container_without_its_memory_limit_voids(self):
+        self.svc_void("emlab2-wphard-broker (the lease broker (D6)) created during the run: memory limit '0', "
+                      "committed 536870912", suffix="broker", mem=0)
+
+    def test_integ_service_container_on_another_network_voids(self):
+        self.svc_void("created during the run: network 'bridge', committed 'host'", network="bridge")
+
+    def test_integ_service_container_of_another_image_voids(self):
+        self.svc_void("created during the run: image 'python:3.12', committed 'ubuntu:24.04'", image="python:3.12")
+
+    def test_integ_service_container_without_the_label_voids(self):
+        self.svc_void("does not carry the stream label emlab2.stream=wphard", suffix="app", labels={})
+
+    def test_integ_service_container_with_an_extra_mount_voids(self):
+        # exp/h_d2_uids.py, fenced arm: the operator's secrets mounted into the app container
+        sec = str(self.home / "secrets")
+        self.svc_void(f"mount {ascii(os.path.realpath(sec))} at '/operator/secrets' (ro) is not committed", suffix="app",
+                      extra_mounts=[{"Type": "bind", "Source": sec, "Destination": "/operator/secrets", "RW": False}])
+
+    def test_integ_service_container_with_svc_writable_voids(self):
+        ms = [dict(m, RW=True) if m["Destination"] == "/svc" else m for m in
+              [{"Type": "bind", "Source": src.replace("HOME", str(self.home)).replace("TREE", str(self.tree)),
+                "Destination": d, "RW": rw} for src, d, rw in T_SERVICE_MOUNTS]]
+        self.svc_void("at '/svc' (rw) is not committed", "the committed mount", mounts=ms)
+
+    def test_integ_service_container_missing_a_committed_mount_voids(self):
+        ms = [{"Type": "bind", "Source": src.replace("HOME", str(self.home)).replace("TREE", str(self.tree)),
+               "Destination": d, "RW": rw} for src, d, rw in T_SERVICE_MOUNTS if d != "/wp/logs"]
+        self.svc_void("the committed mount", mounts=ms)
+
+    def test_integ_service_container_renamed_during_the_run_voids(self):
+        self.start()
+        c = self.svc("keysvc")
+        self.F.rename(c, "emlab2-wphard-keysvc-old")
+        self.F.remove(c)
+        self.assertExactly(*self.call("end"), 3, "a container of this stream was renamed during the run")
+
+    def test_integ_service_container_gone_before_inspection_voids(self):
+        self.svc_void("could not be inspected", gone=True)
+
+    def test_integ_container_event_stream_failure_voids(self):
+        self.F.flag(events_rc=True)
+        self.start()
+        self.assertExactly(*self.call("end"), 3, "Docker's container event stream ended during the run")
+
+    def test_integ_service_spec_is_bound_to_h_d2_run_args(self):
+        src = (self.tree / "exp" / "h_d2_uids.py").read_text()
+        args = re.search(r"def _run_args\(.*?\n\n\n", src, re.S).group(0)
+        gp = self._gp()
+        self.assertIn(f'IMAGE = "{gp.SERVICE_IMAGE}"', src)
+        self.assertIn('"--network", "host"', args)
+        self.assertIn('"-m", "512m"', args)
+        self.assertEqual(gp.SERVICE_MEMORY, 512 * 1024 ** 2)
+        vols = re.findall(r'"-v", f?"([^"]+)"', args)
+        table = {"{config.HOME / 'venv'}": "home:venv", "{src}": "tree", "{config.HOME / 'conf'}": "home:conf",
+                 "{config.HOME / 'logs'}": "home:logs", "{config.HOME / 'svc'}": "home:svc",
+                 "{config.HOME / 'run'}": "home:run"}
+        have = set()
+        for v in vols:
+            parts = v.split(":")
+            src_, dst, ro = parts[0], parts[1], parts[2:] == ["ro"]
+            have.add((table.get(src_, src_), dst, not ro))
+        self.assertEqual(have, set(gp.SERVICE_MOUNTS), "SERVICE_MOUNTS differ from h_d2_uids._run_args")
+        self.assertEqual({k: v[0] for k, v in gp.SERVICE_CONTAINERS.items()}, T_SERVICE_UIDS)
+
+    # ---- integ: write_refusals without guard triggers, R1 to R4 (the owner's four conditions)
+    def writer(self, **kw):
+        row = next(r for r in self.F.st()["catalog"]["wp_events"]["functions"] if r[0] == T_WRITER)
+        for k, v in kw.items():
+            row[{"owner": 2, "definer": 3, "acl": 4, "config": 6}[k]] = v
+        self.F.cat("wp_events", "functions", "set", *row)
+
+    def test_integ_refusals_verifier_read_is_the_one_admitted_grant(self):
+        self.start()
+        self.assertValid(*self.call("end"))
+
+    def test_integ_refusals_column_grant_to_a_login_role_blocks(self):
+        self.F.cat("wp_events", "unguarded_privs", "add", "write_refusals", "wp_legal", "SELECT")
+        self.assertExactly(*self.call("start"), 2, "G3 write_refusals (no guard triggers) R1: login role wp_legal "
+                           "holds ['SELECT'] on write_refusals")
+
+    def test_integ_refusals_insert_by_the_verifier_during_the_run_voids(self):
+        self.start()
+        self.F.cat("wp_events", "unguarded_privs", "add", "write_refusals", "wp_verifier", "INSERT")
+        self.assertExactly(*self.call("end"), 3, "R1: login role wp_verifier holds ['INSERT'] on write_refusals",
+                           "catalog wp_events.unguarded_privs changed")
+
+    def test_integ_refusals_writer_owned_by_another_role_blocks(self):
+        self.writer(owner="wp_app")
+        self.assertExactly(*self.call("start"), 2, "R2: its writer wp_write_refused is not a SECURITY DEFINER function "
+                           "owned by wp_owner (owner wp_app")
+
+    def test_integ_refusals_writer_search_path_not_pinned_blocks(self):
+        self.writer(config="")
+        self.assertExactly(*self.call("start"), 2, "R3: its writer wp_write_refused has the setting '', committed "
+                           "'search_path=public, pg_temp'")
+
+    def test_integ_refusals_writer_search_path_changed_during_the_run_voids(self):
+        self.start()
+        self.writer(config="search_path=public")
+        self.assertExactly(*self.call("end"), 3, "R3: its writer wp_write_refused has the setting 'search_path=public'",
+                           "catalog wp_events.functions changed")
+
+    def test_integ_refusals_public_execute_blocks(self):
+        self.writer(acl="{=X/wp_owner,wp_owner=X/wp_owner,wp_app=X/wp_owner}")
+        self.assertExactly(*self.call("start"), 2, "R4: PUBLIC may execute its writer wp_write_refused (ACL "
+                           "{=X/wp_owner")
+
+    def test_integ_refusals_default_acl_blocks(self):
+        self.writer(acl="")
+        self.assertExactly(*self.call("start"), 2, "R4: PUBLIC may execute its writer wp_write_refused (ACL NULL")
+
+    def test_integ_refusals_execute_by_another_role_blocks(self):
+        self.F.cat("wp_events", "role_execute", "add", "public.wp_write_refused", "wp_broker")
+        self.assertExactly(*self.call("start"), 2, "R4: EXECUTE on its writer wp_write_refused is held by "
+                           "['wp_app', 'wp_broker']", "role wp_broker may execute public.wp_write_refused")
+
+    def test_integ_refusals_execute_missing_for_the_app_blocks(self):
+        self.F.cat("wp_events", "role_execute", "drop", "public.wp_write_refused", "wp_app")
+        self.assertExactly(*self.call("start"), 2, "R4: EXECUTE on its writer wp_write_refused is held by []",
+                           "committed EXECUTE")
 
     # amendment GF1a: the gate's lines are H6d's, in one unit
     def test_integ_gf1_lines_equal_h6d(self):

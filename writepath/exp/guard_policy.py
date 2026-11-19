@@ -30,12 +30,24 @@ ROW, BEFORE, INS, DEL, UPD, TRUNC = 1, 2, 4, 8, 16, 32           # pg_trigger.tg
 UNIQUE_INDEXES = ("decision_source_once", "erasure_one_open")    # G7
 APP_NO_EXECUTE = ("wp_hold_place", "wp_hold_release")            # D1: holds are the legal role's alone
 EVENTS_OWNER, KEYS_OWNER = "wp_owner", "wp_kms"                   # G1, G5
-# G3 exemption. ASSUMPTION (inferred from wp/schema.sql at e1e7e51; not decided by the hardening owner, reported to
-# them): schema.sql creates write_refusals without guard triggers (it is in neither trigger list). It is admitted on
-# compensating rules, all checked: owner wp_owner; the effective privileges below (the verifier reads it, no role
-# writes it); its writer function (SECURITY DEFINER, owner wp_owner, EXECUTE for the app role alone, EXECUTE_ONLY);
-# and any trigger it does carry is enabled ALWAYS. Not covered: wp_owner (a NOLOGIN role) truncating it.
-UNGUARDED_OK = {"write_refusals": "wp_write_refused"}
+# G3 without guard triggers, by design (the hardening owner, 2026-11-18, relayed by main: write_refusals holds counts
+# only, codes WPM01-03 under a check constraint, and its only writer is wp_write_refused). In place of guard triggers
+# the gate requires exactly, at admission and at the end:
+#   R1 no login role (superusers aside: they hold every privilege) holds a privilege on the table, table or column
+#      level, effective, but UNGUARDED_READ;
+#   R2 the writer is SECURITY DEFINER and owned by wp_owner;
+#   R3 the writer's proconfig pins search_path, exactly UNGUARDED[t]["config"];
+#   R4 EXECUTE on the writer is held by exactly UNGUARDED[t]["execute"] (effective, every non-superuser role) and its
+#      ACL grants nothing to PUBLIC (a NULL ACL is the default one, which grants EXECUTE to PUBLIC).
+# Any trigger it does carry must be enabled ALWAYS. Not covered: wp_owner (a NOLOGIN role) or a superuser writing it.
+UNGUARDED = {"write_refusals": {"writer": "wp_write_refused", "config": "search_path=public, pg_temp",
+                                "execute": ("wp_app",)}}
+UNGUARDED_OK = {t: v["writer"] for t, v in UNGUARDED.items()}     # the names guard_check and G3 coverage skip
+# TARGET_MISMATCH (not the owner's words): the owner said no login role holds any privilege on write_refusals, but
+# wp/schema.sql (`grant select on all tables in schema public to wp_verifier`, after the table is created) gives
+# wp_verifier SELECT on it, and the live cluster shows it (t2-dev, 2026-11-18). The gate admits that one grant, named
+# here; with a revoke in schema.sql this becomes {} and the gate then refuses it.
+UNGUARDED_READ = {"write_refusals": {"wp_verifier": {"SELECT"}}}
 
 # G4 and the cluster (wp/setup.py): roles, their attributes and settings, memberships, database grants
 OWNER_ROLE = "wp_owner"
@@ -97,12 +109,27 @@ EXECUTE_ONLY = {
     **{f"wp_seal.{f}": set() for f in SEAL_FUNCTIONS},
 }
 
-# Service containers (hardening D2, D6: exp/h_d2_uids.py, exp/h_d6_broker.py start them under the stream's container
-# prefix with the stream label, mount parts of WP_HOME, and remove them before they end). The rule is the prefix and
-# the label: at admission no container but the run's two stores may carry either, and at the end none may remain.
-# The names give the reason its text. The seal authority has no container in this tree (wp/sealer.py describes uid
-# 20005 and /svc/sealer only): "sealer" is ASSUMPTION, and the prefix rule covers whatever name it gets.
+# Service containers (the hardening owner, 2026-11-18, relayed by main). No standing service container: by default the
+# key service and the seal authority run in-process under the experiment's uid. Socket mode exists only inside steps
+# (SU, D6, h_d2) as short-lived containers the step removes: image ubuntu:24.04, fixed uids, host network, 512 MiB,
+# the stream label, and exactly the bind mounts of exp/h_d2_uids.py _run_args. The gate's rule:
+#   at admission no container but the run's two stores may carry the stream prefix or label (BLOCKED);
+#   during the run every container created with the prefix or the label, or renamed or updated to carry them, must
+#   be one of SERVICE_CONTAINERS by exact name and match its spec, inspected when Docker reports its creation (VOID);
+#   at the end none may remain (VOID).
+# Their bind mounts under WP_HOME (conf, logs, svc read-only; run read-write) are the committed mount list, admitted
+# only during the run; the C12 rule (no container but the stores uses this home at admission or end) is unchanged.
+# The gate checks the mount list, not the files in it (LIMITS).
 STREAM_LABEL = ("emlab2.stream", "wphard")
-SERVICE_CONTAINERS = {"keysvc": "the key service", "verifier": "the verifier service", "broker": "the lease broker",
-                      "app": "an application container", "app12": "an application container (D6 C12)",
-                      "peer": "a peer container (D6)", "sealer": "the seal authority (ASSUMPTION: name not in tree)"}
+SERVICE_IMAGE, SERVICE_MEMORY, SERVICE_NETWORK = "ubuntu:24.04", 512 * 1024 ** 2, "host"
+SERVICE_CONTAINERS = {                       # name after the stream prefix: (uid, what it is)
+    "keysvc": (20003, "the key service (SU, D6, h_d2)"), "sealer": (20005, "the seal authority (SU)"),
+    "broker": (20004, "the lease broker (D6)"), "app": (20001, "a one-shot application client"),
+    "peer": (20002, "a one-shot peer client (SU, D6)"), "verifier": (20002, "the verifier client (h_d2)"),
+    # ASSUMPTION (not in the owner's list): exp/h_d6_broker.py starts emlab2-wphard-app12, uid 20001, the same layout
+    "app12": (20001, "an application client (D6 C12)"),
+}
+# (source, destination, read-write): "home:<dir>" is WP_HOME/<dir>, "tree" the run's pinned tree, else an absolute path
+SERVICE_MOUNTS = (("/usr", "/usr", False), ("home:venv", "/venv", False), ("tree", "/src", False),
+                  ("home:conf", "/wp/conf", False), ("home:logs", "/wp/logs", False), ("home:svc", "/svc", False),
+                  ("home:run", "/run/wphard", True))

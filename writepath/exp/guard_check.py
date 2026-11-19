@@ -4,7 +4,8 @@
      a table without a declared policy fails.
   G2 the app role's privileges on every table equal its policy (DELETE and TRUNCATE never), checked with
      has_table_privilege / has_any_column_privilege.
-  G3 every table but exp/guard_policy.py's named exemption (UNGUARDED_OK, ASSUMPTION) has BEFORE triggers covering
+  G3 every table but exp/guard_policy.py's UNGUARDED (write_refusals, no guard triggers by design; the gate holds it
+     to R1-R4) has BEFORE triggers covering
      INSERT, UPDATE, DELETE (row) and TRUNCATE (statement), and EVERY non-internal trigger is enabled ALWAYS ('A'),
      so session_replication_role=replica cannot skip it.
   G4 roles: every committed login and group role (exp/guard_policy.py) is not superuser, createrole, createdb,
@@ -51,7 +52,7 @@ def check(adm, kadm):
                 if typ & TRUNC:
                     cov["TRUNCATE"] = True
         miss = [k for k, v in cov.items() if not v]
-        if miss and rel not in GP.UNGUARDED_OK:   # named exemption, ASSUMPTION (exp/guard_policy.py)
+        if miss and rel not in GP.UNGUARDED_OK:   # by design (exp/guard_policy.py UNGUARDED: the gate's R1-R4)
             out["G3"].append(f"{rel}:no guard for {','.join(miss)}")
     for r in GP.LOGIN_ROLES + GP.GROUP_ROLES:
         a = adm.execute("select rolsuper, rolcreaterole, rolcreatedb, rolreplication, rolbypassrls from pg_roles where rolname=%s", (r,)).fetchone()

@@ -1,0 +1,337 @@
+# failing-first receipt
+# date: 2026-11-19T00:23:28Z
+# file under test: 728857c:writepath/exp/disk_gate.py blob 77b747e6f09e3ed29ddc05a77b7fe938ae95e0b0 sha256 de79ec67a5cdc02377036f3feeb816baf99565ee0268a512ad0b05a3c5c0f319
+# tree: writepath at 728857c (git archive); the current tests/ copied into it; run from it; nothing imported from the current tree
+# test file: tests/test_disk_gate.py from HEAD 728857c blob b3bdce10411e69c233819b611e27ad48c74f3740
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<that file> python3 - <tests> < runner) with tests: tests.test_disk_gate.Gate.test_integ_service_container_left_at_the_end_voids tests.test_disk_gate.Gate.test_integ_service_container_removed_within_the_run_is_valid tests.test_disk_gate.Gate.test_integ_service_container_not_in_the_committed_set_voids tests.test_disk_gate.Gate.test_integ_unnamed_container_with_the_stream_label_voids tests.test_disk_gate.Gate.test_integ_service_container_under_another_uid_voids tests.test_disk_gate.Gate.test_integ_service_container_as_root_voids tests.test_disk_gate.Gate.test_integ_service_container_without_its_memory_limit_voids tests.test_disk_gate.Gate.test_integ_service_container_on_another_network_voids tests.test_disk_gate.Gate.test_integ_service_container_of_another_image_voids tests.test_disk_gate.Gate.test_integ_service_container_without_the_label_voids tests.test_disk_gate.Gate.test_integ_service_container_with_an_extra_mount_voids tests.test_disk_gate.Gate.test_integ_service_container_with_svc_writable_voids tests.test_disk_gate.Gate.test_integ_service_container_missing_a_committed_mount_voids tests.test_disk_gate.Gate.test_integ_service_container_renamed_during_the_run_voids tests.test_disk_gate.Gate.test_integ_service_container_gone_before_inspection_voids tests.test_disk_gate.Gate.test_integ_container_event_stream_failure_voids tests.test_disk_gate.Gate.test_integ_service_spec_is_bound_to_h_d2_run_args tests.test_disk_gate.Gate.test_integ_refusals_verifier_read_is_the_one_admitted_grant tests.test_disk_gate.Gate.test_integ_refusals_column_grant_to_a_login_role_blocks tests.test_disk_gate.Gate.test_integ_refusals_insert_by_the_verifier_during_the_run_voids tests.test_disk_gate.Gate.test_integ_refusals_writer_owned_by_another_role_blocks tests.test_disk_gate.Gate.test_integ_refusals_writer_search_path_not_pinned_blocks tests.test_disk_gate.Gate.test_integ_refusals_writer_search_path_changed_during_the_run_voids tests.test_disk_gate.Gate.test_integ_refusals_public_execute_blocks tests.test_disk_gate.Gate.test_integ_refusals_default_acl_blocks tests.test_disk_gate.Gate.test_integ_refusals_execute_by_another_role_blocks tests.test_disk_gate.Gate.test_integ_refusals_execute_missing_for_the_app_blocks 
+test_integ_service_container_left_at_the_end_voids (tests.test_disk_gate.Gate) ... ERROR
+test_integ_service_container_removed_within_the_run_is_valid (tests.test_disk_gate.Gate) ... ERROR
+test_integ_service_container_not_in_the_committed_set_voids (tests.test_disk_gate.Gate) ... ERROR
+test_integ_unnamed_container_with_the_stream_label_voids (tests.test_disk_gate.Gate) ... ERROR
+test_integ_service_container_under_another_uid_voids (tests.test_disk_gate.Gate) ... ERROR
+test_integ_service_container_as_root_voids (tests.test_disk_gate.Gate) ... ERROR
+test_integ_service_container_without_its_memory_limit_voids (tests.test_disk_gate.Gate) ... ERROR
+test_integ_service_container_on_another_network_voids (tests.test_disk_gate.Gate) ... ERROR
+test_integ_service_container_of_another_image_voids (tests.test_disk_gate.Gate) ... ERROR
+test_integ_service_container_without_the_label_voids (tests.test_disk_gate.Gate) ... ERROR
+test_integ_service_container_with_an_extra_mount_voids (tests.test_disk_gate.Gate) ... ERROR
+test_integ_service_container_with_svc_writable_voids (tests.test_disk_gate.Gate) ... ERROR
+test_integ_service_container_missing_a_committed_mount_voids (tests.test_disk_gate.Gate) ... ERROR
+test_integ_service_container_renamed_during_the_run_voids (tests.test_disk_gate.Gate) ... ERROR
+test_integ_service_container_gone_before_inspection_voids (tests.test_disk_gate.Gate) ... ERROR
+test_integ_container_event_stream_failure_voids (tests.test_disk_gate.Gate) ... FAIL
+test_integ_service_spec_is_bound_to_h_d2_run_args (tests.test_disk_gate.Gate) ... ERROR
+test_integ_refusals_verifier_read_is_the_one_admitted_grant (tests.test_disk_gate.Gate) ... ok
+test_integ_refusals_column_grant_to_a_login_role_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_refusals_insert_by_the_verifier_during_the_run_voids (tests.test_disk_gate.Gate) ... FAIL
+test_integ_refusals_writer_owned_by_another_role_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_refusals_writer_search_path_not_pinned_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_refusals_writer_search_path_changed_during_the_run_voids (tests.test_disk_gate.Gate) ... FAIL
+test_integ_refusals_public_execute_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_refusals_default_acl_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_refusals_execute_by_another_role_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_refusals_execute_missing_for_the_app_blocks (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+ERROR: test_integ_service_container_left_at_the_end_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2627, in test_integ_service_container_left_at_the_end_voids
+    self.svc("sealer")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2641, in svc
+    w = self._run["watch"]
+KeyError: 'watch'
+
+======================================================================
+ERROR: test_integ_service_container_removed_within_the_run_is_valid (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2634, in test_integ_service_container_removed_within_the_run_is_valid
+    self.F.remove(self.svc(n))
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2641, in svc
+    w = self._run["watch"]
+KeyError: 'watch'
+
+======================================================================
+ERROR: test_integ_service_container_not_in_the_committed_set_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2655, in test_integ_service_container_not_in_the_committed_set_voids
+    self.svc_void("not a committed service container was created during the run: 'emlab2-wphard-keysvc2'",
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2651, in svc_void
+    self.F.remove(self.svc(suffix, **kw))
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2641, in svc
+    w = self._run["watch"]
+KeyError: 'watch'
+
+======================================================================
+ERROR: test_integ_unnamed_container_with_the_stream_label_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2660, in test_integ_unnamed_container_with_the_stream_label_voids
+    self.svc_void("not a committed service container was created during the run: 'zealous_turing'",
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2651, in svc_void
+    self.F.remove(self.svc(suffix, **kw))
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2641, in svc
+    w = self._run["watch"]
+KeyError: 'watch'
+
+======================================================================
+ERROR: test_integ_service_container_under_another_uid_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2665, in test_integ_service_container_under_another_uid_voids
+    self.svc_void("service container emlab2-wphard-keysvc (the key service (SU, D6, h_d2)) created during the "
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2651, in svc_void
+    self.F.remove(self.svc(suffix, **kw))
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2641, in svc
+    w = self._run["watch"]
+KeyError: 'watch'
+
+======================================================================
+ERROR: test_integ_service_container_as_root_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2669, in test_integ_service_container_as_root_voids
+    self.svc_void("emlab2-wphard-sealer (the seal authority (SU)) created during the run: user '', committed "
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2651, in svc_void
+    self.F.remove(self.svc(suffix, **kw))
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2641, in svc
+    w = self._run["watch"]
+KeyError: 'watch'
+
+======================================================================
+ERROR: test_integ_service_container_without_its_memory_limit_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2673, in test_integ_service_container_without_its_memory_limit_voids
+    self.svc_void("emlab2-wphard-broker (the lease broker (D6)) created during the run: memory limit '0', "
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2651, in svc_void
+    self.F.remove(self.svc(suffix, **kw))
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2641, in svc
+    w = self._run["watch"]
+KeyError: 'watch'
+
+======================================================================
+ERROR: test_integ_service_container_on_another_network_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2677, in test_integ_service_container_on_another_network_voids
+    self.svc_void("created during the run: network 'bridge', committed 'host'", network="bridge")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2651, in svc_void
+    self.F.remove(self.svc(suffix, **kw))
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2641, in svc
+    w = self._run["watch"]
+KeyError: 'watch'
+
+======================================================================
+ERROR: test_integ_service_container_of_another_image_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2680, in test_integ_service_container_of_another_image_voids
+    self.svc_void("created during the run: image 'python:3.12', committed 'ubuntu:24.04'", image="python:3.12")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2651, in svc_void
+    self.F.remove(self.svc(suffix, **kw))
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2641, in svc
+    w = self._run["watch"]
+KeyError: 'watch'
+
+======================================================================
+ERROR: test_integ_service_container_without_the_label_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2683, in test_integ_service_container_without_the_label_voids
+    self.svc_void("does not carry the stream label emlab2.stream=wphard", suffix="app", labels={})
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2651, in svc_void
+    self.F.remove(self.svc(suffix, **kw))
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2641, in svc
+    w = self._run["watch"]
+KeyError: 'watch'
+
+======================================================================
+ERROR: test_integ_service_container_with_an_extra_mount_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2688, in test_integ_service_container_with_an_extra_mount_voids
+    self.svc_void(f"mount {ascii(os.path.realpath(sec))} at '/operator/secrets' (ro) is not committed", suffix="app",
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2651, in svc_void
+    self.F.remove(self.svc(suffix, **kw))
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2641, in svc
+    w = self._run["watch"]
+KeyError: 'watch'
+
+======================================================================
+ERROR: test_integ_service_container_with_svc_writable_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2695, in test_integ_service_container_with_svc_writable_voids
+    self.svc_void("at '/svc' (rw) is not committed", "the committed mount", mounts=ms)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2651, in svc_void
+    self.F.remove(self.svc(suffix, **kw))
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2641, in svc
+    w = self._run["watch"]
+KeyError: 'watch'
+
+======================================================================
+ERROR: test_integ_service_container_missing_a_committed_mount_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2700, in test_integ_service_container_missing_a_committed_mount_voids
+    self.svc_void("the committed mount", mounts=ms)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2651, in svc_void
+    self.F.remove(self.svc(suffix, **kw))
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2641, in svc
+    w = self._run["watch"]
+KeyError: 'watch'
+
+======================================================================
+ERROR: test_integ_service_container_renamed_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2704, in test_integ_service_container_renamed_during_the_run_voids
+    c = self.svc("keysvc")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2641, in svc
+    w = self._run["watch"]
+KeyError: 'watch'
+
+======================================================================
+ERROR: test_integ_service_container_gone_before_inspection_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2710, in test_integ_service_container_gone_before_inspection_voids
+    self.svc_void("could not be inspected", gone=True)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2651, in svc_void
+    self.F.remove(self.svc(suffix, **kw))
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2641, in svc
+    w = self._run["watch"]
+KeyError: 'watch'
+
+======================================================================
+ERROR: test_integ_service_spec_is_bound_to_h_d2_run_args (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2721, in test_integ_service_spec_is_bound_to_h_d2_run_args
+    self.assertIn(f'IMAGE = "{gp.SERVICE_IMAGE}"', src)
+AttributeError: module 'guard_policy_under_test' has no attribute 'SERVICE_IMAGE'
+
+======================================================================
+FAIL: test_integ_container_event_stream_failure_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2715, in test_integ_container_event_stream_failure_voids
+    self.assertExactly(*self.call("end"), 3, "Docker's container event stream ended during the run")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2445, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2079, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: ot inspected: Elasticsearch indices deleted during the run by a process that does not take the run lock (an older tree's exp.cleanup, a direct DELETE); Elasticsearch users, roles, API keys, ingest pipelines and snapshot repositories; a catalog change made and reverted within the run; the venv's packages, .pth files and sitecustomize (versions recorded, not verified); store content written by a process outside the run. The OOM counter is the gate's whole cgroup: an OOM kill of any process sharing it voids the run. The manifest's commit is named, not judged: tree_manifest.py check recomputes it.
+
+======================================================================
+FAIL: test_integ_refusals_column_grant_to_a_login_role_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2750, in test_integ_refusals_column_grant_to_a_login_role_blocks
+    self.assertExactly(*self.call("start"), 2, "G3 write_refusals (no guard triggers) R1: login role wp_legal "
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2445, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2079, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 2 : expected BLOCKED (exit 2), got 0: disk_gate start run r-6c3333cdd3cbb9edb4fae89e59c5c86f
+
+======================================================================
+FAIL: test_integ_refusals_insert_by_the_verifier_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2756, in test_integ_refusals_insert_by_the_verifier_during_the_run_voids
+    self.assertExactly(*self.call("end"), 3, "R1: login role wp_verifier holds ['INSERT'] on write_refusals",
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2445, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2079, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: ot inspected: Elasticsearch indices deleted during the run by a process that does not take the run lock (an older tree's exp.cleanup, a direct DELETE); Elasticsearch users, roles, API keys, ingest pipelines and snapshot repositories; a catalog change made and reverted within the run; the venv's packages, .pth files and sitecustomize (versions recorded, not verified); store content written by a process outside the run. The OOM counter is the gate's whole cgroup: an OOM kill of any process sharing it voids the run. The manifest's commit is named, not judged: tree_manifest.py check recomputes it.
+
+======================================================================
+FAIL: test_integ_refusals_writer_owned_by_another_role_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2761, in test_integ_refusals_writer_owned_by_another_role_blocks
+    self.assertExactly(*self.call("start"), 2, "R2: its writer wp_write_refused is not a SECURITY DEFINER function "
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2445, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2083, in assertOnly
+    self.assertTrue(any(w in x for w in why), f"{kind} for a reason other than the one under test: {x[:300]}")
+AssertionError: False is not true : BLOCKED for a reason other than the one under test: G3 table write_refusals has no guard triggers and its writer wp_write_refused is not a SECURITY DEFINER function owned by wp_owner
+
+======================================================================
+FAIL: test_integ_refusals_writer_search_path_not_pinned_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2766, in test_integ_refusals_writer_search_path_not_pinned_blocks
+    self.assertExactly(*self.call("start"), 2, "R3: its writer wp_write_refused has the setting '', committed "
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2445, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2079, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 2 : expected BLOCKED (exit 2), got 0: disk_gate start run r-93a2667044f59a1b40ef6bd46305ede3
+
+======================================================================
+FAIL: test_integ_refusals_writer_search_path_changed_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2772, in test_integ_refusals_writer_search_path_changed_during_the_run_voids
+    self.assertExactly(*self.call("end"), 3, "R3: its writer wp_write_refused has the setting 'search_path=public'",
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2449, in assertExactly
+    self.assertTrue(any(w in x for x in lines), f"no {kind} reason names {w!r}: {lines}")
+AssertionError: False is not true : no VOID reason names "R3: its writer wp_write_refused has the setting 'search_path=public'": ['catalog wp_events.functions changed during the run: 1 row(s) new, 1 gone (e.g. ["wp_write_refused", "t tenant_t, c text", "wp_owner", "True", "{wp_owner=X/wp_owner,wp_app=X/wp_owner}", "11111111111111111111111111111111", "search_path=publi)']
+
+======================================================================
+FAIL: test_integ_refusals_public_execute_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2777, in test_integ_refusals_public_execute_blocks
+    self.assertExactly(*self.call("start"), 2, "R4: PUBLIC may execute its writer wp_write_refused (ACL "
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2445, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2079, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 2 : expected BLOCKED (exit 2), got 0: disk_gate start run r-c15b2f182b69769ea555460fe2e7239d
+
+======================================================================
+FAIL: test_integ_refusals_default_acl_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2782, in test_integ_refusals_default_acl_blocks
+    self.assertExactly(*self.call("start"), 2, "R4: PUBLIC may execute its writer wp_write_refused (ACL NULL")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2445, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2079, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 2 : expected BLOCKED (exit 2), got 0: disk_gate start run r-550e714d1f36d0ed4321cda26d12688e
+
+======================================================================
+FAIL: test_integ_refusals_execute_by_another_role_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2786, in test_integ_refusals_execute_by_another_role_blocks
+    self.assertExactly(*self.call("start"), 2, "R4: EXECUTE on its writer wp_write_refused is held by "
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2449, in assertExactly
+    self.assertTrue(any(w in x for x in lines), f"no {kind} reason names {w!r}: {lines}")
+AssertionError: False is not true : no BLOCKED reason names "R4: EXECUTE on its writer wp_write_refused is held by ['wp_app', 'wp_broker']": ['role wp_broker may execute public.wp_write_refused (not committed)']
+
+======================================================================
+FAIL: test_integ_refusals_execute_missing_for_the_app_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2791, in test_integ_refusals_execute_missing_for_the_app_blocks
+    self.assertExactly(*self.call("start"), 2, "R4: EXECUTE on its writer wp_write_refused is held by []",
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.VgyCv8oRaH/writepath/tests/test_disk_gate.py", line 2449, in assertExactly
+    self.assertTrue(any(w in x for x in lines), f"no {kind} reason names {w!r}: {lines}")
+AssertionError: False is not true : no BLOCKED reason names 'R4: EXECUTE on its writer wp_write_refused is held by []': ['committed EXECUTE of wp_app on public.wp_write_refused is missing']
+
+----------------------------------------------------------------------
+Ran 27 tests in 52.997s
+
+FAILED (failures=10, errors=16)
+# loaded writepath modules (path in the extracted tree, sha256 prefix):
+#   tests.test_disk_gate tests/test_disk_gate.py 338530b0023d475b
+# exit status: 1

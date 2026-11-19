@@ -1125,10 +1125,15 @@ waves that one rule through (results/failing-first/integ/integ-mutant-*.red.out)
   wp_sealer and both reviewers; no grantee but the owner and the admin holds TEMPORARY on a stream database (review J
   M5). Bound to wp/setup.py and wp/db.py by text.
 - Tables. write_refusals, identifier_proposals and quarantine_removed are in POLICY with no app privilege. schema.sql
-  gives write_refusals no guard triggers; UNGUARDED_OK names it with compensating rules (owner, the effective
-  privileges of every role, its writer wp_write_refused a SECURITY DEFINER function of wp_owner that only the app role
-  may execute, any trigger it carries ALWAYS). This exemption is an ASSUMPTION reported to the hardening owner; the
-  binding test fails once schema.sql gives the table guards, so the exemption cannot outlive the gap.
+  gives write_refusals no guard triggers, by design (the hardening owner, 2026-11-18: counts only, codes WPM01-03
+  under a check constraint, one writer). The gate requires instead (`_unguarded_rules`, exp/guard_policy.py
+  UNGUARDED), at admission and at the end: R1 no login role but the superusers holds a privilege on it, table or
+  column level, effective, except UNGUARDED_READ; R2 its writer wp_write_refused is SECURITY DEFINER, owned by
+  wp_owner; R3 the writer's proconfig is exactly `search_path=public, pg_temp`; R4 EXECUTE on the writer is held by
+  wp_app alone and its ACL grants nothing to PUBLIC (a NULL ACL is the default, which does). TARGET_MISMATCH: the
+  owner said no login role holds a privilege, but schema.sql's `grant select on all tables in schema public to
+  wp_verifier` gives wp_verifier SELECT on it (live on t2-dev, 2026-11-18); UNGUARDED_READ admits that one grant until
+  the owner revokes it. Bound to schema.sql by text (test_integ_guard_policy_is_bound_to_schema).
 - Privileges (`_hardening_rules`). Every role's EFFECTIVE table privileges in public and wp_seal (has_table_privilege,
   inheritance included; wp_app's stay G2's), schema privileges (USAGE, CREATE on public and wp_seal) and EXECUTE on the
   functions in EXECUTE_ONLY equal the committed sets; bound to wp/schema.sql's grant statements by text.
@@ -1136,12 +1141,24 @@ waves that one rule through (results/failing-first/integ/integ-mutant-*.red.out)
   public (owner wp_kms). wp_seal holds exactly seal_keys and install, message, verify, all of wp_owner, none SECURITY
   DEFINER, no role holding a privilege on any of them; any trigger there is ALWAYS. The seal schema's OID joins the
   reset-or-replaced identity check. No query reads a column of seal_keys (the pads are the key).
-- Service containers. The key service, verifier, broker and application containers of D2 and D6 run under the
-  stream's prefix with the stream label and mount parts of WP_HOME (exp/h_d2_uids.py, exp/h_d6_broker.py). Any
-  container but the two stores with the prefix or the label BLOCKS admission and VOIDS the end; one started and removed
-  within the run is allowed. No container of the seal authority exists in this tree ("sealer" in SERVICE_CONTAINERS is
-  an ASSUMPTION; the prefix rule covers any name it gets). WP_SECRETS_DIR outside WP_HOME is not seen by the bind-mount
-  rule of C12; the prefix and label rule does not depend on it.
+- Service containers (the hardening owner, 2026-11-18). No standing service container: by default the key service
+  and the seal authority run in-process. Socket mode exists only inside steps SU, D6 and h_d2 as short-lived
+  containers the step removes. Any container but the two stores with the prefix or the label BLOCKS admission and
+  VOIDS the end. During the run the gate reads Docker's container events (`docker events --since <admission> --filter
+  type=container --filter event=create|rename|update`, its own session, outside the run's process group) and judges
+  every container created with the prefix or the label when the create event arrives (`_Watch`, `_service_why`): its
+  name must be one of SERVICE_CONTAINERS (keysvc 20003, sealer 20005, broker 20004, app 20001, peer 20002, verifier
+  20002, app12 20001: an ASSUMPTION from exp/h_d6_broker.py, not in the owner's list), its label the stream's, image
+  ubuntu:24.04, user `<uid>:<uid>`, memory 512 MiB, network host, not privileged, and its mounts exactly
+  SERVICE_MOUNTS (exp/h_d2_uids.py `_run_args`: /usr, the venv, the pinned tree read-only at /src, WP_HOME conf, logs,
+  svc read-only, WP_HOME/run read-write). A container that cannot be inspected, a rename or `docker update` of one,
+  and an event stream that ends by itself are VOID. Mounts and C12: the C12 rule (no container but the stores with a
+  bind mount under WP_HOME, at admission and at the end) is unchanged; the service containers' WP_HOME mounts are
+  admitted only during the run and only as the committed list; their contents (the svc credential copies, conf, logs)
+  are not inspected (LIMITS). Conflicts reported to the owner: exp/h_d2_uids.py's control arm runs the key service and
+  verifier as uid 20001, its root helper container (`_root`: the label, no committed name, root, all of WP_HOME
+  read-write) and its fenced arm's app container (the operator's secrets mounted read-only) do not meet the spec, so a
+  stamped run of h_d2 ends VOID under this rule until the owner changes the experiment or the spec.
 - Scanner. runkit/leak_scan.py inventories secrets/seal_key (wp/sealer.py) as a key-store key with its HMAC pads, the
   form wp_seal.seal_keys holds, and lists the hardening's creation sites (wp/es_keys.py _rotate, wp/sealer.py mac and
   new_key_file); red on fb0e19a in results/failing-first/integ/integ-seal-key-scan-fb0e19a.red.out.

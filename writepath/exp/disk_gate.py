@@ -57,6 +57,7 @@ import signal
 import stat
 import subprocess
 import sys
+import threading
 import time
 import urllib.error
 import urllib.parse
@@ -80,7 +81,12 @@ LIMITS = ("LIMITS v6 (GATE-DESIGN 9.4, 8.4, 6.4): not detected, the operator tru
           "keys, ingest pipelines and snapshot repositories; a catalog change made and reverted within the run; the "
           "venv's packages, .pth files and sitecustomize (versions recorded, not verified); store content written by "
           "a process outside the run. The OOM counter is the gate's whole cgroup: an OOM kill of any process sharing "
-          "it voids the run. The manifest's commit is named, not judged: tree_manifest.py check recomputes it.")
+          "it voids the run. The manifest's commit is named, not judged: tree_manifest.py check recomputes it. "
+          "integ: a service container of the stream is judged when Docker reports its creation (name, label, image, "
+          "user, memory limit, network, privileged flag, the mount list), not by the files in its mounts (WP_HOME "
+          "conf, logs, svc, run), its capabilities, devices or environment, and one created within the last second "
+          "before the end and removed before it can be missed; Elasticsearch index and component templates are "
+          "inspected at admission only; write_refusals is not protected from a superuser or wp_owner.")
 # amendment GF1 (the user's ruling of 2026-11-18, answer 3335a07a): a lab run starts with >= 10 GB host free and stops
 # itself under 8 GB; the 2 GB own-usage cap is amendment 17c's
 START_GB, STOP_GB, CAP_GB = 10.0, 8.0, 2.0
@@ -1207,6 +1213,13 @@ SEAL_Q = {
     "role_schema": "SELECT r.rolname, n.nspname, p.priv FROM pg_namespace n CROSS JOIN pg_roles r CROSS JOIN "
                    f"unnest(ARRAY['USAGE', 'CREATE']) AS p(priv) WHERE {_BOTH} AND {_ROLES} AND "
                    "has_schema_privilege(r.oid, n.oid, p.priv) ORDER BY 1, 2, 3",
+    "unguarded_privs": "SELECT c.relname, r.rolname, p.priv FROM pg_class c JOIN pg_namespace n ON n.oid = "
+                       "c.relnamespace CROSS JOIN pg_roles r CROSS JOIN unnest(ARRAY['SELECT', 'INSERT', 'UPDATE', "
+                       f"'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER']) AS p(priv) WHERE {_PUBLIC} AND c.relkind IN "
+                       "('r', 'p') AND c.relname IN (" + ", ".join(f"'{t}'" for t in sorted(GP.UNGUARDED)) + ") AND "
+                       "r.rolcanlogin AND NOT r.rolsuper AND (has_table_privilege(r.oid, c.oid, p.priv) OR (p.priv IN "
+                       "('SELECT', 'INSERT', 'UPDATE', 'REFERENCES') AND has_any_column_privilege(r.oid, c.oid, "
+                       "p.priv))) ORDER BY 1, 2, 3",
     "role_execute": "SELECT n.nspname || '.' || p.proname, r.rolname FROM pg_proc p JOIN pg_namespace n ON n.oid = "
                     f"p.pronamespace CROSS JOIN pg_roles r WHERE {_BOTH} AND {_ROLES} AND n.nspname || '.' || "
                     "p.proname IN (" + ", ".join(f"'{f}'" for f in sorted(GP.EXECUTE_ONLY)) + ") AND "
@@ -1337,11 +1350,7 @@ def _catalog_rules(snap, phase):
         if en != "A":
             why.append(f"G3 trigger {t}.{name} is enabled {en!r}, not ALWAYS")
     fns = {r[0]: r for r in ev["functions"]}
-    for t, writer in sorted(GP.UNGUARDED_OK.items()):   # G3's named exemption and its compensating rules
-        f = fns.get(writer)
-        if t in tables and (f is None or f[2] != GP.EVENTS_OWNER or f[3] != "True"):
-            why.append(f"G3 table {t} has no guard triggers and its writer {writer} is not a SECURITY DEFINER "
-                       f"function owned by {GP.EVENTS_OWNER}")
+    why += _unguarded_rules(ev, tables, fns)       # G3 without guard triggers: R1 to R4 (exp/guard_policy.py)
     for t in sorted(set(tables) - set(GP.UNGUARDED_OK)):
         cov = set()
         for _n, typ, _e in trg.get(t, []):
@@ -1469,6 +1478,45 @@ def _own_oom():
         return None
 
 
+def _unguarded_rules(ev, tables, fns):
+    """G3 for a table without guard triggers by design (exp/guard_policy.py UNGUARDED): R1 no login role holds a
+    privilege on it but UNGUARDED_READ; R2 its writer is SECURITY DEFINER, owned by wp_owner; R3 the writer pins
+    search_path; R4 EXECUTE on the writer is held by exactly the committed roles, and never by PUBLIC."""
+    why, held = [], {}
+    for t, r, p in ev["unguarded_privs"]:
+        held.setdefault((t, r), set()).add(p)
+    for t, spec in sorted(GP.UNGUARDED.items()):
+        if t not in tables:
+            continue
+        w, tag = spec["writer"], f"G3 {t} (no guard triggers)"
+        read = GP.UNGUARDED_READ.get(t, {})
+        for (tt, r), ps in sorted(held.items()):
+            extra = ps - read.get(r, set()) if tt == t else set()
+            if extra:
+                why.append(f"{tag} R1: login role {r} holds {sorted(extra)} on {t} (committed: no login role but "
+                           f"{', '.join(f'{x} {sorted(y)}' for x, y in sorted(read.items())) or 'none'})")
+        f = fns.get(w)
+        if f is None:
+            why.append(f"{tag}: its writer {w} is missing")
+            continue
+        if f[2] != GP.EVENTS_OWNER or f[3] != "True":
+            why.append(f"{tag} R2: its writer {w} is not a SECURITY DEFINER function owned by {GP.EVENTS_OWNER} "
+                       f"(owner {f[2]}, security definer {f[3]})")
+        if (f[6] if len(f) > 6 else None) != spec["config"]:
+            why.append(f"{tag} R3: its writer {w} has the setting {str(f[6] if len(f) > 6 else None)[:80]!r}, "
+                       f"committed {spec['config']!r}")
+        acl = f[4] if len(f) > 4 else ""
+        if not acl or any(x.startswith("=") and "X" in x.split("=", 1)[1].split("/", 1)[0]
+                          for x in acl.strip("{}").split(",")):
+            shown = acl[:120] or "NULL: the default, which grants EXECUTE to PUBLIC"
+            why.append(f"{tag} R4: PUBLIC may execute its writer {w} (ACL {shown})")
+        ex = {r for f2, r in ev["role_execute"] if f2 == f"public.{w}"}
+        if ex != set(spec["execute"]):
+            why.append(f"{tag} R4: EXECUTE on its writer {w} is held by {sorted(ex)} (committed "
+                       f"{sorted(spec['execute'])} alone)")
+    return why
+
+
 def _stream_reasons(stores, when):
     """integ (hardening service containers, exp/guard_policy.py SERVICE_CONTAINERS): reasons for every container
     other than the run's two stores whose name starts with the stream's prefix or that carries the stream label: at
@@ -1476,9 +1524,9 @@ def _stream_reasons(stores, when):
     at the end one an experiment started and did not remove. A list failure is a reason too."""
     users, stream, why = _home_users(stores)
     for n in stream or []:
-        what = GP.SERVICE_CONTAINERS.get(n[len(config.OWN_PREFIX):]) if n.startswith(config.OWN_PREFIX) else None
+        spec = GP.SERVICE_CONTAINERS.get(n[len(config.OWN_PREFIX):]) if n.startswith(config.OWN_PREFIX) else None
         why.append(f"a container of this stream other than the run's stores {when}: {n}"
-                   + (f" ({what})" if what else ""))
+                   + (f" ({spec[1]})" if spec else ""))
     return users, why
 
 
@@ -1519,6 +1567,127 @@ def _home_users(stores):
                 out.append(name)
                 break
     return sorted(out), sorted(stream), []
+
+
+WATCH_EVENTS = ("create", "rename", "update")
+WATCH_SETTLE_S = 1.0                    # what Docker reports just before the end is read before the stream is stopped
+
+
+def _service_why(cid, name, attrs):
+    """integ: reasons a container of the stream (prefix or label) created during the run is not one of the committed
+    service containers (exp/guard_policy.py SERVICE_CONTAINERS, SERVICE_MOUNTS), from its create event's attributes
+    and a docker inspect made when the event arrives (the container may be removed seconds later)."""
+    pre, (key, value) = config.OWN_PREFIX, GP.STREAM_LABEL
+    spec = GP.SERVICE_CONTAINERS.get(name[len(pre):]) if name.startswith(pre) else None
+    if spec is None:
+        return [f"a container of this stream that is not a committed service container was created during the run: "
+                f"{ascii(name)[:80]} ({str(attrs.get('image'))[:60]})"]
+    uid, what = spec
+    tag = f"service container {name} ({what}) created during the run"
+    why = [] if attrs.get(key) == value else [f"{tag} does not carry the stream label {key}={value}"]
+    try:
+        r = _docker("inspect", "--type", "container", cid, timeout=60)
+        j = json.loads(r.stdout)[0] if r.returncode == 0 else None
+    except (OSError, subprocess.TimeoutExpired, ValueError, IndexError):
+        j = None
+    if not isinstance(j, dict):
+        return why + [f"{tag} could not be inspected (removed before the gate read it, or Docker failed): its uid, "
+                      "memory limit and mounts are unknown"]
+    cfg, hc = j.get("Config") or {}, j.get("HostConfig") or {}
+    for label, have, want in (("image", cfg.get("Image"), GP.SERVICE_IMAGE), ("user", cfg.get("User"), f"{uid}:{uid}"),
+                              ("memory limit", hc.get("Memory"), GP.SERVICE_MEMORY),
+                              ("network", hc.get("NetworkMode"), GP.SERVICE_NETWORK),
+                              ("privileged", bool(hc.get("Privileged")), False)):
+        if have != want:
+            why.append(f"{tag}: {label} {str(have)[:80]!r}, committed {want!r}")
+    home, tree = os.path.realpath(HOME), os.path.realpath(ROOT)
+    want = {(os.path.realpath(home + "/" + s[5:]) if s.startswith("home:") else tree if s == "tree" else s, d, rw)
+            for s, d, rw in GP.SERVICE_MOUNTS}
+    have = set()
+    for m in j.get("Mounts") or []:
+        src = str(m.get("Source") or "")
+        have.add((os.path.realpath(src) if m.get("Type") == "bind" and src else f"{m.get('Type')}:{src}",
+                  str(m.get("Destination")), bool(m.get("RW"))))
+    for s, d, rw in sorted(have - want):
+        why.append(f"{tag}: mount {ascii(s)[:120]} at {ascii(d)[:60]} ({'rw' if rw else 'ro'}) is not committed")
+    for s, d, rw in sorted(want - have):
+        why.append(f"{tag}: the committed mount {s} at {d} ({'rw' if rw else 'ro'}) is missing")
+    return why
+
+
+class _Watch:
+    """integ (hardening service containers): Docker's container events from admission to the end, read as they come
+    (`docker events --since`, in a session of its own, outside the run's process group). Every container created with
+    the stream prefix or label is judged by _service_why; a rename or an update of one is a reason; a stream that
+    fails or ends by itself is a reason (fails closed)."""
+
+    def __init__(self, stores):
+        self.stores, self.why, self.p, self.t, self.n, self.seen = set(stores), [], None, None, 0, set()
+
+    def start(self):
+        cmd = ["docker", "events", "--since", str(int(time.time()) - 1), "--filter", "type=container"]
+        cmd += [x for e in WATCH_EVENTS for x in ("--filter", f"event={e}")] + ["--format", "{{json .}}"]
+        try:
+            self.p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                                      stdin=subprocess.DEVNULL, start_new_session=True)
+        except OSError as e:
+            self.why.append(f"Docker's container event stream could not be started ({type(e).__name__}): the "
+                            "containers created during the run are unknown")
+            return
+        self.t = threading.Thread(target=self._read, daemon=True)
+        self.t.start()
+
+    def _read(self):
+        for raw in self.p.stdout:
+            try:
+                e = json.loads(raw)
+                self._event(e if isinstance(e, dict) else {})
+                self.seen.add(str((e.get("Actor") or {}).get("ID") or ""))     # judged (read by the tests)
+            except ValueError:
+                self.why.append("a line of Docker's container event stream could not be read")
+            except Exception as x:                  # judged closed: a reason, never a silent pass
+                self.why.append(f"a container event could not be judged ({type(x).__name__})")
+            self.n += 1
+
+    def _event(self, e):
+        actor = e.get("Actor") or {}
+        attrs = actor.get("Attributes") or {}
+        cid, act = str(actor.get("ID") or e.get("id") or ""), str(e.get("Action") or e.get("status") or "")
+        name, old = str(attrs.get("name") or "").lstrip("/"), str(attrs.get("oldName") or "").lstrip("/")
+        key, value = GP.STREAM_LABEL
+        ours = name.startswith(config.OWN_PREFIX) or old.startswith(config.OWN_PREFIX) or attrs.get(key) == value
+        if cid in self.stores or not ours:
+            return                                  # the stores' own changes are the drift and identity rules'
+        if act == "create":
+            self.why += _service_why(cid, name, attrs)
+        elif act.startswith("rename"):
+            self.why.append(f"a container of this stream was renamed during the run: {ascii(old)[:80]} -> "
+                            f"{ascii(name)[:80]}")
+        elif act.startswith("update"):
+            self.why.append(f"a container of this stream was changed by docker update during the run: "
+                            f"{ascii(name)[:80]}")
+
+    def stop(self):
+        """The reasons; stops the stream (what Docker reported in the last WATCH_SETTLE_S is read first)."""
+        if self.p is None:
+            return list(self.why)
+        ended = self.p.poll() is not None
+        if not ended:
+            time.sleep(WATCH_SETTLE_S)
+            ended = self.p.poll() is not None
+        if not ended:
+            self.p.terminate()
+        try:
+            rc = self.p.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            self.p.kill()
+            rc = None
+        if self.t is not None:
+            self.t.join(timeout=10)
+        if ended or rc not in (-signal.SIGTERM, None):   # it stopped by itself (Docker's error, a crash), not by us
+            self.why.append("Docker's container event stream ended during the run: containers created after it "
+                            "ended are unknown")
+        return list(self.why)
 
 
 def _exp_env():
@@ -1647,9 +1816,11 @@ def _admit(label, pgid):
         d = RUNS_DIR / run_id
         d.parent.mkdir(parents=True, exist_ok=True)
         d.mkdir(mode=0o700)                         # P10: never an existing directory
+        watch = _Watch({slow["es"]["id"], slow["pg"]["id"]})
+        watch.start()                               # integ: the stream's service containers until the end
         return {"run": run_id, "seq": adm["seq"], "label": label, "obs": _merge(slow, fast), "base_home": base,
                 "free": f, "lock": lock, "dir": d, "info": info, "window_start": t, "oom": oom, "catalog": snap,
-                "env": env}
+                "env": env, "watch": watch}
     except BaseException:
         lock.close()
         raise
@@ -1715,6 +1886,8 @@ def _finish(run, extra=()):
     when = "by the end of the run"
     why = list(extra)
     try:
+        if run.get("watch") is not None:            # integ: what the service containers did during the run
+            why += run["watch"].stop()
         try:
             d = (_home_bytes() - run["base_home"]) / GIB
             why += [f"WP_HOME grew {d:.2f} GiB > cap {CAP_GB} {when}"] if d > CAP_GB else []
