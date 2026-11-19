@@ -81,8 +81,8 @@ def append(conn, ks: K.KeyService, lease, events, hook=_noop, sealer=None):
 def _append(conn, ks: K.KeyService, lease, events, hook, auth):
     """events: dicts with subject_id, kind, actor, trust_origin, ts_event (aware datetime), content (str), optional
     idem_key and, for kind='decision', decision={item, action, based_on_event_id, source_event_id}.
-    Returns {'accepted': [event_id], 'duplicates': [event_id], 'quarantined': n, ...}. Never raises on a stale epoch
-    except SealUnavailable from the quarantine reseal (review J M2).
+    Returns {'accepted': [event_id], 'duplicates': [event_id], 'quarantined': n, ...}. Never raises on a stale epoch:
+    the batch is quarantined under the scan that bound it, without calling the authority again (review 42cfd11 R1).
     Raises IdempotencyConflict when a key is reused with a different request, StaleDecision on a stale decision, and
     WriteRefused (ContentTooLarge WPM01, MatcherBudgetExceeded WPM02, CallBudgetExceeded WPM03; m5 b1) before anything
     else when an event is over the content size bound or its matcher key budget, or the call over its limits: the whole batch is refused, nothing is stored (no event, no
@@ -94,14 +94,24 @@ def _append(conn, ks: K.KeyService, lease, events, hook, auth):
     eids = [uuid.uuid4().hex for _ in events]
     batch = uuid.uuid4().hex
 
-    def seal(purpose="events"):
+    def seal(prior=None):
         try:
             got = auth.seal(t, lease.scope, lease.epoch, batch, [{"event_id": eid, "subject_id": e["subject_id"], "content": e["content"]}
-                                                                for eid, e in zip(eids, events)], purpose=purpose)
+                                                                for eid, e in zip(eids, events)], purpose="events",
+                            prior_mentions=prior)
         except WriteRefused as ex:
             raise _record(conn, t, ex) from None
         if [r["event_id"] for r in got] != eids:
             raise SealError("the seal authority returned another batch")
+        # review 42cfd11 R1: every row carries both attestations from its one scan, and a retry keeps every subject an
+        # earlier scan found. An authority that does not (an older build) is refused here, loudly, before anything is
+        # stored, rather than silently dropping fenced writes or forgetting a mention.
+        for i, r in enumerate(got):
+            macs = r.get("seal_macs") or {}
+            if set(macs) != set(SL.PURPOSES) or r.get("seal_mac") != macs.get("events"):
+                raise SealError("the seal authority returned no attestation for each table (review 42cfd11 R1)")
+            if prior is not None and not set(prior[i]) <= set(r["mentions"]):
+                raise SealError("the seal authority dropped an earlier scan's mention (review 42cfd11 R1)")
         return got
 
     sealed = seal()
@@ -123,7 +133,10 @@ def _append(conn, ks: K.KeyService, lease, events, hook, auth):
         except psycopg.Error as ex:
             st = getattr(ex, "sqlstate", None)
             if st == "WPS17" and attempt < 7:
-                _apply_seal(prepared, seal())     # identifiers declared meanwhile: the authority rescans and re-attests
+                # identifiers declared meanwhile: the authority rescans and re-attests, carrying every subject an
+                # earlier scan of the same event found (review 42cfd11 R1: a cascade that deleted an erased subject's
+                # identifiers meanwhile cannot drop it from the mentions; the store then refuses it, WPS18)
+                _apply_seal(prepared, seal(prior=[list(p["mentions"]) for p in prepared]))
                 continue
             if st == "23514" and (getattr(getattr(ex, "diag", None), "constraint_name", None) or "").endswith("_content_size"):
                 raise _record(conn, t, ContentTooLarge("the store refused the ciphertext size (a path that skipped the check)")) from None
@@ -134,16 +147,14 @@ def _append(conn, ks: K.KeyService, lease, events, hook, auth):
             if st == "WPS09":
                 raise IdempotencyConflict(str(ex).split("\n")[0]) from None
             if is_stale_error(ex):
-                # review J M2: an attestation is valid in one table only, so the authority seals the batch again for
-                # quarantine (a fresh scan against the current identifier set; review J N1). A speaker erased meanwhile:
-                # the whole batch is that speaker's or another's, so every event is dropped as erased.
-                try:
-                    _apply_seal(prepared, seal("quarantine"))
-                except K.SubjectErased:
-                    return {"accepted": [], "duplicates": [], "quarantined": 0, "dropped_over_cap": 0, "dropped_stale": 0,
-                            "dropped_erased": len(prepared)}
+                # review 42cfd11 R1: the batch is quarantined under the scan that BOUND it (the quarantine attestation
+                # the authority returned with that same scan), never rescanned: a fresh scan after an erasure's cascade
+                # cannot find the erased subject and would launder the content. The store then applies WPS17 (scanned
+                # below the current identifier set), WPS18 (names an erased subject) and WPS42; those are dropped and
+                # counted, never retried (a fenced writer has no liveness claim). An erased speaker: WPS03, dropped.
                 q = dropped = stale = 0
                 for p in prepared:
+                    p = dict(p, seal_mac=p["seal_macs"]["quarantine"])     # present: checked in seal()
                     try:
                         with conn.transaction():
                             n = conn.execute("insert into quarantine(tenant_id, session_id, subject_id, presented_epoch, reason, kind, content_enc, mentions, "
@@ -156,9 +167,9 @@ def _append(conn, ks: K.KeyService, lease, events, hook, auth):
                     except psycopg.Error as qe:
                         qs = getattr(qe, "sqlstate", None)
                         if qs in ("WPS17", "WPS18", "WPS42"):
-                            # review J N1: a write rescanned below an identifier declared meanwhile, mentioning an erased
-                            # subject, or removed by an erasure is refused by the store; it is dropped and counted here
-                            # (the writer's lease was taken over: it is not retried)
+                            # review J N1, 42cfd11 R1: a write scanned below an identifier declared meanwhile,
+                            # mentioning an erased subject, or removed by an erasure is refused by the store; it is
+                            # dropped and counted here (the writer's lease was taken over: it is not retried)
                             stale += 1
                         elif qs != "WPS03":     # an erased subject's stale write is dropped, not kept
                             raise
@@ -172,7 +183,8 @@ def _append(conn, ks: K.KeyService, lease, events, hook, auth):
 def _apply_seal(prepared, sealed):
     for p, r in zip(prepared, sealed):
         p.update(content_enc=r["content_enc"], content_digest=r["content_digest"], mentions=list(r["mentions"]), scan=r["scan"],
-                 matcher=r["matcher"], secret_scan=r["secret_scan"], **{c: r[c] for c in SEAL_COLS})
+                 matcher=r["matcher"], secret_scan=r["secret_scan"], seal_macs=dict(r.get("seal_macs") or {}),
+                 **{c: r[c] for c in SEAL_COLS})
 
 
 def _record(conn, t, ex):

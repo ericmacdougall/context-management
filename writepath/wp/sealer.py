@@ -164,11 +164,15 @@ class Authority:
                 _tag(tenant), _tag(batch_id), len(events), sum(len(str(e.get("content", "")).encode()) for e in events), result,
                 time.monotonic() - t0))
 
-    def seal(self, tenant, lease_scope, lease_epoch, batch_id, events, purpose="events"):
-        """events: [{event_id, subject_id, content}]; purpose: the table the rows are for (events, or quarantine for a
-        write whose lease was taken over; review J M2). Returns per event, in order: {event_id, content_enc,
-        content_digest, mentions, scan, matcher, secret_scan, seal_key_id, seal_mac, seal_batch, seal_index,
-        seal_count}. Raises WriteRefused (WPM01 to WPM03) or SecretDetected before any key is used."""
+    def seal(self, tenant, lease_scope, lease_epoch, batch_id, events, purpose="events", prior_mentions=None):
+        """events: [{event_id, subject_id, content}]; purpose: the table seal_mac is for (review J M2). Returns per
+        event, in order: {event_id, content_enc, content_digest, mentions, scan, matcher, secret_scan, seal_key_id,
+        seal_mac, seal_macs, seal_batch, seal_index, seal_count}; seal_macs holds the attestation for BOTH tables from
+        this ONE scan (review 42cfd11 R1: a fenced write is quarantined under the scan that bound it, never rescanned).
+        prior_mentions (review 42cfd11 R1): per event, subjects an earlier scan of the same event found; they are
+        unioned into the attested mentions (naming more only restricts: the store then refuses an erased one, WPS18),
+        so a rescan after a cascade deleted an identifier cannot drop that subject.
+        Raises WriteRefused (WPM01 to WPM03) or SecretDetected before any key is used."""
         t0 = time.monotonic()
         for v in (tenant, lease_scope, batch_id):
             if not isinstance(v, str) or not v:
@@ -184,6 +188,10 @@ class Authority:
                 raise ValueError("an event is {event_id, subject_id, content} of text")
         if len({e["event_id"] for e in events}) != len(events):
             raise ValueError("event ids repeat within the batch")
+        prior = [[] for _ in events] if prior_mentions is None else prior_mentions
+        if not (isinstance(prior, list) and len(prior) == len(events)
+                and all(isinstance(p, list) and all(isinstance(s, str) and s for s in p) for p in prior)):
+            raise ValueError("prior mentions are one list of subject ids per event")
         texts = [e["content"] for e in events]
         try:
             M.admit(texts)                                   # 1. admission (b1, review H): nothing else runs on refusal
@@ -198,14 +206,14 @@ class Authority:
             raise
         keys = self.ks.keys(tenant, sorted({e["subject_id"] for e in events}), create=True)
         n, out = len(events), []
-        for i, (e, f) in enumerate(zip(events, found)):
+        for i, (e, f, pm) in enumerate(zip(events, found, prior)):
             enc = bytes(K.seal(keys[e["subject_id"]], tenant, e["subject_id"], e["event_id"], e["content"]))   # 4.
             dg = hashlib.sha256(enc).hexdigest()
-            men = sorted({x for x in f if x != e["subject_id"]})
-            m = message(self.key_id, tenant, e["event_id"], e["subject_id"], dg, version, mid, sv, men, lease_scope,
-                        lease_epoch, batch_id, i, n, purpose)                                                  # 5.
+            men = sorted({x for x in list(f) + pm if x != e["subject_id"]})
+            macs = {p: mac(self._key, message(self.key_id, tenant, e["event_id"], e["subject_id"], dg, version, mid, sv, men,
+                                              lease_scope, lease_epoch, batch_id, i, n, p)) for p in PURPOSES}      # 5.
             out.append({"event_id": e["event_id"], "content_enc": enc, "content_digest": dg, "mentions": men, "scan": version,
-                        "matcher": mid, "secret_scan": sv, "seal_key_id": self.key_id, "seal_mac": mac(self._key, m),
+                        "matcher": mid, "secret_scan": sv, "seal_key_id": self.key_id, "seal_mac": macs[purpose], "seal_macs": macs,
                         "seal_batch": batch_id, "seal_index": i, "seal_count": n, "purpose": purpose})
         self._note(tenant, batch_id, events, "ok", t0)
         return out
@@ -217,7 +225,7 @@ def dispatch(auth, op, a):
         return {"error": "unknown_op"}
     try:
         rows = auth.seal(a.get("tenant"), a.get("lease_scope"), a.get("lease_epoch"), a.get("batch_id"), a.get("events"),
-                         a.get("purpose", "events"))
+                         a.get("purpose", "events"), a.get("prior_mentions"))
     except M.WriteRefused as ex:
         return {"error": "WriteRefused", "code": ex.code, "index": getattr(ex, "index", None)}
     except SEC.SecretDetected as ex:
@@ -247,9 +255,9 @@ class Client:
             raise SealUnavailable(f"seal authority unreachable ({type(e).__name__})") from None
         self.f = self.sock.makefile("rwb")
 
-    def seal(self, tenant, lease_scope, lease_epoch, batch_id, events, purpose="events"):
+    def seal(self, tenant, lease_scope, lease_epoch, batch_id, events, purpose="events", prior_mentions=None):
         req = {"op": "seal", "args": {"tenant": tenant, "lease_scope": lease_scope, "lease_epoch": lease_epoch, "batch_id": batch_id,
-                                      "purpose": purpose,
+                                      "purpose": purpose, "prior_mentions": prior_mentions,
                                       "events": [{"event_id": e["event_id"], "subject_id": e["subject_id"], "content": e["content"]}
                                                  for e in events]}}
         data = (json.dumps(req) + "\n").encode()
