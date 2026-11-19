@@ -8,7 +8,8 @@
         write through a read alias, refused 400 in both arms whatever the key could read.
   D6R4  a B_read of 404 (B has no read alias) is INVALID-REQUEST in the fenced arm, not a refusal.
   D6R5  the stated limit no longer claims that the projector role key re-points any tenant's alias: the receipts of
-        dc08269a and e8ebd3c7 show that request refused (403, control C4 and the fence CAS).
+        dc08269a and e8ebd3c7 show that request refused (403, control C4 and the fence CAS); nor a
+        cross-tenant read (the live D6 at c6d3e85 refused the control's search of B, 403).
   D6R6  the key's validity is observed (an own write right after the five): a refused own write fails C14c, and any
         401 among the five makes C14c INVALID-REQUEST.
   D6R7  the operator's existence check: 404 False, 200 True, any other status or an exception None (never raises, so
@@ -94,6 +95,8 @@ class D6R8(unittest.TestCase):
         src = inspect.getsource(H)
         self.assertNotIn("can re-point any tenant's alias", src)
         self.assertIn("re-pointing is not demonstrated", src)
+        # the live D6 at c6d3e85 refused the role key's search of B (403): the limits must not claim a read either
+        self.assertNotIn("reads any tenant", src)
 
 
     def test_d6r6_key_validity_is_observed(self):
