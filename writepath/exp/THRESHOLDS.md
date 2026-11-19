@@ -1209,3 +1209,41 @@ kind pinned, nothing missing, nothing extra). P1 and P2 pass only with exit 0 AN
 programs exit 0 whatever their verdict). A red step that passes or fails otherwise, a missing signature file (RX has
 none) or an unknown step is a mismatch. The chain's exit status is not a verdict of any H-amendment; each
 experiment's own verdict rule stands. (Text revised at 7c3a83f, before any run under this amendment.)
+
+## Amendment H6g (2026-11-19, review 42cfd11 R3, R5, R6, R8; written before any run it governs; owner a5bed869)
+Source: main's relay of the 42cfd11 review (BLOCK; R3 chain judge, R5 oom_kill, R6 timeout, R8 D6). Method changes to
+H6, H6e and H6f; nothing above is rewritten and no threshold changes. Governs every later run of the D6 experiment and
+of the owner's live chain.
+D6 (R8):
+  C1 B_read   was a write through B's read alias, refused 400 in both arms whatever the key could read (vacuous). It
+              is now a search (POST <B's read alias>/_search, size 0)             -> fenced: refused (not 200);
+              404 (B has no read alias) is INVALID-REQUEST. The control's C1 includes this search.
+  C14c        was run after C5's CAS, when h1's key was already invalidated (every write 401: vacuous). It now runs
+              BEFORE C5 with A's writer key while it is valid: 5 writes WITHOUT require_alias to a name of A's family
+              that is no index or alias (A's -w<E+5>)                             -> 0 accepted, and the operator
+              (admin key) finds no index of that name afterwards (HEAD 404); a HEAD that cannot tell fails C14c.
+              The key's validity is observed: an own write through A's -w<E> right after the five must be accepted,
+              else C14c fails; any 401 among the five makes C14c INVALID-REQUEST. -w<E+5> lies outside the key's
+              descriptor (it names epoch E only), so a refusal is the key's scope at work, as in C1 and C4; the
+              control does not run C14c.
+              The old post-CAS writes are still made and REPORTED (C14.c_after_cas_reported), not judged.
+  Control     H6e's stated reason ("can re-point any tenant's alias") is WITHDRAWN: the H6e receipts
+              (h_d6_broker.dc08269a7c563f58, e8ebd3c717978087) show alias add and the fence CAS refused 403 for the
+              projector role key (H6a already recorded the CAS refusal). Corrected statement: in the default role-key
+              mode the projector role key writes through any tenant's existing write alias (control C1 B_w, 201),
+              updates another tenant's mapping (C14_reported d, 200) and, under this amendment, its read of B is
+              recorded (C1 B_read); re-pointing an alias is not demonstrated. The control's judgement is unchanged
+              (H6, H6a: at least one C1 or C4 request accepted).
+Live chain (R3, R5, R6), extending H6f's signature rule (results/failing-first/harness/step_judge.py, standard library):
+  - every step's file pins "RAN <n>" (the unittest "Ran <n> tests" count) and "SKIP <n>" (default 0); a different
+    count fails the step. Pass steps G1, G2, G3 have files under expected-pass/; a pass step needs exit 0, OK and no
+    failing block.
+  - each red line is "<FAIL|ERROR> <test> :: <text>": the kind, the test and a text that must appear in that test's
+    traceback (hex runs of 8 or more compared as '#'). Any other FAIL or ERROR block, including one outside a test
+    method (setUpClass, tearDownClass, setUpModule, a module import), is extra. A red file with no line is invalid.
+  - an empty or unknown step list is refused (exit 3) before the run lock is taken.
+  - D6 passes only with the ES security enable exiting 0, the licence line "licence 200 basic active" and exit 0.
+  - each step reads every store container's cgroup memory.events oom_kill before and after; a count that grew (same
+    container id) or a count that cannot be read fails the step.
+  - every step timeout is "timeout -k 120": a step that ignores SIGTERM is killed 120 s later.
+  - timings of a run whose stores are on tmpfs are not comparable with disk-backed runs (stated on each such run).
