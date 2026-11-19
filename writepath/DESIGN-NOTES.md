@@ -1457,3 +1457,19 @@ Receipts on t2-dev under ~/emlab2-16096/wphard/windows-c6d3e85/ (L2, R1, R2-cont
   control 5/5 violated; every fenced C14c: 5 writes 403, own write after 201 (key valid), no index of the -w<E+5>
   name afterwards; C1 B_read 403 in both arms. The control's search of B was REFUSED (403), so the limits line of
   that receipt ("reads any tenant") was wrong; corrected in the code after this run (reading is not claimed).
+- Chain L4 at fa25f8d (after amendment H6h; windows-fa25f8d/L4.out, receipts in live-J/l4-fa25f8d/): 14 steps as
+  declared, CHAIN OK. D6 (h_d6_broker.f66b4185cd1d80eb.json): fenced 5/5, control 5/5, no INVALID-REQUEST; every run's
+  operator witness of B's read alias 200 while the fenced and control keys got 403 (the H6h witness: the refusal is
+  not of a missing name). M3 holds with the transaction-sampling arms: sampled_control 2 of 2 pads (session rate 1,
+  pads inlined), sampled_quiet 0 of 2 (quiet() sets the rate to 0 before its BEGIN). oom_kill 0 at every step.
+- Judge on real output (no stores; offline/judge-mutants-L3-RS.txt): L3's RS.out judged against RS.txt with one text
+  altered gives red-without-signature(wrong-text 1); with one line dropped, (extra 1); unchanged, red; with exit 0,
+  green.
+- Not live: the sampling handling has no live RED (no committed tree has quiet() without it; S-ROLE4 and S-ROLE5 are
+  the reds, offline at 42cfd11). R9 (the verifier statement) is covered live only by the same quiet() mechanism M3
+  shows for a stand-in statement, not by an ALTER ROLE logged under sampling.
+- Hygiene: three offline receipts committed in 1f0fd56 carried a throwaway test key's id ("seal key seal-<id>",
+  printed by S-ROLE5's call of _seal_key); removed in 1c43c39 (history keeps them; no rewrite), and S-ROLE5 now
+  captures stdout and removes its temporary key directory. 112 older seal_key files of 96 or 110 bytes remain under
+  t2-dev's /tmp/tmp*/ from offline test runs since 2026-11-18 (likely this stream's tests: test_sealer and others
+  make throwaway keys in mkdtemp dirs); not deleted, since their owner cannot be proved from the files.
