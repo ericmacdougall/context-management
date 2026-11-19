@@ -2627,8 +2627,17 @@ class Gate(unittest.TestCase):
     def test_integ_service_container_left_at_the_end_voids(self):
         self.start()
         self.svc("sealer")
+        # both rules name it: the stream rule, and C12 (its committed mounts are under WP_HOME; on macOS the test home
+        # is reached through /var -> /private/var, which C12 compared unresolved before 2026-11-18)
         self.assertExactly(*self.call("end"), 3, "a container of this stream other than the run's stores at the end "
-                           "of the run (an experiment removes the service containers it starts): emlab2-wphard-sealer")
+                           "of the run (an experiment removes the service containers it starts): emlab2-wphard-sealer",
+                           "uses this home (a bind mount under WP_HOME) by the end of the run: emlab2-wphard-sealer")
+
+    def test_integ_c12_bind_source_through_a_link_to_the_home_blocks(self):
+        link = pathlib.Path(os.path.realpath(self.home)).parent / "home-link"
+        os.symlink(os.path.realpath(self.home), link)
+        self.F.add_user("emlab2-other-tool", str(link / "conf"))
+        self.assertExactly(*self.call("start"), 2, "uses this home (a bind mount under WP_HOME): emlab2-other-tool")
 
     def test_integ_service_container_removed_within_the_run_is_valid(self):
         self.start()

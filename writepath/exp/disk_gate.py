@@ -1563,6 +1563,7 @@ def _home_users(stores):
             stream.append(name)
         for m in j.get("Mounts") or []:
             src = str(m.get("Source") or "")
+            src = os.path.realpath(src) if src else src   # a source reached through a link names the same home
             if m.get("Type") == "bind" and (src == home or src.startswith(home.rstrip("/") + "/")):
                 out.append(name)
                 break
