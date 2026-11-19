@@ -163,17 +163,21 @@ class ChainDisk(unittest.TestCase):
         py.write_text(f'#!/bin/sh\necho "$*" >> {self.calls}\n[ "$1" = "-c" ] && exit {c_rc}\n'
                       f'cat {self.home / "pyout"}\nexit {rc}\n')
 
-    def signature(self, step, names):
+    def signature(self, step, entries):
+        """entries: "<FAIL|ERROR> <test>" lines, as in results/failing-first/harness/expected-red/."""
         d = self.home / "new" / "results" / "failing-first" / "harness" / "expected-red"
         d.mkdir(parents=True, exist_ok=True)
-        (d / f"{step}.txt").write_text(f"# {step} test signature\n" + "".join(n + "\n" for n in names))
+        (d / f"{step}.txt").write_text(f"# {step} test signature\n" + "".join(n + "\n" for n in entries))
 
     @staticmethod
-    def unittest_out(failed, passed=()):
+    def unittest_out(failed, passed=(), errors=()):
         lines = [f"{t} (tests.test_d3_pg.D3Store.{t}) ... FAIL" for t in failed]
+        lines += [f"{t} (tests.test_d3_pg.D3Store.{t}) ... ERROR" for t in errors]
         lines += [f"{t} (tests.test_d3_pg.D3Store.{t}) ... ok" for t in passed]
-        lines += ["", *(f"FAIL: {t} (tests.test_d3_pg.D3Store.{t})" for t in failed), "",
-                  f"Ran {len(failed) + len(passed)} tests in 0.1s", "", f"FAILED (failures={len(failed)})" if failed else "OK"]
+        lines += ["", *(f"ERROR: {t} (tests.test_d3_pg.D3Store.{t})" for t in errors),
+                  *(f"FAIL: {t} (tests.test_d3_pg.D3Store.{t})" for t in failed), "",
+                  f"Ran {len(failed) + len(passed) + len(errors)} tests in 0.1s", "",
+                  f"FAILED (failures={len(failed)}, errors={len(errors)})" if failed or errors else "OK"]
         return "\n".join(lines) + "\n"
 
     def test_dr8_failing_pass_step_fails_the_chain(self):
@@ -192,7 +196,7 @@ class ChainDisk(unittest.TestCase):
         self.assertIn("G1:pass/fail(G1 exit=1)", out)
 
     def test_dr9_expected_red_that_goes_green_fails_the_chain(self):
-        self.signature("XB", ["test_n1a", "test_s10"])
+        self.signature("XB", ["FAIL test_n1a", "FAIL test_s10"])
         self.env["XB_TREE"] = str(self.home / "new")
         self.fake(0, self.unittest_out([], ["test_n1a", "test_s10"]))
         rc, out, _ = self.run_chain(12 * G, "XB")
@@ -200,21 +204,62 @@ class ChainDisk(unittest.TestCase):
         self.assertIn("XB:red/green", out)
 
     def test_dr10_expected_red_with_its_signature_passes(self):
-        self.signature("XB", ["test_n1a", "test_s10"])
+        self.signature("XB", ["FAIL test_n1a", "ERROR test_s10"])
         self.env["XB_TREE"] = str(self.home / "new")
-        self.fake(1, self.unittest_out(["test_n1a", "test_s10"], ["test_ok"]))
+        self.fake(1, self.unittest_out(["test_n1a"], ["test_ok"], errors=["test_s10"]))
         rc, out, _ = self.run_chain(12 * G, "XB")
         self.assertEqual(rc, 0, out)
         self.assertIn("XB:red/red", out)
         self.assertIn("CHAIN OK", out)
 
     def test_dr11_red_for_another_reason_fails_the_chain(self):
-        # red, but one named test passed (e.g. the failure moved): not the declared red
-        self.signature("RS", ["test_b5", "test_b6"])
+        # red, but one named test passed and another failed instead (the failure moved): not the declared red
+        self.signature("RS", ["FAIL test_b5", "FAIL test_b6"])
         self.fake(1, self.unittest_out(["test_b5", "test_other"], ["test_b6"]))
         rc, out, _ = self.run_chain(12 * G, "RS")
         self.assertEqual(rc, 3, out)
-        self.assertIn("RS:red/red-without-signature(missing 1)", out)
+        self.assertIn("RS:red/red-without-signature(missing 1 extra 1)", out)
+
+    def test_dr11b_an_extra_failure_fails_the_chain(self):
+        self.signature("RS", ["FAIL test_b5", "FAIL test_b6"])
+        self.fake(1, self.unittest_out(["test_b5", "test_b6", "test_c1"]))
+        rc, out, _ = self.run_chain(12 * G, "RS")
+        self.assertEqual(rc, 3, out)
+        self.assertIn("RS:red/red-without-signature(missing 0 extra 1)", out)
+
+    def test_dr11c_the_kind_is_pinned(self):
+        # the signature says the test errors (e.g. a missing function); a plain assertion failure is another red
+        self.signature("RH", ["ERROR test_b4", "FAIL test_b5"])
+        self.fake(1, self.unittest_out(["test_b4", "test_b5"]))
+        rc, out, _ = self.run_chain(12 * G, "RH")
+        self.assertEqual(rc, 3, out)
+        self.assertIn("RH:red/red-without-signature(missing 1 extra 1)", out)
+
+    def test_dr11d_names_are_matched_whole(self):
+        # test_n1a must not be satisfied by test_n1a2 failing
+        self.signature("RS", ["FAIL test_n1a"])
+        self.fake(1, self.unittest_out(["test_n1a2"], ["test_n1a"]))
+        rc, out, _ = self.run_chain(12 * G, "RS")
+        self.assertEqual(rc, 3, out)
+        self.assertIn("RS:red/red-without-signature(missing 1 extra 1)", out)
+
+    def test_dr11e_the_committed_signatures_parse(self):
+        # the repo's own expected-red files, replayed as unittest output of their kinds: XB, RS and RH judge red/red
+        src = HERE / "results" / "failing-first" / "harness" / "expected-red"
+        dst = self.home / "new" / "results" / "failing-first" / "harness" / "expected-red"
+        shutil.copytree(src, dst)
+        self.env["XB_TREE"] = str(self.home / "new")
+        out_all = ""
+        for st in ("XB", "RS", "RH"):
+            ent = [ln.split() for ln in (src / f"{st}.txt").read_text().splitlines() if ln and not ln.startswith("#")]
+            self.assertTrue(ent and all(k in ("FAIL", "ERROR") and t.startswith("test_") for k, t in ent), st)
+            self.fake(1, self.unittest_out([t for k, t in ent if k == "FAIL"], ["test_ok"],
+                                           errors=[t for k, t in ent if k == "ERROR"]))
+            rc, out, _ = self.run_chain(12 * G, st)
+            self.assertEqual(rc, 0, out)
+            out_all += out
+        for st in ("XB", "RS", "RH"):
+            self.assertIn(f"{st}:red/red", out_all)
 
     def test_dr12_red_step_without_signature_file_fails_the_chain(self):
         self.fake(1, self.unittest_out(["test_b5"]))
@@ -227,6 +272,21 @@ class ChainDisk(unittest.TestCase):
         rc, out, _ = self.run_chain(12 * G, "G1 G3 ZZ")
         self.assertEqual(rc, 3, out)
         self.assertIn("steps expected/observed: G1:pass/pass G3:pass/pass ZZ:pass/fail(unknown step)", out)
+
+    def test_dr15_verdict_fail_with_exit_0_fails_the_chain(self):
+        # exp/registry_marker and exp/d4_store_mark exit 0 whatever their verdict
+        self.fake(0, "registry_marker FAIL fenced 9 / 10 controls violated {}\n")
+        rc, out, _ = self.run_chain(12 * G, "P1")
+        self.assertEqual(rc, 3, out)
+        self.assertIn("P1:pass/fail(verdict not PASS)", out)
+        self.fake(0, "d4_store_mark {'pass': False, 'why': ['x']}\n")
+        rc, out, _ = self.run_chain(12 * G, "P2")
+        self.assertEqual(rc, 3, out)
+        self.assertIn("P2:pass/fail(verdict not pass)", out)
+        self.fake(0, "registry_marker PASS fenced 10 / 10\nd4_store_mark {'pass': True, 'why': []}\n")
+        rc, out, _ = self.run_chain(12 * G, "P1 P2")
+        self.assertEqual(rc, 0, out)
+        self.assertIn("P1:pass/pass P2:pass/pass", out)
 
     def test_dr14_all_steps_as_declared(self):
         self.fake(0, self.unittest_out([], ["test_a"]))

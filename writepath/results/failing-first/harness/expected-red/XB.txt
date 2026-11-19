@@ -1,6 +1,7 @@
-# XB: tests that MUST fail (FAIL or ERROR) for the step to count as its declared red; observed in window A at 1ffbfa1 (2026-11-19)
-test_n1a2_zombie_row_naming_an_erased_subject_refused
-test_n1a_zombie_row_scanned_before_the_identifier_refused_after_erasure
-test_n1b_removed_quarantine_row_cannot_come_back
-test_n1c_held_unscanned_quarantine_row_blocks_completion
-test_s10_an_attestation_is_valid_in_one_table
+# XB declared red, observed in window A at 1ffbfa1 (2026-11-19): "<FAIL|ERROR> <test method>" per line. The step counts
+# as its declared red only if it exits non-zero and its failing tests are exactly these, each with this kind.
+FAIL test_n1a2_zombie_row_naming_an_erased_subject_refused
+FAIL test_n1a_zombie_row_scanned_before_the_identifier_refused_after_erasure
+FAIL test_n1b_removed_quarantine_row_cannot_come_back
+FAIL test_n1c_held_unscanned_quarantine_row_blocks_completion
+FAIL test_s10_an_attestation_is_valid_in_one_table

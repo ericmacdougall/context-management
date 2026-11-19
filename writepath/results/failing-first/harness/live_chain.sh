@@ -72,14 +72,20 @@ ESC=$(cat "$WP_HOME/conf/es_container" 2>/dev/null)
 wm_lines() { docker logs --since "$1" "$ESC" > "$O/.eslog" 2>&1 || { echo unreadable; return; }
   grep -ciE "(high|flood.stage) disk watermark.*exceeded" "$O/.eslog"; }
 # Declared outcomes (main, 2026-11-19: a step that ends otherwise makes the chain exit 3, never 0). Every step is
-# "pass" except XB, RS, RH, RX, which are "red": a non-zero exit AND every test named in
-# results/failing-first/harness/expected-red/<step>.txt failing (FAIL or ERROR). An expected red that passes, or fails
-# without its signature, is a mismatch; so is an unknown step or a red step without a signature file.
+# "pass" except XB, RS, RH, RX, which are "red": a non-zero exit AND the step's failing tests ("FAIL: t" / "ERROR: t")
+# exactly the "<FAIL|ERROR> <test>" lines of results/failing-first/harness/expected-red/<step>.txt (kind pinned, nothing
+# missing, nothing extra). An expected red that passes, or fails otherwise, is a mismatch; so is an unknown step or a
+# red step without a signature file (RX has none yet). P1 and P2 are judged on their verdict line as well as their exit.
 expected() { case $1 in XB|RS|RH|RX) echo red;; *) echo pass;; esac; }
 ex0() { grep -q "^$1 exit=0 " "$O/.sum"; }
 observed() {
   case $1 in
-    EW|G1|G2|G3|PC|P1|P2|M3|SS|SU) ex0 "$1" && echo pass || echo "fail($(grep -o "^$1 exit=[0-9]*" "$O/.sum" | head -1))";;
+    EW|G1|G2|G3|PC|M3|SS|SU) ex0 "$1" && echo pass || echo "fail($(grep -o "^$1 exit=[0-9]*" "$O/.sum" | head -1))";;
+    # registry_marker and d4_store_mark exit 0 whatever their verdict: their verdict line is judged as well
+    P1) if ! ex0 P1; then echo "fail($(grep -o "^P1 exit=[0-9]*" "$O/.sum" | head -1))"
+        elif grep -q "^registry_marker PASS " "$O/P1.out"; then echo pass; else echo "fail(verdict not PASS)"; fi;;
+    P2) if ! ex0 P2; then echo "fail($(grep -o "^P2 exit=[0-9]*" "$O/.sum" | head -1))"
+        elif grep -q "^d4_store_mark {'pass': True," "$O/P2.out"; then echo pass; else echo "fail(verdict not pass)"; fi;;
     P0) grep -q "^setup ok" "$O/P0.out" 2>/dev/null && echo pass || echo "fail(no setup ok)";;
     D6) grep -qx "exit=0" "$O/D6.out" 2>/dev/null && echo pass || echo "fail($(grep -E '^exit=' "$O/D6.out" 2>/dev/null | head -1))";;
     RR) [ "$(tail -1 "$O/RR.$(basename "$NEW").out" 2>/dev/null)" = "unregistered []" ] && echo pass || echo "fail(head registry)";;
@@ -91,9 +97,12 @@ observed() {
     XB|RS|RH|RX) sig=results/failing-first/harness/expected-red/$1.txt
         if [ ! -s "$sig" ]; then echo "fail(no signature file)"
         elif ex0 "$1"; then echo "green"
-        else miss=0
-          for t in $(grep -v '^#' "$sig"); do grep -qE "^(FAIL|ERROR): $t " "$O/$1.out" || miss=$((miss + 1)); done
-          [ $miss -eq 0 ] && echo red || echo "red-without-signature(missing $miss)"
+        else # the failing set, "<KIND> <test>" sorted, must equal the signature exactly (kind pinned, nothing extra)
+          want=$(grep -E '^(FAIL|ERROR) test' "$sig" | sort)
+          got=$(grep -E '^(FAIL|ERROR): test' "$O/$1.out" | sed -E 's/^(FAIL|ERROR): ([^ ]+).*/\1 \2/' | sort)
+          if [ -n "$want" ] && [ "$want" = "$got" ]; then echo red
+          else echo "red-without-signature(missing $(printf '%s\n' "$want" | grep -cvxF -e "$got") extra $(printf '%s\n' "$got" | grep -cvxF -e "$want"))"
+          fi
         fi;;
     *) echo "fail(unknown step)";;
   esac; }
