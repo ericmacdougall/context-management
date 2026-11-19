@@ -1,7 +1,9 @@
 """Amendment H2 (D2): separate service identities, proved with distinct uids in this stream's own containers.
 
 The orchestrator (this process, the operator, uid of the host user) prepares one credential directory per service
-under WP_HOME/svc through a root helper container (copy, chown, chmod; values are never printed) and runs:
+under WP_HOME/svc through a named root helper container, emlab2-wphard-h2prep (copy, chown, chmod; values are never
+printed; it sees the operator's secrets read-only and may write only WP_HOME/svc and WP_HOME/run; a second named
+helper, emlab2-wphard-h2witness, reads svc and secrets read-only for the existence witness) and runs:
   emlab2-wphard-keysvc    uid 20003  WP_SECRETS_DIR=/svc/keysvc   (pgpass.wp_kms)          python -m wp.keysvc serve
   emlab2-wphard-verifier  uid 20002  WP_SECRETS_DIR=/svc/verifier (pgpass.wp_verifier, its ES key if any)
                                                                                              python -m wp.verifier_service
@@ -111,10 +113,39 @@ def _docker(*a, check=True, timeout=600):
     return subprocess.run(["docker", *a], capture_output=True, text=True, check=check, timeout=timeout)
 
 
-def _root(script):
-    """A root helper container with WP_HOME at /h and no network. Prints only names and flags."""
+# Root helpers (main's h_d2 decision for the gate's service-container rule): two NAMED one-shot containers, no network,
+# this stream's label. Neither sees WP_HOME as a whole:
+#   PREP     emlab2-wphard-h2prep     WP_HOME/secrets read-only at /h/secrets; WP_HOME/svc and WP_HOME/run read-write
+#   WITNESS  emlab2-wphard-h2witness  WP_HOME/svc and WP_HOME/secrets, both read-only
+PREP, WITNESS = "emlab2-wphard-h2prep", "emlab2-wphard-h2witness"
+
+
+def _helper_args(name, mounts):
+    """docker run arguments of a named root helper; `mounts` is [(host path, container path, "ro" | "rw")]."""
+    vols = [a for h, c, mode in mounts for a in ("-v", f"{h}:{c}:{mode}")]
+    return ["run", "--rm", "--name", name, "--network", "none", "--label", LABEL, *vols, IMAGE, "sh", "-c"]
+
+
+def _prep(script):
+    """PREP helper: may change only WP_HOME/svc and WP_HOME/run; reads the operator's secrets read-only."""
     from wp import config
-    return _docker("run", "--rm", "--network", "none", "--label", LABEL, "-v", f"{config.HOME}:/h", IMAGE, "sh", "-c", script).stdout
+    for d in ("svc", "run"):                  # bind sources made by the operator, so docker never creates them
+        (config.HOME / d).mkdir(exist_ok=True)
+    _docker("rm", "-f", PREP, check=False)    # a leftover of an interrupted run
+    return _docker(*_helper_args(PREP, [(config.SECRETS, "/h/secrets", "ro"), (config.HOME / "svc", "/h/svc", "rw"),
+                                        (config.HOME / "run", "/h/run", "rw")]), script).stdout
+
+
+def _witness(script):
+    """WITNESS helper: reads WP_HOME/svc and WP_HOME/secrets, writes nothing. Prints only names and flags."""
+    from wp import config
+    _docker("rm", "-f", WITNESS, check=False)
+    return _docker(*_helper_args(WITNESS, [(config.HOME / "svc", "/h/svc", "ro"), (config.SECRETS, "/h/secrets", "ro")]),
+                   script).stdout
+
+
+# /h/svc and /h/run are mount points inside PREP: emptied, never removed
+CLEAR = "find /h/svc /h/run -mindepth 1 -delete"
 
 
 def prepare(arm):
@@ -128,21 +159,21 @@ def prepare(arm):
              "verifier": (UIDS["verifier"], ["pgpass.wp_verifier", es_files["verifier"]]),
              "keysvc": (UIDS["keysvc"], ["pgpass.wp_kms"])})
     ks_uid = UIDS["app"] if arm == "control" else UIDS["keysvc"]
-    lines = ["set -e", "rm -rf /h/svc /h/run", "install -d -m 755 /h/svc", f"install -d -o {ks_uid} -g {ks_uid} -m 755 /h/run"]
+    lines = ["set -e", CLEAR, "chown 0:0 /h/svc", "chmod 755 /h/svc", f"chown {ks_uid}:{ks_uid} /h/run", "chmod 755 /h/run"]
     for d, (uid, files) in sets.items():
         lines.append(f"install -d -o {uid} -g {uid} -m 700 /h/svc/{d}")
         for f in files:
             if f in have:
                 lines.append(f"install -o {uid} -g {uid} -m 600 /h/secrets/{f} /h/svc/{d}/{f}")
-    _root("\n".join(lines))
+    _prep("\n".join(lines))
     return {d: [f for f in files if f in have] for d, (_, files) in sets.items()}
 
 
 def witness(arm):
-    """Root helper: does each probe file exist and hold something? (yes/no only)"""
+    """WITNESS helper: does each probe file exist and hold something? (yes/no only)"""
     dirs = {"verifier": "shared", "keysvc": "shared"} if arm == "control" else {"verifier": "verifier", "keysvc": "keysvc"}
     paths = {n: p.format(**dirs).replace("/svc/", "/h/svc/").replace("/operator/secrets/", "/h/secrets/") for n, p in PROBE_FILES.items()}
-    out = _root("; ".join(f"[ -s {p} ] && echo {n}=yes || echo {n}=no" for n, p in paths.items()))
+    out = _witness("; ".join(f"[ -s {p} ] && echo {n}=yes || echo {n}=no" for n, p in paths.items()))
     return dict(ln.split("=") for ln in out.split())
 
 
@@ -255,7 +286,7 @@ def main(r=5):
             stop_services()
     finally:
         stop_services()
-        _root("rm -rf /h/svc /h/run")
+        _prep(CLEAR)
     f_ok = sum(x["holds"] for x in res["fenced"])
     c_ok = sum(x["violated"] for x in res["control"])
     res["verdict"] = {"fenced_holds": f"{f_ok}/{r}", "control_violated": f"{c_ok}/{r}", "pass": f_ok == r and c_ok == r}
