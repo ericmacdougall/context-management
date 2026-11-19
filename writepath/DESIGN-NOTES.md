@@ -1217,6 +1217,11 @@ replay rows" without these qualifiers over-claims and is not used.
 - M7: amendment H6e; C9 opens the three role-key files and seal_key; C14a to C14d.
 
 ### Stated limits (not built here)
+- Run validity (main's relay, 2026-11-19): the stamped-run validity gate failed its final independent review and was
+  dropped. Every stamped write-path run is lab evidence only, and its result document carries the line "run validity
+  not independently enforced (validity gate dropped after final review, GoodQA #16096)". Only one home drives the
+  emlab2-wphard stores; every live step holds ~/emlab2-16096/RUNLOCK; the owner's chain judge and stop rules are the
+  lab's run discipline.
 - M1, tenant authority (MATERIAL for client use): the seal authority, the key service and the broker trust every
   allowed peer uid for EVERY tenant. Through the authority an allowed peer can ask whether a text contains another
   tenant's declared identifiers (the mentions reply names subject ids), creates subject keys in any tenant
@@ -1258,3 +1263,59 @@ replay rows" without these qualifiers over-claims and is not used.
   the erasure (WPS24) on deliberately corrupted rows; the trade-off (content removal versus erasure availability) is
   main's to decide; until then the docstring's "an environmental fault must never remove content" holds for faults
   that raise, not for a wrong key.
+
+## Review 42cfd11 (writepath-review-42cfd11, relayed by main 2026-11-19; written before tests and code)
+
+### R1. The binding-scan invariant (erasure completeness), stated before the fix
+Definitions. A row's BINDING SCAN is the one authority scan whose identifier-set version v and mentions M the row's
+attestation carries (wp/sealer.py; the store recomputes the MAC, WPS41). max_seq is the tenant's identifier-set
+version; it only grows (an erasure deletes identifiers but never lowers it). X's job records ident_xmax = max_seq at
+X's mark; the mark sets subjects.erased for X under the subject row lock; the cascade's final pass deletes X's
+identifiers only after the rescan has used them.
+Invariant. For every path by which content reaches events or quarantine, the row is bound to a scan of THAT content
+whose mentions include every subject any earlier scan of the same event (in the same append call) found, and the
+store accepts it only if v >= max_seq at insert (WPS17), no subject in M is erased (WPS18) and, for quarantine, the
+event id was not removed by a cascade (WPS42). Consequence: once X's erasure is marked, no row can be stored whose
+binding scan found X (WPS18, serialised with the mark by the subject lock) or ran below X's declaration (v < X's
+declaration seq <= max_seq: WPS17); rows stored before the mark are removed by the cascade (mentions contain X, or the
+rescan finds X in an event scanned below ident_xmax, or a quarantine row scanned below ident_xmax), and completion
+counts what is left. So a completed erasure of X is not followed by stored content that named X at any scan the
+writer obtained for it. What it cannot cover: a scan that runs AFTER the cascade's final pass deleted X's
+identifiers cannot find X, so its mentions are [] at a current v and it is accepted in either table (the inherent
+limit below).
+Paths, from the code (grep of "into events", "into quarantine" in wp/ and exp/; every seal call in wp/log.py):
+1. log._append_txn, first seal (log.py seal(), events): bound to that scan; WPS17 or WPS18 at insert. HOLDS.
+2. log._append, WPS17 retry (log.py:125-126, events): the reseal is a FRESH scan; at 42cfd11 it drops a subject
+   whose identifiers were deleted meanwhile (X erased between the first seal and the retry), so the event is stored
+   naming X. VIOLATES the invariant ("every subject an earlier scan found"). Fix: the reseal carries the earlier
+   mentions (the authority unions caller-named prior mentions into the attested list; naming more only restricts),
+   so WPS18 refuses it.
+3. log._append, WPS01 (fenced) branch (log.py:137-141, quarantine): at 42cfd11 a fresh scan; after X's cascade it
+   returns [] at a current v, so content that named X at its first scan is quarantined after X's erasure (review
+   R1). VIOLATES. Fix: the authority returns BOTH purpose MACs from ONE scan; the fenced branch stores the batch with
+   the quarantine MAC of its binding scan (the first, or the last WPS17 reseal, which carries the first's mentions),
+   never rescanning; WPS17 or WPS18 then drop it (counted as dropped_stale). A fenced writer has no liveness claim.
+4. wp_app direct SQL with a kept attestation (replay): WPS41 (moved fields), WPS17 (older scan), WPS18 (erased
+   mention), WPS42 (removed quarantine id), unique event id (one insert per table). HOLDS (review 42cfd11: closed).
+5. wp_app direct SQL with a FRESH attestation it requests from the authority for any content: bound to a scan after
+   the request. HOLDS for content scanned before X's identifiers were deleted; the limit below for later scans.
+6. exp/row6_chain.py inserts as the admin with triggers off: an experiment fixture outside the trust boundary (the
+   admin is the store's owner), never a write path of the application. Not covered, by definition.
+7. schema.sql wp_erasure_apply (update events set content_enc = null) and the cascade's quarantine delete only
+   remove content. Not write paths for content.
+Remaining limit, exactly: after the cascade's final pass has deleted X's identifiers, ANY fresh scan of content
+naming X finds nothing, so that content is accepted in either table: newly typed content; a WPS17 retry of content
+whose first scan ran BEFORE X was declared (nothing to carry forward); content sealed before X's declaration and
+first inserted after X's cascade (its stale v is refused WPS17, and its retry is a fresh scan); and any content
+wp_app asks the authority to seal. Bound: the scan must start after X's identifiers are gone, so only content
+presented to the authority after X's cascade finished (or, for a retry, first scanned before X existed) is
+affected; content that any scan found naming X is refused for good. Closing it would need the erased identifiers'
+HMACs kept as a deny list, which the design rejects (an erased subject keeps no identifier, DESIGN-NOTES class 3).
+Erasure here removes what is stored; it is not a filter on later input.
+Behaviour change from the fix (stated, not hidden): a fenced writer is no longer rescanned. Its batch goes to
+quarantine under its binding scan or not at all, so a fenced batch whose scan went stale because ANY identifier was
+declared meanwhile (not only an erased one) is now dropped and counted (dropped_stale), where 42cfd11 rescanned and
+quarantined it. A fenced writer has no liveness claim; the content is still the client's to resend under its new
+lease. log.append also refuses (SealError, nothing stored) an authority row that lacks either attestation or a retry
+whose mentions are not a superset of the earlier scan's, so a mismatched authority build fails loudly instead of
+silently dropping fenced writes or forgetting a mention.
