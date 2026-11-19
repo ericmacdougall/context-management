@@ -33,7 +33,7 @@ PROBE_FILES = {"broker_es_pw_file": "/svc/broker/es_broker_password", "broker_pg
                "elastic_pw_file": "/operator/secrets/es_elastic_password",
                "admin_es_key": "/operator/secrets/es_api_key.json", "admin_pgpass": "/operator/secrets/pgpass",
                "operator_broker_pw_file": "/operator/secrets/es_broker_password",
-               # H6e (review J M7): the role keys (the projector's re-points any tenant's alias) and the seal key
+               # H6e (review J M7): the role keys (the projector's writes through any tenant's alias) and the seal key
                "projector_role_key": "/operator/secrets/es_api_key.projector.json",
                "eraser_role_key": "/operator/secrets/es_api_key.eraser.json",
                "verifier_role_key": "/operator/secrets/es_api_key.verifier.json",
@@ -57,6 +57,27 @@ def _w(es, target, doc_id, alias=True):
     kw = {"require_alias": "true"} if alias else {}
     s, j = es.req("PUT", f"/{target}/_create/{doc_id}", {"event_id": doc_id, "kind": "h6probe"}, ok=None, **kw)
     return [s, None if s in (200, 201) else _etype(j)]
+
+
+def _s(es, target):
+    """One search through `target` (review 42cfd11 R8: C1 B_read tests READING another tenant, which a write through a
+    read alias never did: it was 400 in both arms); (status, error type)."""
+    from wp.es import _etype
+    s, j = es.req("POST", f"/{target}/_search", {"size": 0}, ok=None)
+    return [s, None if s == 200 else _etype(j)]
+
+
+def exists_after(name, es=None):
+    """H6g C14c: whether an index or alias of that name exists (admin key). True, False, or None when the HEAD could
+    not tell (any other status or an exception), which fails C14c rather than losing the run's rows."""
+    try:
+        if es is None:
+            from wp.es import ES
+            es = ES()
+        s, _ = es.req("HEAD", f"/{name}", ok=None)
+    except Exception:                                         # noqa: BLE001
+        return None
+    return None if s not in (200, 404) else s == 200
 
 
 def _alias_req(es, actions):
@@ -142,7 +163,7 @@ def child_fenced(a):
         res["key_A_fp"], res["E"] = _fp(k1["id"]), E
         res["own_write"] = _w(es1, F.write_alias(A, "events", E), "h6-own")
         res["C1"] = {"B_w": _w(es1, F.write_alias(Bt, "events", eb), "h6-c1w"),
-                     "B_read": _w(es1, F.read_alias(Bt, "events"), "h6-c1r"),
+                     "B_read": _s(es1, F.read_alias(Bt, "events")),
                      "B_x": _w(es1, F.erase_alias(Bt, "events"), "h6-c1x")}
         res["C2"] = {"A_base": _w(es1, F.base_index(A, "events"), "h6-c2", alias=False)}
         res["C3"] = {"A_x": _w(es1, F.erase_alias(A, "events"), "h6-c3")}
@@ -151,6 +172,15 @@ def child_fenced(a):
                      "remove_own": _alias_req(es1, [{"remove": {"index": idx, "alias": F.write_alias(A, "events", E)}}]),
                      "add_on_B": _alias_req(es1, [{"add": {"index": F.base_index(Bt, "events"), "alias": F.write_alias(Bt, "events", eb + 1)}}])}
         res["C14"] = _c14(es1, A, Bt, E, eb)                 # H6e
+        # H6e C14c (review 42cfd11 R8): with the key STILL VALID, a name of A's family that is no index or alias
+        # (-w<E+5>), WITHOUT require_alias: an accepted write would auto-create an index of that name. Judged: no write
+        # accepted, and (parent, admin key) no index of that name afterwards
+        c14c_name = F.write_alias(A, "events", E + 5)
+        c = [_w(es1, c14c_name, f"h6-c14c-{i}", alias=False) for i in range(5)]
+        # the key's validity is observed, not assumed: an own write through -w<E> right after must be accepted
+        own = _w(es1, F.write_alias(A, "events", E), "h6-c14c-own")
+        res["C14"]["c"] = {"name": c14c_name, "writes": c, "accepted": sum(1 for s, _ in c if s in (200, 201)),
+                           "own_after": own, "key_valid": own[0] in (200, 201)}
         # C5: h2 takes the lease by force; the broker's CAS moves -w; h1's key then writes through -w<E>
         l2 = L.acquire(conn, A, L.PROJECTOR, 120.0, force=True)
         k2 = key(A, l2, "mint_A_h2") if l2 else None
@@ -158,9 +188,10 @@ def child_fenced(a):
             res["C5"] = {"E2": l2.epoch, "h2_write": _w(B.es_with_key(k2, "projector"), F.write_alias(A, "events", l2.epoch), "h6-c5own"),
                          "stale": [_w(es1, F.write_alias(A, "events", E), f"h6-c5-{i}") for i in range(N_STALE)]}
             res["C5"]["stale_accepted"] = sum(1 for s, _ in res["C5"]["stale"] if s in (200, 201))
-            # H6e C14c: the stale name WITHOUT require_alias (an accepted write would auto-create an index of that name)
-            c = [_w(es1, F.write_alias(A, "events", E), f"h6-c14c-{i}", alias=False) for i in range(5)]
-            res["C14"]["c"] = {"writes": c, "accepted": sum(1 for s, _ in c if s in (200, 201))}
+            # the stale name without require_alias after the CAS is reported only (the key is invalid: 401, review
+            # 42cfd11 R8), the judged C14c ran above while the key was valid
+            c = [_w(es1, F.write_alias(A, "events", E), f"h6-c14c-stale-{i}", alias=False) for i in range(5)]
+            res["C14"]["c_after_cas_reported"] = {"writes": c}
             res["C6"] = {}
             for name, (ep, who) in {"old_epoch_h1": (E, la.holder), "new_epoch_h1": (l2.epoch, la.holder),
                                     "new_epoch_empty": (l2.epoch, "")}.items():
@@ -242,7 +273,7 @@ def child_control(a):
     idx = F.base_index(A, "events")
     res["own_write"] = _w(es, F.write_alias(A, "events", E), "h6-own")
     res["C1"] = {"B_w": _w(es, F.write_alias(Bt, "events", eb), "h6-c1w"),
-                 "B_read": _w(es, F.read_alias(Bt, "events"), "h6-c1r"),
+                 "B_read": _s(es, F.read_alias(Bt, "events")),
                  "B_x": _w(es, F.erase_alias(Bt, "events"), "h6-c1x")}
     res["C2"] = {"A_base": _w(es, idx, "h6-c2", alias=False)}
     res["C3"] = {"A_x": _w(es, F.erase_alias(A, "events"), "h6-c3")}
@@ -533,6 +564,8 @@ def judge(arm, x, wit):
         return ([] if acc else ["control accepted no C1 or C4 request (cannot detect)"]), inv
     if not ok(x.get("own_write")):
         inv["own_write"] = f"own write {x.get('own_write')}: refusals would be vacuous"
+    if _st((x.get("C1") or {}).get("B_read")) == 404:        # review 42cfd11 R8: no read alias, the refusal is vacuous
+        inv["C1 B_read"] = f"B's read alias missing {(x.get('C1') or {}).get('B_read')}"
     for c in ("C1", "C2", "C3", "C4"):
         for k, r in (x.get(c) or {}).items():
             if ok(r):
@@ -550,8 +583,11 @@ def judge(arm, x, wit):
     b14 = c14.get("b")
     if c14 and (not isinstance(b14, list) or (b14[0] == 200 and (b14[2] or 0) > 0)):
         why.append(f"C14b reindex {b14}")
-    if c14 and x.get("C5") and (c14.get("c") or {}).get("accepted", 1) != 0:
-        why.append(f"C14c accepted {(c14.get('c') or {}).get('accepted')}")
+    c14c = c14.get("c") or {}
+    if c14c and any(isinstance(w, list) and w and w[0] == 401 for w in c14c.get("writes") or []):
+        inv["C14c"] = "a C14c write was refused 401 (key not valid): the refusal would be vacuous"
+    if c14 and (c14c.get("accepted", 1) != 0 or not c14c.get("key_valid") or c14c.get("exists_after") is not False):
+        why.append(f"C14c accepted {c14c.get('accepted')} key_valid {c14c.get('key_valid')} exists_after {c14c.get('exists_after')}")
     if c14 and ok((c14.get("d") or {}).get("B_mapping")):
         why.append(f"C14d B mapping {(c14.get('d') or {}).get('B_mapping')}")
     c5 = x.get("C5") or {}
@@ -600,10 +636,14 @@ def main(r=5):
                       "tenant (tenant authority: design path item 2)", "holder strings are trusted within one service "
                       "identity", "a key already issued writes until the next CAS or its 1 h expiry (C12 a)",
                       "the operator directory is mounted into the app container for this test only",
-                      "H6e: the default role-key mode (WP_BROKER unset) has no tenant isolation: the projector role key "
-                      "holds manage and create_index on every tenant's names and can re-point any tenant's alias; only "
-                      "broker-minted keys are tenant- and epoch-scoped; a broker-mode deployment must not mint or place "
-                      "the role keys where the application runs",
+                      "H6e, H6g: the default role-key mode (WP_BROKER unset) has no tenant isolation: the projector role "
+                      "key writes through any tenant's existing write alias (control C1 B_w), reads any tenant (C1 "
+                      "B_read) and updates another tenant's mapping (C14_reported d); alias add and re-point were REFUSED "
+                      "(403, control C4 and the fence CAS), so re-pointing is not demonstrated; only broker-minted keys "
+                      "are tenant- and epoch-scoped; a broker-mode deployment must not mint or place the role keys where "
+                      "the application runs",
+                      "H6g C14c: a write without require_alias to an unused name of A's family, key still valid; the "
+                      "same writes after the CAS (key invalid, 401) are reported only (C14.c_after_cas_reported)",
                       "H6e C14d: whether a writer key can update its own tenant's mapping is observed, not assumed "
                       "(see C14.d.own_mapping); tenant-local, reported, not judged"],
            "cleanup": "broker-minted keys are not invalidated by this experiment; they expire after 1 h"}
@@ -618,6 +658,9 @@ def main(r=5):
                 start_services()
             rows = [once(arm, i) for i in range(r)]
             for x in rows:
+                c14c = (x.get("C14") or {}).get("c") or {}
+                if c14c.get("name"):                          # review 42cfd11 R8: no index of that name was created
+                    c14c["exists_after"] = exists_after(c14c["name"])
                 x["why"], x["invalid_request"] = judge(arm, x, wit)
                 # control: the H6 rule is acceptance of a C1 or C4 request only (H6a)
                 x["holds" if arm == "fenced" else "violated"] = not x["why"] and (arm == "control" or not x["invalid_request"])
