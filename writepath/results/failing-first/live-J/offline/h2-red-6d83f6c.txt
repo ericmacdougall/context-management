@@ -1,0 +1,45 @@
+h_d2 helpers RED: exp/h_d2_uids.py of 6d83f6c with the new tests/test_h_d2_helpers.py
+test_h2h1_prep_mounts (tests.test_h_d2_helpers.Helpers) ... FAIL
+test_h2h2_witness_read_only (tests.test_h_d2_helpers.Helpers) ... FAIL
+test_h2h3_whole_experiment_helper_runs (tests.test_h_d2_helpers.Helpers) ... h_d2_uids {'fenced_holds': '0/0', 'control_violated': '0/0', 'pass': True}
+FAIL
+test_h2h4_mount_points_are_emptied_not_removed (tests.test_h_d2_helpers.Helpers) ... ERROR
+
+======================================================================
+ERROR: test_h2h4_mount_points_are_emptied_not_removed (tests.test_h_d2_helpers.Helpers)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/73716864-6b3b-4deb-94ef-8ed2c8432e4a/agent-a5bed86994269066b/red-hd2/writepath/tests/test_h_d2_helpers.py", line 115, in test_h2h4_mount_points_are_emptied_not_removed
+    script = self.helper_runs(PREP)[0][-1]
+IndexError: list index out of range
+
+======================================================================
+FAIL: test_h2h1_prep_mounts (tests.test_h_d2_helpers.Helpers)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/73716864-6b3b-4deb-94ef-8ed2c8432e4a/agent-a5bed86994269066b/red-hd2/writepath/tests/test_h_d2_helpers.py", line 76, in test_h2h1_prep_mounts
+    self.assertEqual(len(runs), 1, self.runs)
+AssertionError: 0 != 1 : [['run', '--rm', '--network', 'none', '--label', 'emlab2.stream=wphard', '-v', '/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmpxqgzaa3c/home:/h', 'ubuntu:24.04', 'sh', '-c', 'set -e\nrm -rf /h/svc /h/run\ninstall -d -m 755 /h/svc\ninstall -d -o 20003 -g 20003 -m 755 /h/run\ninstall -d -o 20001 -g 20001 -m 700 /h/svc/app\ninstall -o 20001 -g 20001 -m 600 /h/secrets/pgpass.wp_app /h/svc/app/pgpass.wp_app\ninstall -d -o 20002 -g 20002 -m 700 /h/svc/verifier\ninstall -o 20002 -g 20002 -m 600 /h/secrets/pgpass.wp_verifier /h/svc/verifier/pgpass.wp_verifier\ninstall -d -o 20003 -g 20003 -m 700 /h/svc/keysvc\ninstall -o 20003 -g 20003 -m 600 /h/secrets/pgpass.wp_kms /h/svc/keysvc/pgpass.wp_kms']]
+
+======================================================================
+FAIL: test_h2h2_witness_read_only (tests.test_h_d2_helpers.Helpers)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/73716864-6b3b-4deb-94ef-8ed2c8432e4a/agent-a5bed86994269066b/red-hd2/writepath/tests/test_h_d2_helpers.py", line 86, in test_h2h2_witness_read_only
+    self.assertEqual(set(w.values()), {"yes"})
+AssertionError: Items in the second set but not the first:
+'yes'
+
+======================================================================
+FAIL: test_h2h3_whole_experiment_helper_runs (tests.test_h_d2_helpers.Helpers)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/73716864-6b3b-4deb-94ef-8ed2c8432e4a/agent-a5bed86994269066b/red-hd2/writepath/tests/test_h_d2_helpers.py", line 100, in test_h2h3_whole_experiment_helper_runs
+    self.assertIn(_opt(r, "--name")[:1], ([PREP], [WITNESS]), r)
+AssertionError: [] not found in (['emlab2-wphard-h2prep'], ['emlab2-wphard-h2witness']) : ['run', '--rm', '--network', 'none', '--label', 'emlab2.stream=wphard', '-v', '/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmpxqgzaa3c/home:/h', 'ubuntu:24.04', 'sh', '-c', 'set -e\nrm -rf /h/svc /h/run\ninstall -d -m 755 /h/svc\ninstall -d -o 20003 -g 20003 -m 755 /h/run\ninstall -d -o 20001 -g 20001 -m 700 /h/svc/app\ninstall -o 20001 -g 20001 -m 600 /h/secrets/pgpass.wp_app /h/svc/app/pgpass.wp_app\ninstall -d -o 20002 -g 20002 -m 700 /h/svc/verifier\ninstall -o 20002 -g 20002 -m 600 /h/secrets/pgpass.wp_verifier /h/svc/verifier/pgpass.wp_verifier\ninstall -d -o 20003 -g 20003 -m 700 /h/svc/keysvc\ninstall -o 20003 -g 20003 -m 600 /h/secrets/pgpass.wp_kms /h/svc/keysvc/pgpass.wp_kms']
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.046s
+
+FAILED (failures=3, errors=1)
+exit=1

@@ -1,0 +1,12 @@
+h_d2 helpers GREEN: worktree exp/h_d2_uids.py (6d83f6c + helper change) with tests/test_h_d2_helpers.py
+test_h2h1_prep_mounts (tests.test_h_d2_helpers.Helpers) ... ok
+test_h2h2_witness_read_only (tests.test_h_d2_helpers.Helpers) ... ok
+test_h2h3_whole_experiment_helper_runs (tests.test_h_d2_helpers.Helpers) ... h_d2_uids {'fenced_holds': '0/0', 'control_violated': '0/0', 'pass': True}
+ok
+test_h2h4_mount_points_are_emptied_not_removed (tests.test_h_d2_helpers.Helpers) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.006s
+
+OK
+exit=0

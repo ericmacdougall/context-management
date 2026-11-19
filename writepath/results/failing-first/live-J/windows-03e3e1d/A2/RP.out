@@ -1,0 +1,4 @@
+old ids hashed 4
+before {"files": 4, "ids_changed": false, "valid_per_name": {"projector": 1, "eraser": 1, "verifier": 1, "admin": 1}, "old_ids_valid": 4}
+created keys; id fingerprints {'projector': 'sha256:0fe2cb48d94878c2', 'eraser': 'sha256:2ece2732ac60eb10', 'verifier': 'sha256:ddcd7e714bb14bf7', 'admin': 'sha256:eb36a65fc96e7089'} rotation (invalidated, error) {'projector': [1, None], 'eraser': [1, None], 'verifier': [1, None], 'admin': [1, None]}
+after {"files": 4, "ids_changed": true, "valid_per_name": {"projector": 1, "eraser": 1, "verifier": 1, "admin": 1}, "old_ids_valid": 0}

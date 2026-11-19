@@ -1189,3 +1189,21 @@ Stated with the result (limits, not cases): the default role-key mode (WP_BROKER
 projector role key holds manage and create_index on every tenant's base, read, write and erase names, so it can
 re-point any tenant's alias (the control arm's reason). Only broker-minted keys are tenant- and epoch-scoped. A client
 deployment in broker mode must not mint or place the role keys (es_api_key.<role>.json) where the application runs.
+
+## Amendment H2a (2026-11-19, main's h_d2 decision; written before any run it governs; owner a5bed869; no threshold changes)
+Source: main's relay of the gate's service-container rule (decision: keep the control arm and the fenced operator
+mount, change the root helper). Method change for amendment H2 only; nothing above is rewritten. "The root helper"
+in H2 (a) is now two named one-shot containers, both without network and with this stream's label:
+  emlab2-wphard-h2prep     prepares the credential directories: WP_HOME/secrets read-only; only WP_HOME/svc and
+                           WP_HOME/run read-write (emptied between arms and at the end, never removed)
+  emlab2-wphard-h2witness  the existence witness of H2 (a): WP_HOME/svc and WP_HOME/secrets, both read-only
+Neither mounts WP_HOME as a whole. The arms, the probes and the verdict rule of H2 are unchanged. h_d2 runs only after
+the gate side has its allow entries for these helpers (main's decision).
+
+## Amendment H6f (2026-11-19, main's finding on window A at 1ffbfa1; owner a5bed869; no threshold changes)
+Source: main's relay ("Your chain exited 0 for window A although D6 exited 1"). The owner's live chain
+(results/failing-first/harness/live_chain.sh) judges every step against a declared outcome and exits 3 on any
+mismatch: pass for every step except XB, RS, RH and RX, which are red with a signature (a non-zero exit AND every test
+named in results/failing-first/harness/expected-red/<step>.txt failing). A red step that passes, a red without its
+signature, a missing signature file or an unknown step is a mismatch. The chain's exit status is not a verdict of any
+H-amendment; each experiment's own verdict rule stands.

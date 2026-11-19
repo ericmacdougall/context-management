@@ -1,0 +1,14 @@
+fenced prepare {'app': ['pgpass.wp_app'], 'verifier': ['pgpass.wp_verifier'], 'keysvc': ['pgpass.wp_kms']}
+fenced witness {'verifier_pgpass': 'yes', 'kms_pgpass': 'yes', 'admin_pgpass': 'yes', 'elastic_pw_file': 'yes', 'admin_es_key': 'yes'}
+fenced svc owner 0 0o755 run owner 20003 0o755
+drwx------:20001:app drwx------:20003:keysvc drwx------:20002:verifier
+control prepare {'shared': ['pgpass.wp_app', 'pgpass.wp_verifier', 'pgpass.wp_kms']}
+control witness {'verifier_pgpass': 'yes', 'kms_pgpass': 'yes', 'admin_pgpass': 'yes', 'elastic_pw_file': 'yes', 'admin_es_key': 'yes'}
+control svc owner 0 0o755 run owner 20001 0o755
+drwx------:20001:shared
+write into read-only secrets mount: rc=1 EROFS
+after cleanup svc entries [] run entries []
+secrets unchanged ['es_api_key.json', 'es_elastic_password', 'pgpass', 'pgpass.wp_app', 'pgpass.wp_kms', 'pgpass.wp_verifier']
+helpers left []
+exit=0
+lock released 2026-11-19T01:51:31Z

@@ -1,0 +1,128 @@
+chain judge RED: live_chain.sh of 6d83f6c with the new tests/test_live_chain_disk.py; t2-dev 2026-11-19T01:49:56Z
+test_dr10_expected_red_with_its_signature_passes (tests.test_live_chain_disk.ChainDisk.test_dr10_expected_red_with_its_signature_passes) ... FAIL
+test_dr11_red_for_another_reason_fails_the_chain (tests.test_live_chain_disk.ChainDisk.test_dr11_red_for_another_reason_fails_the_chain) ... FAIL
+test_dr12_red_step_without_signature_file_fails_the_chain (tests.test_live_chain_disk.ChainDisk.test_dr12_red_step_without_signature_file_fails_the_chain) ... FAIL
+test_dr13_mixed_chain_prints_every_step_and_fails_on_one (tests.test_live_chain_disk.ChainDisk.test_dr13_mixed_chain_prints_every_step_and_fails_on_one) ... FAIL
+test_dr14_all_steps_as_declared (tests.test_live_chain_disk.ChainDisk.test_dr14_all_steps_as_declared) ... FAIL
+test_dr1_starts_at_12_gb (tests.test_live_chain_disk.ChainDisk.test_dr1_starts_at_12_gb) ... ok
+test_dr2_refuses_at_9_gb (tests.test_live_chain_disk.ChainDisk.test_dr2_refuses_at_9_gb) ... ok
+test_dr2b_exact_boundary (tests.test_live_chain_disk.ChainDisk.test_dr2b_exact_boundary) ... ok
+test_dr3_stops_at_8_gb_during_a_step (tests.test_live_chain_disk.ChainDisk.test_dr3_stops_at_8_gb_during_a_step) ... ok
+test_dr5_grouped_step_runs_nothing_after_the_stop (tests.test_live_chain_disk.ChainDisk.test_dr5_grouped_step_runs_nothing_after_the_stop) ... ok
+test_dr6_watermark_line_voids_the_step (tests.test_live_chain_disk.ChainDisk.test_dr6_watermark_line_voids_the_step) ... ok
+test_dr7_rp_rotates_inside_the_window (tests.test_live_chain_disk.ChainDisk.test_dr7_rp_rotates_inside_the_window) ... FAIL
+test_dr8_failing_pass_step_fails_the_chain (tests.test_live_chain_disk.ChainDisk.test_dr8_failing_pass_step_fails_the_chain) ... FAIL
+test_dr8b_failing_unittest_step_fails_the_chain (tests.test_live_chain_disk.ChainDisk.test_dr8b_failing_unittest_step_fails_the_chain) ... FAIL
+test_dr9_expected_red_that_goes_green_fails_the_chain (tests.test_live_chain_disk.ChainDisk.test_dr9_expected_red_that_goes_green_fails_the_chain) ... FAIL
+
+======================================================================
+FAIL: test_dr10_expected_red_with_its_signature_passes (tests.test_live_chain_disk.ChainDisk.test_dr10_expected_red_with_its_signature_passes)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/chaintest/red/writepath/tests/test_live_chain_disk.py", line 208, in test_dr10_expected_red_with_its_signature_passes
+    self.assertIn("XB:red/red", out)
+AssertionError: 'XB:red/red' not found in 'lock taken 2026-11-19T01:49:56Z head new seal0 seal0 h0 h0 free_kib 12582912\nXB exit=1 tree new Ran 3 tests in 0.1s FAILED (failures=2) \n  XB seconds=0 watermark_lines 0\nfree_kib_end 12582912 chain done 2026-11-19T01:49:56Z\nlock released 2026-11-19T01:49:56Z\n'
+
+======================================================================
+FAIL: test_dr11_red_for_another_reason_fails_the_chain (tests.test_live_chain_disk.ChainDisk.test_dr11_red_for_another_reason_fails_the_chain)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/chaintest/red/writepath/tests/test_live_chain_disk.py", line 216, in test_dr11_red_for_another_reason_fails_the_chain
+    self.assertEqual(rc, 3, out)
+AssertionError: 0 != 3 : lock taken 2026-11-19T01:50:01Z head new seal0 seal0 h0 h0 free_kib 12582912
+RS exit=1 Ran 3 tests in 0.1s FAILED (failures=2) 
+  RS seconds=0 watermark_lines 0
+free_kib_end 12582912 chain done 2026-11-19T01:50:01Z
+lock released 2026-11-19T01:50:01Z
+
+
+======================================================================
+FAIL: test_dr12_red_step_without_signature_file_fails_the_chain (tests.test_live_chain_disk.ChainDisk.test_dr12_red_step_without_signature_file_fails_the_chain)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/chaintest/red/writepath/tests/test_live_chain_disk.py", line 222, in test_dr12_red_step_without_signature_file_fails_the_chain
+    self.assertEqual(rc, 3, out)
+AssertionError: 0 != 3 : lock taken 2026-11-19T01:50:06Z head new seal0 seal0 h0 h0 free_kib 12582912
+RH exit=1 Ran 1 tests in 0.1s FAILED (failures=1) 
+  RH seconds=0 watermark_lines 0
+free_kib_end 12582912 chain done 2026-11-19T01:50:06Z
+lock released 2026-11-19T01:50:06Z
+
+
+======================================================================
+FAIL: test_dr13_mixed_chain_prints_every_step_and_fails_on_one (tests.test_live_chain_disk.ChainDisk.test_dr13_mixed_chain_prints_every_step_and_fails_on_one)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/chaintest/red/writepath/tests/test_live_chain_disk.py", line 228, in test_dr13_mixed_chain_prints_every_step_and_fails_on_one
+    self.assertEqual(rc, 3, out)
+AssertionError: 0 != 3 : lock taken 2026-11-19T01:50:11Z head new seal0 seal0 h0 h0 free_kib 12582912
+G1 exit=0 Ran 1 tests in 0.1s OK 
+  G1 seconds=0 watermark_lines 0
+G3 exit=0 Ran 1 tests in 0.1s OK 
+  G3 seconds=0 watermark_lines 0
+ZZ unknown step
+  ZZ seconds=0 watermark_lines 0
+free_kib_end 12582912 chain done 2026-11-19T01:50:12Z
+lock released 2026-11-19T01:50:12Z
+
+
+======================================================================
+FAIL: test_dr14_all_steps_as_declared (tests.test_live_chain_disk.ChainDisk.test_dr14_all_steps_as_declared)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/chaintest/red/writepath/tests/test_live_chain_disk.py", line 235, in test_dr14_all_steps_as_declared
+    self.assertIn("steps expected/observed: G1:pass/pass G3:pass/pass", out)
+AssertionError: 'steps expected/observed: G1:pass/pass G3:pass/pass' not found in 'lock taken 2026-11-19T01:50:16Z head new seal0 seal0 h0 h0 free_kib 12582912\nG1 exit=0 Ran 1 tests in 0.1s OK \n  G1 seconds=1 watermark_lines 0\nG3 exit=0 Ran 1 tests in 0.1s OK \n  G3 seconds=0 watermark_lines 0\nfree_kib_end 12582912 chain done 2026-11-19T01:50:17Z\nlock released 2026-11-19T01:50:17Z\n'
+
+======================================================================
+FAIL: test_dr7_rp_rotates_inside_the_window (tests.test_live_chain_disk.ChainDisk.test_dr7_rp_rotates_inside_the_window)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/chaintest/red/writepath/tests/test_live_chain_disk.py", line 144, in test_dr7_rp_rotates_inside_the_window
+    self.assertIn("RP:pass/pass", out)
+AssertionError: 'RP:pass/pass' not found in 'lock taken 2026-11-19T01:51:52Z head new seal0 seal0 h0 h0 free_kib 12582912\nRP in-window old ids hashed 1 before {"files": 1, "ids_changed": false, "valid_per_name": {"projector": 1, "eraser": 1, "verifier": 1, "admin": 1}, "old_ids_valid": 1} after {"files": 1, "ids_changed": true, "valid_per_name": {"projector": 1, "eraser": 1, "verifier": 1, "admin": 1}, "old_ids_valid": 0} \n  RP seconds=0 watermark_lines 0\naaaa\nfree_kib_end 12582912 chain done 2026-11-19T01:51:52Z\nlock released 2026-11-19T01:51:52Z\n'
+
+======================================================================
+FAIL: test_dr8_failing_pass_step_fails_the_chain (tests.test_live_chain_disk.ChainDisk.test_dr8_failing_pass_step_fails_the_chain)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/chaintest/red/writepath/tests/test_live_chain_disk.py", line 183, in test_dr8_failing_pass_step_fails_the_chain
+    self.assertEqual(rc, 3, out)
+AssertionError: 0 != 3 : lock taken 2026-11-19T01:51:57Z head new seal0 seal0 h0 h0 free_kib 12582912
+D6 h_d6_broker {"fenced_holds": "0/5"} h_d6_broker {"fenced_holds": "0/5"} exit=1 
+  D6 seconds=0 watermark_lines 0
+free_kib_end 12582912 chain done 2026-11-19T01:51:57Z
+lock released 2026-11-19T01:51:57Z
+
+
+======================================================================
+FAIL: test_dr8b_failing_unittest_step_fails_the_chain (tests.test_live_chain_disk.ChainDisk.test_dr8b_failing_unittest_step_fails_the_chain)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/chaintest/red/writepath/tests/test_live_chain_disk.py", line 191, in test_dr8b_failing_unittest_step_fails_the_chain
+    self.assertEqual(rc, 3, out)
+AssertionError: 0 != 3 : lock taken 2026-11-19T01:52:02Z head new seal0 seal0 h0 h0 free_kib 12582912
+G1 exit=1 Ran 1 tests in 0.1s FAILED (failures=1) 
+  G1 seconds=0 watermark_lines 0
+free_kib_end 12582912 chain done 2026-11-19T01:52:02Z
+lock released 2026-11-19T01:52:02Z
+
+
+======================================================================
+FAIL: test_dr9_expected_red_that_goes_green_fails_the_chain (tests.test_live_chain_disk.ChainDisk.test_dr9_expected_red_that_goes_green_fails_the_chain)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/chaintest/red/writepath/tests/test_live_chain_disk.py", line 199, in test_dr9_expected_red_that_goes_green_fails_the_chain
+    self.assertEqual(rc, 3, out)
+AssertionError: 0 != 3 : lock taken 2026-11-19T01:52:07Z head new seal0 seal0 h0 h0 free_kib 12582912
+XB exit=0 tree new Ran 2 tests in 0.1s OK 
+  XB seconds=0 watermark_lines 0
+free_kib_end 12582912 chain done 2026-11-19T01:52:07Z
+lock released 2026-11-19T01:52:07Z
+
+
+----------------------------------------------------------------------
+Ran 15 tests in 135.565s
+
+FAILED (failures=9)
+exit=1
