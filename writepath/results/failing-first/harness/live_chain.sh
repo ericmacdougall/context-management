@@ -71,6 +71,33 @@ ESC=$(cat "$WP_HOME/conf/es_container" 2>/dev/null)
 # amendment 23a lines in the node's log since $1 (UTC); prints a count, or "unreadable"
 wm_lines() { docker logs --since "$1" "$ESC" > "$O/.eslog" 2>&1 || { echo unreadable; return; }
   grep -ciE "(high|flood.stage) disk watermark.*exceeded" "$O/.eslog"; }
+# Declared outcomes (main, 2026-11-19: a step that ends otherwise makes the chain exit 3, never 0). Every step is
+# "pass" except XB, RS, RH, RX, which are "red": a non-zero exit AND every test named in
+# results/failing-first/harness/expected-red/<step>.txt failing (FAIL or ERROR). An expected red that passes, or fails
+# without its signature, is a mismatch; so is an unknown step or a red step without a signature file.
+expected() { case $1 in XB|RS|RH|RX) echo red;; *) echo pass;; esac; }
+ex0() { grep -q "^$1 exit=0 " "$O/.sum"; }
+observed() {
+  case $1 in
+    EW|G1|G2|G3|PC|P1|P2|M3|SS|SU) ex0 "$1" && echo pass || echo "fail($(grep -o "^$1 exit=[0-9]*" "$O/.sum" | head -1))";;
+    P0) grep -q "^setup ok" "$O/P0.out" 2>/dev/null && echo pass || echo "fail(no setup ok)";;
+    D6) grep -qx "exit=0" "$O/D6.out" 2>/dev/null && echo pass || echo "fail($(grep -E '^exit=' "$O/D6.out" 2>/dev/null | head -1))";;
+    RR) [ "$(tail -1 "$O/RR.$(basename "$NEW").out" 2>/dev/null)" = "unregistered []" ] && echo pass || echo "fail(head registry)";;
+    RP) a=$(grep -E '^after |^\{' "$O/RP.out" 2>/dev/null | tail -1)
+        case $a in *'"ids_changed": true'*'"valid_per_name": {"projector": 1, "eraser": 1, "verifier": 1, "admin": 1}'*'"old_ids_valid": 0'*)
+          if [ -n "${ROT_OLD:-}" ] || grep -q '^before .*"ids_changed": false' "$O/RP.out"; then echo pass; else echo "fail(no before)"; fi;;
+          *) echo "fail(rotation)";; esac;;
+    LS) grep -qE "^LS .*files with a secret value: 0( |$)" "$O/.sum" && echo pass || echo "fail(leak scan)";;
+    XB|RS|RH|RX) sig=results/failing-first/harness/expected-red/$1.txt
+        if [ ! -s "$sig" ]; then echo "fail(no signature file)"
+        elif ex0 "$1"; then echo "green"
+        else miss=0
+          for t in $(grep -v '^#' "$sig"); do grep -qE "^(FAIL|ERROR): $t " "$O/$1.out" || miss=$((miss + 1)); done
+          [ $miss -eq 0 ] && echo red || echo "red-without-signature(missing $miss)"
+        fi;;
+    *) echo "fail(unknown step)";;
+  esac; }
+VERDICT=""; MISMATCH=0
 echo "lock taken $(date -u +%FT%TZ) head $(cat "$NEW/GIT_HEAD") seal0 $(cat "$SEAL0/GIT_HEAD") h0 $(cat "$H0/GIT_HEAD") free_kib $K"
 cd "$NEW" || exit 2
 for st in $STEPS; do
@@ -160,7 +187,10 @@ print("PC seeded", a.execute("select count(*) from pc_marker").fetchone()[0])' >
     echo "VOID $st: amendment 23a, ES log watermark lines since $ts: $n"; exit 7
   fi
   cat "$O/.sum"
-  echo "  $st seconds=$(( $(date +%s) - t0 )) watermark_lines 0"
+  e=$(expected "$st"); o=$(observed "$st")
+  [ "$e" = "$o" ] || MISMATCH=1
+  VERDICT="$VERDICT $st:$e/$o"
+  echo "  $st seconds=$(( $(date +%s) - t0 )) watermark_lines 0 expected $e observed $o"
 done
 # leaked throwaway databases of the live tests (ours only, by prefix)
 $PY -c '
@@ -171,3 +201,6 @@ for d in left:
     a.execute(f"drop database if exists \"{d}\" with (force)")
 print("dropped leaked test databases", len(left))' 2>&1 | tail -1
 echo "free_kib_end $(free_kib) chain done $(date -u +%FT%TZ)"
+echo "steps expected/observed:$VERDICT"
+[ $MISMATCH -eq 0 ] || { echo "CHAIN FAILED: a step's outcome differs from its declared one (exit 3)"; exit 3; }
+echo "CHAIN OK: every step as declared"

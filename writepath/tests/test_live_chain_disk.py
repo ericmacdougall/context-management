@@ -132,10 +132,16 @@ class ChainDisk(unittest.TestCase):
         # review J M8 on tmpfs stores (a recreated node holds no earlier window's keys): without ROT_OLD the RP step
         # hashes the ids D6 minted (0600), proves, rotates (wp.es_keys create), proves again, in that order
         py = self.home / "emlab2-16096" / "wphard" / "wp" / "venv" / "bin" / "python"
-        py.write_text(f'#!/bin/sh\necho "$*" >> {self.calls}\n[ "$1" = "-c" ] && {{ echo aaaa; exit 0; }}\necho "{{}}"\n')
+        # rot_proof answers like the live one (window A2): before = ids unchanged, all 4 old valid; after = rotated
+        n = self.home / "n"
+        py.write_text(f'#!/bin/sh\necho "$*" >> {self.calls}\n[ "$1" = "-c" ] && {{ echo aaaa; exit 0; }}\n'
+                      f'case "$*" in *rot_proof*) echo x >> {n}\n'
+                      f'  if [ "$(wc -l < {n})" -eq 1 ]; then echo \'{BEFORE}\'; else echo \'{AFTER}\'; fi;;\n'
+                      '  *) echo "{}";; esac\n')
         self.env.pop("ROT_OLD", None)
         rc, out, _ = self.run_chain(12 * G, "RP")
         self.assertEqual(rc, 0, out)
+        self.assertIn("RP:pass/pass", out)
         lines = self.calls.read_text().splitlines() if self.calls.exists() else []
         at = lambda pred: next((i for i, ln in enumerate(lines) if pred(ln)), None)  # noqa: E731
         h = at(lambda ln: "es_api_key*.json" in ln)           # the hashing snippet (its lines follow "-c")
@@ -147,6 +153,93 @@ class ChainDisk(unittest.TestCase):
         self.assertEqual(f.stat().st_mode & 0o777, 0o600)
         self.assertIn("RP in-window old ids hashed 1", out)
         self.assertFalse(self.lock())
+
+    # Declared outcomes (main, after window A at 1ffbfa1 exited 0 although D6 exited 1): the chain exits 3 whenever a
+    # step ends otherwise than declared, and its last lines print expected/observed per step.
+    def fake(self, rc, text="", c_rc=0):
+        """python whose step commands print `text` and exit `rc`; `-c` snippets exit `c_rc`."""
+        py = self.home / "emlab2-16096" / "wphard" / "wp" / "venv" / "bin" / "python"
+        (self.home / "pyout").write_text(text)
+        py.write_text(f'#!/bin/sh\necho "$*" >> {self.calls}\n[ "$1" = "-c" ] && exit {c_rc}\n'
+                      f'cat {self.home / "pyout"}\nexit {rc}\n')
+
+    def signature(self, step, names):
+        d = self.home / "new" / "results" / "failing-first" / "harness" / "expected-red"
+        d.mkdir(parents=True, exist_ok=True)
+        (d / f"{step}.txt").write_text(f"# {step} test signature\n" + "".join(n + "\n" for n in names))
+
+    @staticmethod
+    def unittest_out(failed, passed=()):
+        lines = [f"{t} (tests.test_d3_pg.D3Store.{t}) ... FAIL" for t in failed]
+        lines += [f"{t} (tests.test_d3_pg.D3Store.{t}) ... ok" for t in passed]
+        lines += ["", *(f"FAIL: {t} (tests.test_d3_pg.D3Store.{t})" for t in failed), "",
+                  f"Ran {len(failed) + len(passed)} tests in 0.1s", "", f"FAILED (failures={len(failed)})" if failed else "OK"]
+        return "\n".join(lines) + "\n"
+
+    def test_dr8_failing_pass_step_fails_the_chain(self):
+        # D6 as in window A at 1ffbfa1: es_security and the licence check fine, h_d6_broker exits 1
+        self.fake(1, 'h_d6_broker {"fenced_holds": "0/5"}\n')
+        rc, out, _ = self.run_chain(12 * G, "D6")
+        self.assertEqual(rc, 3, out)
+        self.assertIn("D6:pass/fail(exit=1)", out)
+        self.assertIn("CHAIN FAILED", out)
+        self.assertFalse(self.lock())
+
+    def test_dr8b_failing_unittest_step_fails_the_chain(self):
+        self.fake(1, self.unittest_out(["test_a"]))
+        rc, out, _ = self.run_chain(12 * G, "G1")
+        self.assertEqual(rc, 3, out)
+        self.assertIn("G1:pass/fail(G1 exit=1)", out)
+
+    def test_dr9_expected_red_that_goes_green_fails_the_chain(self):
+        self.signature("XB", ["test_n1a", "test_s10"])
+        self.env["XB_TREE"] = str(self.home / "new")
+        self.fake(0, self.unittest_out([], ["test_n1a", "test_s10"]))
+        rc, out, _ = self.run_chain(12 * G, "XB")
+        self.assertEqual(rc, 3, out)
+        self.assertIn("XB:red/green", out)
+
+    def test_dr10_expected_red_with_its_signature_passes(self):
+        self.signature("XB", ["test_n1a", "test_s10"])
+        self.env["XB_TREE"] = str(self.home / "new")
+        self.fake(1, self.unittest_out(["test_n1a", "test_s10"], ["test_ok"]))
+        rc, out, _ = self.run_chain(12 * G, "XB")
+        self.assertEqual(rc, 0, out)
+        self.assertIn("XB:red/red", out)
+        self.assertIn("CHAIN OK", out)
+
+    def test_dr11_red_for_another_reason_fails_the_chain(self):
+        # red, but one named test passed (e.g. the failure moved): not the declared red
+        self.signature("RS", ["test_b5", "test_b6"])
+        self.fake(1, self.unittest_out(["test_b5", "test_other"], ["test_b6"]))
+        rc, out, _ = self.run_chain(12 * G, "RS")
+        self.assertEqual(rc, 3, out)
+        self.assertIn("RS:red/red-without-signature(missing 1)", out)
+
+    def test_dr12_red_step_without_signature_file_fails_the_chain(self):
+        self.fake(1, self.unittest_out(["test_b5"]))
+        rc, out, _ = self.run_chain(12 * G, "RH")
+        self.assertEqual(rc, 3, out)
+        self.assertIn("RH:red/fail(no signature file)", out)
+
+    def test_dr13_mixed_chain_prints_every_step_and_fails_on_one(self):
+        self.fake(0, self.unittest_out([], ["test_a"]))
+        rc, out, _ = self.run_chain(12 * G, "G1 G3 ZZ")
+        self.assertEqual(rc, 3, out)
+        self.assertIn("steps expected/observed: G1:pass/pass G3:pass/pass ZZ:pass/fail(unknown step)", out)
+
+    def test_dr14_all_steps_as_declared(self):
+        self.fake(0, self.unittest_out([], ["test_a"]))
+        rc, out, _ = self.run_chain(12 * G, "G1 G3")
+        self.assertEqual(rc, 0, out)
+        self.assertIn("steps expected/observed: G1:pass/pass G3:pass/pass", out)
+        self.assertIn("CHAIN OK", out)
+
+
+BEFORE = ('{"files": 1, "ids_changed": false, "valid_per_name": {"projector": 1, "eraser": 1, "verifier": 1, '
+          '"admin": 1}, "old_ids_valid": 1}')
+AFTER = ('{"files": 1, "ids_changed": true, "valid_per_name": {"projector": 1, "eraser": 1, "verifier": 1, '
+         '"admin": 1}, "old_ids_valid": 0}')
 
 
 class NodeWatermarks(unittest.TestCase):
