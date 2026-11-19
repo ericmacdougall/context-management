@@ -298,6 +298,99 @@ class SealerOffline(unittest.TestCase):
             a.seal("t1", "session:s1", 7, "b1", [{"event_id": "e4", "subject_id": "S1", "content": "key AKIA" + "ABCDEFGHIJKLMNOP"}])
         self.assertEqual(ks.calls, [], "a refused batch reached the key service")
 
+    # ------------------------------------------------------------------ U11: one scan binds both tables (review 42cfd11 R1)
+    def test_u11_one_scan_both_purposes_and_prior_mentions(self):
+        S = self.sealer()
+        ks = FakeKS()
+        conn = self.tenant_conn(ks, {NAME: "SX"})
+        a = S.Authority(conn, ks, KID, SEAL_KEY)
+        evs = [{"event_id": "e1", "subject_id": "SY", "content": "I met " + NAME},
+               {"event_id": "e2", "subject_id": "SY", "content": "nobody named"}]
+        req = {"tenant": "t1", "lease_scope": "session:s1", "lease_epoch": 7, "batch_id": "b1", "events": evs}
+        n_scans = sum(1 for s in conn.sql if "subject_identifiers" in s)
+        out = S.dispatch(a, "seal", dict(req, prior_mentions=[["SQ"], ["SY", "SP"]]))
+        self.assertEqual(sum(1 for s in conn.sql if "subject_identifiers" in s) - n_scans, 1, "more than one scan for one seal")
+        rows = out.get("ok") or []
+        self.assertEqual([r["mentions"] for r in rows], [["SQ", "SX"], ["SP"]],
+                         "an earlier scan's mention was dropped (the WPS17 retry), or the speaker listed")
+        for i, r in enumerate(rows):
+            macs = r.get("seal_macs") or {}
+            self.assertEqual(set(macs), {"events", "quarantine"}, "the authority did not return both purposes from the one scan")
+            for p in ("events", "quarantine"):
+                m = S.message(KID, "t1", r["event_id"], "SY", r["content_digest"], r["scan"], r["matcher"], r["secret_scan"],
+                              r["mentions"], "session:s1", 7, "b1", i, 2, p)
+                self.assertEqual(macs[p], hmac.new(SEAL_KEY, m, hashlib.sha256).hexdigest(), p)
+            self.assertEqual(r["seal_mac"], macs["events"])
+            self.assertNotEqual(macs["events"], macs["quarantine"])
+        for bad in ([["SQ"]], [["SQ"], "SP"], [["SQ"], [""]], [["SQ"], [None]], "SQ"):
+            self.assertEqual(S.dispatch(a, "seal", dict(req, prior_mentions=bad)), {"error": "bad_request"}, repr(bad))
+            with self.assertRaises(ValueError):
+                a.seal("t1", "session:s1", 7, "b1", evs, prior_mentions=bad)
+        r = a.seal("t1", "session:s1", 7, "b1", evs, purpose="quarantine", prior_mentions=[["SQ"], []])[0]
+        self.assertEqual((r["mentions"], r["seal_mac"]), (["SQ", "SX"], r["seal_macs"]["quarantine"]))
+
+    # ------------------------------------------------------------------ U12: append's binding scan (review 42cfd11 R1)
+    def _r1_append(self, fail_states, strip_macs=False):
+        """append() of one event by SY naming NAME (subject SX), against an in-process authority whose identifier rows
+        for SX vanish after its first scan (an erasure's final pass). The events insert raises `fail_states` in turn
+        (then succeeds). Returns (result or exception, seal calls [(purpose, prior)], inserts [(table, args)])."""
+        import datetime
+        S = self.sealer()
+        ks = FakeKS()
+        conn = self.tenant_conn(ks, {NAME: "SX"})
+        real = S.Authority(conn, ks, KID, SEAL_KEY)
+        calls, inserts, fails = [], [], list(fail_states)
+
+        class Rec:
+            def seal(self, *a, purpose="events", prior_mentions=None):
+                calls.append((purpose, prior_mentions))
+                kw = {"purpose": purpose} if prior_mentions is None else {"purpose": purpose, "prior_mentions": prior_mentions}
+                rows = real.seal(*a, **kw)
+                conn.idents.clear()                      # the cascade's final pass: SX can no longer be found
+                return [{k: v for k, v in r.items() if k != "seal_macs"} for r in rows] if strip_macs else rows
+
+        base_exec = conn.execute
+
+        def execute(sql, args=()):
+            if "insert into events" in sql or "insert into quarantine" in sql:
+                table = "events" if "insert into events" in sql else "quarantine"
+                if table == "events" and fails:
+                    err = type("E", (self.LOG.psycopg.Error,), {"sqlstate": fails.pop(0)})
+                    raise err("refused")
+                inserts.append((table, args))
+            return base_exec(sql, args)
+        conn.execute = execute
+        lease = types.SimpleNamespace(tenant="t1", scope="session:s1", epoch=1)
+        ev = dict(subject_id="SY", kind="message", actor="user", trust_origin="user_typed",
+                  ts_event=datetime.datetime.now(datetime.timezone.utc), content="I met " + NAME)
+        try:
+            res = self.LOG.append(conn, ks, lease, [ev], sealer=Rec())
+        except Exception as e:                           # noqa: BLE001  (the type is asserted by each caller)
+            res = e
+        return res, calls, inserts
+
+    def test_u12a_fenced_batch_is_quarantined_under_its_own_scan(self):
+        S = self.sealer()
+        res, calls, inserts = self._r1_append(["WPS01"])
+        self.assertEqual([c[0] for c in calls], ["events"], "the stale path called the authority again (a rescan after the cascade)")
+        self.assertEqual([t for t, _ in inserts], ["quarantine"], res)
+        a = inserts[0][1]
+        self.assertEqual(a[7], ["SX"], "the quarantine row lost the mention its first scan found")
+        self.assertEqual(a[13], S.mac(SEAL_KEY, S.message(KID, "t1", a[8], "SY", hashlib.sha256(bytes(a[6])).hexdigest(), a[9], a[10],
+                                                           a[11], ["SX"], "session:s1", 1, a[14], 0, 1, "quarantine")),
+                         "the quarantine row is not attested by the scan that bound it")
+
+    def test_u12b_retry_after_wps17_keeps_the_earlier_mention(self):
+        res, calls, inserts = self._r1_append(["WPS17"])
+        self.assertEqual([c[0] for c in calls], ["events", "events"], res)
+        self.assertEqual(calls[1][1], [["SX"]], "the retry did not hand the authority the first scan's mentions")
+        self.assertEqual([(t, a[13]) for t, a in inserts], [("events", ["SX"])], "the retried row dropped SX")
+
+    def test_u12c_authority_without_both_attestations_is_refused(self):
+        res, calls, inserts = self._r1_append([], strip_macs=True)
+        self.assertEqual(type(res).__name__, "SealError", f"append ended with {res!r}")
+        self.assertEqual(inserts, [], "a row was stored from an authority that returned one attestation")
+
     # ------------------------------------------------------------------ U7: the socket
     def test_u7_socket_peer_codes_and_log(self):
         S = self.sealer()
@@ -317,6 +410,10 @@ class SealerOffline(unittest.TestCase):
             rows = c.seal("t1", "session:s1", 7, "batch-u7", [{"event_id": eid, "subject_id": "SY", "content": content}])
             self.assertEqual(rows[0]["mentions"], ["SX"])
             self.assertIsInstance(rows[0]["content_enc"], bytes)
+            self.assertEqual(set(rows[0].get("seal_macs") or {}), {"events", "quarantine"}, "the socket lost an attestation (42cfd11 R1)")
+            r2 = c.seal("t1", "session:s1", 7, "batch-u7p", [{"event_id": eid + "p", "subject_id": "SY", "content": "no name"}],
+                        prior_mentions=[["SQ"]])[0]
+            self.assertEqual(r2["mentions"], ["SQ"], "the socket dropped prior_mentions (42cfd11 R1)")
             with self.assertRaises(self.M.MatcherBudgetExceeded) as cm:
                 c.seal("t1", "session:s1", 7, "batch-u7b", [{"event_id": "e9", "subject_id": "SY", "content": CRAFTED}])
             self.assertEqual(cm.exception.code, "WPM02")

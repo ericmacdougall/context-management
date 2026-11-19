@@ -1176,6 +1176,108 @@ class D3Store(unittest.TestCase):
         self.assertFalse(done.get("done"), "the erasure was reported done while an unscanned quarantine row remained")
         self.assertEqual(done.get("verify", {}).get("pg:quarantine_unscanned"), 1, done)
 
+    # ------------------------------------------------------------------ R1 (review 42cfd11): the REAL writer, log.append
+    def writer(self, t, sid, speaker, content, hook):
+        """log.append through the in-process authority (test key) with a real lease; `hook` runs at the writer's own
+        pause points (before_txn comes after the first seal). Returns (result or the exception, lease)."""
+        from wp import lease as L
+        import datetime
+        ls = L.acquire(self.app, t, "session:" + sid, ttl_s=60, force=True)
+        ev = dict(subject_id=speaker, kind="message", actor="user", trust_origin="user_typed",
+                  ts_event=datetime.datetime.now(datetime.timezone.utc), content=content)
+        try:
+            return self.LG.append(self.app, AppendKS(), ls, [ev], hook=hook, sealer=self.authority()), ls
+        except Exception as e:                          # noqa: BLE001  (the caller asserts on it)
+            return e, ls
+
+    def takeover(self, t, sid):
+        from wp import lease as L
+        return L.acquire(self.app, t, "session:" + sid, ttl_s=60, force=True)
+
+    def finish(self, j):
+        """X's erasure from mark to completion: rescan, cascade, keys destroyed, complete. Returns the completion."""
+        from wp import erasure
+        erasure.rescan(self.app, FixedKS(), j)
+        self.cascade(j)
+        self.assertEqual(self.owner_state("update erasure_jobs set state = 'keys_destroyed' where job_id = %s", (j,)), "ok")
+        return self.complete(j)
+
+    def once(self, fn):
+        fired = []
+
+        def hook(name, _data=None):
+            if name == "before_txn" and not fired:
+                fired.append(fn())
+        return hook, fired
+
+    def test_n1d_fenced_writer_resumed_after_done_stores_nothing(self):
+        """R1, n1a2 shape: X declared; the writer's seal finds X; it pauses; its lease is taken over and X's erasure
+        runs to done; it resumes. Before: the fenced branch rescanned (X's identifiers deleted), found nothing and
+        quarantined content naming X under the speaker's live key after X's job was done."""
+        t, sid = "d3n1e", "n1e"
+        self.tenant(t)
+        self.declare(t, "N5X", NAME)
+
+        def pause():
+            self.takeover(t, sid)
+            return self.finish(self.job("N5X", t=t))
+        hook, fired = self.once(pause)
+        res, _ = self.writer(t, sid, "N5Y", "I met " + NAME + " today", hook)
+        self.assertTrue(fired and fired[0].get("done"), f"X's erasure did not complete while the writer paused: {fired}")
+        self.assertIsInstance(res, dict, res)
+        self.assertEqual((res.get("quarantined"), res.get("dropped_stale")), (0, 1),
+                         f"the fenced writer stored content naming X after X's erasure was done: {res}")
+        self.assertEqual(self.one("select count(*) from quarantine where tenant_id=%s", (t,)), (0,))
+
+    def test_n1e_fenced_writer_sealed_before_declaration_stores_nothing(self):
+        """R1, n1a shape: the writer seals before X is declared (mentions []), pauses; X is declared and erased to
+        done and the lease taken over; it resumes. Before: rescanned after X's cascade, quarantined. Now its binding
+        scan is below X's declaration: WPS17, dropped."""
+        t, sid = "d3n1f", "n1f"
+        self.tenant(t)
+
+        def pause():
+            self.takeover(t, sid)
+            return self.finish(self.declared_job(t, "N6X", NAME))
+        hook, fired = self.once(pause)
+        res, _ = self.writer(t, sid, "N6Y", "I met " + NAME + " today", hook)
+        self.assertTrue(fired and fired[0].get("done"), f"X's erasure did not complete while the writer paused: {fired}")
+        self.assertIsInstance(res, dict, res)
+        self.assertEqual((res.get("quarantined"), res.get("dropped_stale")), (0, 1),
+                         f"the fenced writer stored content scanned before X's declaration after X's erasure: {res}")
+        self.assertEqual(self.one("select count(*) from quarantine where tenant_id=%s", (t,)), (0,))
+
+    def test_n1f_valid_writer_retry_keeps_the_erased_mention(self):
+        """R1, events path (log.py WPS17 retry): a writer with a VALID lease seals content naming X; it pauses; X is
+        erased to done and an unrelated identifier is declared (WPS17 at insert); it resumes and retries. Before: the
+        retry's fresh scan no longer found X and the event was stored in events naming X. Now the retry carries X
+        forward: WPS18, MentionsErased, nothing stored."""
+        t, sid = "d3n1g", "n1g"
+        self.tenant(t)
+        self.declare(t, "N7X", NAME)
+
+        def pause():
+            done = self.finish(self.job("N7X", t=t))
+            self.declare(t, "N7Z", "Zora Quill")          # moves the identifier set: the insert gets WPS17
+            return done
+        hook, fired = self.once(pause)
+        res, _ = self.writer(t, sid, "N7Y", "I met " + NAME + " today", hook)
+        self.assertTrue(fired and fired[0].get("done"), f"X's erasure did not complete while the writer paused: {fired}")
+        self.assertIsInstance(res, self.LG.MentionsErased, f"the retry stored content naming the erased X: {res}")
+        self.assertEqual(self.one("select count(*) from events where tenant_id=%s", (t,)), (0,))
+
+    def test_n1g_fenced_writer_control_still_quarantines(self):
+        """Control for n1d to n1f: a fenced writer whose content names nobody erased is quarantined (one row, under
+        its binding scan), so the fix drops only what the invariant requires."""
+        t, sid = "d3n1h", "n1h"
+        self.tenant(t)
+        self.declare(t, "N8X", NAME)
+        hook, fired = self.once(lambda: self.takeover(t, sid))
+        res, _ = self.writer(t, sid, "N8Y", "I met " + NAME + " today", hook)
+        self.assertIsInstance(res, dict, res)
+        self.assertEqual((res.get("quarantined"), res.get("dropped_stale")), (1, 0), res)
+        self.assertEqual(self.one("select mentions from quarantine where tenant_id=%s", (t,)), (["N8X"],))
+
 
 class FixedKS:
     """Fixed test keys: one subject key for every speaker, one tenant HMAC key (opaque test bytes, not a secret)."""
@@ -1188,6 +1290,12 @@ class FixedKS:
     def tenant_hmac_many(self, tenant, texts):
         import hmac as _h
         return [_h.new(self.HKEY, x.encode(), hashlib.sha256).hexdigest() for x in texts]
+
+
+class AppendKS(FixedKS):
+    """FixedKS plus what log.append reads: a fixed chain key (opaque test bytes)."""
+    def chain_key(self, tenant):
+        return b"test-only-chain-key-32-bytes-xx!"
 
 
 if __name__ == "__main__":
