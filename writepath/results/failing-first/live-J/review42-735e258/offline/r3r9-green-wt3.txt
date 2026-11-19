@@ -13,4 +13,4 @@ PC8 {"scenario": "pc8", "n": 32, "line_limit": 2097152, "capped": false, "base_m
 Ran 298 tests in 311.959s
 
 OK (skipped=3)
-seal key seal-ac626c203bf10141
+seal key [the id of a throwaway test key, removed after commit 1f0fd56]

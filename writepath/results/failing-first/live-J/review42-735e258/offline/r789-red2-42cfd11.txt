@@ -76,4 +76,4 @@ AssertionError: unexpectedly None : no operator existence check for the C14c nam
 Ran 12 tests in 0.043s
 
 FAILED (failures=9)
-seal key seal-d2b4c1b1e9385773
+seal key [the id of a throwaway test key, removed after commit 1f0fd56]

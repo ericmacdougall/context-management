@@ -237,4 +237,4 @@ AssertionError: "can re-point any tenant's alias" unexpectedly found in '"""Amen
 Ran 40 tests in 195.823s
 
 FAILED (failures=25)
-seal key seal-6d4678a03da165de
+seal key [the id of a throwaway test key, removed after commit 1f0fd56]
