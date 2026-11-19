@@ -1684,7 +1684,10 @@ class _Watch:
             rc = None
         if self.t is not None:
             self.t.join(timeout=10)
-        if ended or rc not in (-signal.SIGTERM, None):   # it stopped by itself (Docker's error, a crash), not by us
+        # It stopped by itself (Docker's error, a crash) if it had ended before the gate signalled it, or if it then
+        # exits other than by that signal: -SIGTERM, or 128+SIGTERM from a CLI that traps it (Docker 29.1.3 on
+        # t2-dev exits 143, live smoke 2026-11-18).
+        if ended or rc not in (-signal.SIGTERM, 128 + signal.SIGTERM, None):
             self.why.append("Docker's container event stream ended during the run: containers created after it "
                             "ended are unknown")
         return list(self.why)

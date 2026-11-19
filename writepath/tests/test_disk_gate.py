@@ -888,6 +888,8 @@ def fake_main(argv):
         if since is not None and F.st()["flags"].get("events_rc"):      # integ: the event stream fails at once
             print("Error response from daemon: events", file=sys.stderr)
             return 1
+        if F.st()["flags"].get("events_trap"):   # the real CLI (Docker 29.1.3 on t2-dev) exits 143 on SIGTERM
+            signal.signal(signal.SIGTERM, lambda *a: os._exit(143))
         evs = F.events()
         pos = len(evs) if since is None else next((k for k, e in enumerate(evs) if e["time"] >= since), len(evs))
         while True:
@@ -2713,6 +2715,12 @@ class Gate(unittest.TestCase):
         self.F.flag(events_rc=True)
         self.start()
         self.assertExactly(*self.call("end"), 3, "Docker's container event stream ended during the run")
+
+    def test_integ_event_stream_exiting_143_on_the_gates_sigterm_is_valid(self):
+        # live smoke on t2-dev, 2026-11-18: the docker CLI traps SIGTERM and exits 143; that is the gate's own stop
+        self.F.flag(events_trap=True)
+        self.start()
+        self.assertValid(*self.call("end"))
 
     def test_integ_service_spec_is_bound_to_h_d2_run_args(self):
         src = (self.tree / "exp" / "h_d2_uids.py").read_text()
