@@ -8,7 +8,11 @@ against sha256 of each pad's hex. No pad, key or log line is printed; the output
   client   the same call with client-side binding (values inlined into the statement text): POSITIVE CONTROL, want
            a hit for each pad, which shows the search finds a pad that is in the log
   errors_logged  'seal key malformed' ERROR lines since the start: want 2 (the log is read and errors reach it)
-Exit 0 when the claim holds (server 0 hits, client 2 hits, 2 errors logged), 1 otherwise.
+  success_control  review 42cfd11 R7: with the session at log_min_duration_statement 0 and log_parameter_max_length -1,
+           a SUCCESSFUL parameterised statement carrying two fresh pads (as hex text): POSITIVE CONTROL, want 2 hits
+  success_quiet    the same inside wp.setup.quiet (the transaction the install now runs in): want 0 hits
+Exit 0 when the claim holds (server 0 hits, client 2 hits, 2 errors logged, success_control 2, success_quiet 0), 1
+otherwise.
 usage (from a pinned tree, WP_HOME set, after wp.setup): python results/failing-first/harness/m3_pad_log.py"""
 import datetime
 import hashlib
@@ -54,6 +58,21 @@ def main():
         out[f"{variant}_sqlstate"] = _attempt(conn, ip, op, variant == "client")
         del ip, op
     conn.execute("reset role")
+    from wp import setup
+    conn.execute("set log_min_duration_statement = 0")          # session level, superuser: the R7 setting
+    conn.execute("set log_parameter_max_length = -1")
+    for variant in ("success_control", "success_quiet"):
+        ip, op = sealer.pads(os.urandom(32))
+        hashes[variant] = [hashlib.sha256(p.hex().encode()).hexdigest() for p in (ip, op)]
+        q = "select length(decode(%s, 'hex')) + length(decode(%s, 'hex'))"
+        if variant == "success_quiet":
+            with setup.quiet(conn):
+                out[f"{variant}_result"] = conn.execute(q, (ip.hex(), op.hex())).fetchone()[0]
+        else:
+            out[f"{variant}_result"] = conn.execute(q, (ip.hex(), op.hex())).fetchone()[0]
+        del ip, op
+    conn.execute("reset log_min_duration_statement")
+    conn.execute("reset log_parameter_max_length")
     time.sleep(1)
     r = subprocess.run(["docker", "logs", "--since", since, config.PG_CONTAINER], capture_output=True, timeout=120)
     log = r.stdout + r.stderr
@@ -63,7 +82,8 @@ def main():
     for variant, hs in hashes.items():
         out[f"{variant}_pad_hits"] = pad_hits(log, hs)
     out["holds"] = (out["log_read"] and out["errors_logged"] == 2 and out["server_pad_hits"] == 0
-                    and out["client_pad_hits"] == 2)
+                    and out["client_pad_hits"] == 2 and out["success_control_pad_hits"] == 2
+                    and out["success_quiet_pad_hits"] == 0)
     print("m3_pad_log", json.dumps(out, sort_keys=True))
     return 0 if out["holds"] else 1
 

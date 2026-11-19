@@ -27,6 +27,11 @@ if not os.environ.get("WP_HOME"):                 # an isolated lab home, as tes
 from wp import config, setup  # noqa: E402
 
 
+def types_ns(**kw):
+    import types
+    return types.SimpleNamespace(**kw)
+
+
 class _PG:
     def encrypt_password(self, pw, user, alg):
         return b"SCRAM-SHA-256$4096:fake"
@@ -38,6 +43,9 @@ class _Cur:
 
     def fetchall(self):
         return self.rows
+
+    def fetchone(self):
+        return self.rows[0] if self.rows else None
 
 
 class FakeAdmin:
@@ -62,6 +70,17 @@ class FakeAdmin:
 
     def password_set(self, role):
         return any(f"Identifier('{role}')" in s and "password" in s for s in self.sql)
+
+    def transaction(self):
+        import contextlib
+        fa = self
+
+        @contextlib.contextmanager
+        def tx():
+            fa.sql.append("BEGIN")
+            yield
+            fa.sql.append("COMMIT")
+        return tx()
 
 
 class SetupRoles(unittest.TestCase):
@@ -89,6 +108,61 @@ class SetupRoles(unittest.TestCase):
         for r in setup.LOGIN_ROLES:
             self.assertTrue(a.password_set(r), f"{r} still has no password")
             self.assertNotIn("from-the-cluster-before", pathlib.Path(config.pgpass(r)).read_text())
+
+    def test_s_role4_verifier_never_reaches_the_statement_log(self):
+        # review 42cfd11 R9: the verifier is a literal in ALTER ROLE; each such statement runs in its own transaction
+        # after SET LOCAL log_statement none, log_min_duration_statement -1 and log_min_error_statement panic
+        a = FakeAdmin(roles=["wp"])
+        setup._ensure_roles(a)
+        pw = [i for i, s in enumerate(a.sql) if "password" in s and "alter role" in s]
+        self.assertEqual(len(pw), len(setup.LOGIN_ROLES))
+        for i in pw:
+            begin = max((j for j in range(i) if a.sql[j] == "BEGIN"), default=None)
+            self.assertIsNotNone(begin, "a password statement outside a transaction")
+            self.assertFalse(any(a.sql[j] == "COMMIT" for j in range(begin, i)), "a password statement outside a transaction")
+            tx = " ".join(a.sql[begin:i])
+            for g, v in (("log_statement", "none"), ("log_min_duration_statement", "-1"), ("log_min_error_statement", "panic"),
+                         ("log_min_duration_sample", "-1")):
+                self.assertTrue(f"Identifier('{g}')" in tx and f"Literal('{v}')" in tx and "set local" in tx,
+                                f"{g} not switched off before the verifier statement")
+            # transaction sampling is decided when the transaction starts: switched off at session level before BEGIN
+            self.assertIn("set log_transaction_sample_rate = 0", a.sql[begin - 1], "transaction sampling not off before BEGIN")
+
+    def test_s_role5_seal_pads_install_without_statement_logging(self):
+        # review 42cfd11 R7: a SUCCESSFUL install under log_min_duration_statement >= 0 would log the pads as bind
+        # parameters; the install runs in one transaction that first switches statement and parameter logging off
+        # (superuser SET LOCAL), then takes wp_owner for that transaction only
+        from wp import sealer
+        d = tempfile.mkdtemp()
+        old = os.environ.get("WP_SECRETS_DIR")
+        os.environ["WP_SECRETS_DIR"] = d
+        try:
+            a = FakeAdmin(roles=["wp"])
+            a.execute = lambda q, *x, _r=a.execute: (_r(q, *x), types_ns(fetchone=lambda: None))[1]
+            setup._seal_key(a)
+        finally:
+            if old is None:
+                os.environ.pop("WP_SECRETS_DIR", None)
+            else:
+                os.environ["WP_SECRETS_DIR"] = old
+        self.assertTrue(sealer.LINE_LIMIT)              # the authority module imported (the key file was made by it)
+        ins =[i for i, s in enumerate(a.sql) if "wp_seal.install" in s]
+        self.assertEqual(len(ins), 1, a.sql)
+        i = ins[0]
+        begin = max((j for j in range(i) if a.sql[j] == "BEGIN"), default=None)
+        self.assertIsNotNone(begin, "the install runs outside a transaction")
+        tx = a.sql[begin:i]
+        self.assertFalse("COMMIT" in tx, "the install runs outside the quiet transaction")
+        role = next((j for j, s in enumerate(tx) if "role wp_owner" in s), None)
+        self.assertIsNotNone(role, "the install does not run as wp_owner")
+        self.assertIn("set local role", tx[role], "wp_owner is taken beyond the install's transaction")
+        self.assertIn("set log_transaction_sample_rate = 0", a.sql[begin - 1], "transaction sampling not off before BEGIN")
+        for g, v in (("log_statement", "none"), ("log_min_duration_statement", "-1"), ("log_parameter_max_length", "0"),
+                     ("log_parameter_max_length_on_error", "0"), ("log_min_error_statement", "panic"),
+                     ("log_min_duration_sample", "-1")):
+            at = next((j for j, s in enumerate(tx) if f"Identifier('{g}')" in s and f"Literal('{v}')" in s), None)
+            self.assertIsNotNone(at, f"{g} is not switched off for the install")
+            self.assertLess(at, role, f"{g} is set after the role change (superuser setting)")
 
     def test_s_role2_existing_roles_keep_their_passwords(self):
         a = FakeAdmin(roles=["wp", "wp_owner", "wp_reviewer", *setup.LOGIN_ROLES], with_pw=setup.LOGIN_ROLES)
