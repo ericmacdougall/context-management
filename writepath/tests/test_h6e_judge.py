@@ -31,7 +31,8 @@ def holding():
         "C1": {"B_w": REF, "B_read": REF, "B_x": REF}, "C2": {"A_base": REF}, "C3": {"A_x": REF},
         "C4": {"add_next": REF, "remove_own": REF, "add_on_B": REF},
         "C14": {"a": {"request": 200, "own": [201, None], "B": REF}, "b": [403, "security_exception", None],
-                "c": {"writes": [REF] * 5, "accepted": 0}, "d": {"own_mapping": [200, None], "B_mapping": REF}},
+                # H6g (review 42cfd11 R8): C14c runs with the still-valid key; the operator found no such index after
+                "c": {"name": "x", "writes": [REF] * 5, "accepted": 0, "key_valid": True, "exists_after": False}, "d": {"own_mapping": [200, None], "B_mapping": REF}},
         "C5": {"E2": 3, "h2_write": [201, None], "stale": [REF] * 20, "stale_accepted": 0},
         "C6": {"old_epoch_h1": "Refused: x", "new_epoch_h1": "Refused: x", "new_epoch_empty": "Refused: x"},
         "C7": {"p1_step_after_takeover": -1, "p1_written_before": 3, "p1_written_after": 3, "p2_done": True},
