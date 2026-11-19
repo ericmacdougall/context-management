@@ -21,6 +21,7 @@
 #   RX  tests.test_d3_pg with SCHEMA_UNDER_TEST = $RX_TREE/wp/schema.sql (the "before" of the latest fixes)
 #   XB  tests.test_d3_pg from $XB_TREE (its own tests and code)
 #   SS  seal_socket_e2e.py (same uid)      SU seal_uids_e2e.py (sealer under its own uid)
+#   M3  m3_pad_log.py: throwaway seal pads in failing install calls; the node's log searched by pad hash (review J M3)
 #   D6  wp.es_security enable, licence, exp.h_d6_broker 5 (UNSTAMPED; amendments H6c, H6e)
 #   RP  rot_proof.py against $ROT_OLD (a sha256 list of earlier key ids) when set; otherwise IN-WINDOW: hash the ids D6
 #       minted, rot_proof (before: they are the valid ones), wp.es_keys create (rotation), rot_proof (after): counts only
@@ -143,6 +144,7 @@ for t, ext in (("pc_toast_c", False), ("pc_toast_x", True)):
     a.execute(f"insert into {t} values (%s)", ("zqtoastpc-" * 2000,))
 a.execute("checkpoint")
 print("PC seeded", a.execute("select count(*) from pc_marker").fetchone()[0])' > "$O/PC.out" 2>&1; say "PC exit=$? $(tail -1 "$O/PC.out")";;
+    M3) timeout 300 $PY results/failing-first/harness/m3_pad_log.py > "$O/M3.out" 2>&1; say "M3 exit=$? $(tail -1 "$O/M3.out" | S | cut -c1-700)";;
     SS) timeout 600 $PY results/failing-first/harness/seal_socket_e2e.py > "$O/SS.out" 2>&1; say "SS exit=$? $(tail -1 "$O/SS.out" | S | cut -c1-600)";;
     SU) timeout 1200 $PY results/failing-first/harness/seal_uids_e2e.py > "$O/SU.out" 2>&1; say "SU exit=$? $(tail -1 "$O/SU.out" | S | cut -c1-900)";;
     LS) say "LS $($PY runkit/leak_scan.py "$WP_HOME" "$O" "$WP_HOME/results" "$WP_HOME/logs" "$WP_HOME/state" 2>&1 | S | tr '\n' ' ')";;
