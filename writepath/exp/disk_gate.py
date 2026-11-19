@@ -1962,7 +1962,7 @@ def _finish(run, extra=()):
 def _report(run, obs, why, f, window_end):
     print(f"disk_gate end free {f:.1f} GiB {_summary(obs)}")
     for x in why:
-        print(f"disk_gate VOID: {x}")
+        print(f"disk_gate VOID: {_one_line(x)}")
     _verdict_line(run["run"], "VOID" if why else "VALID", window_end)
     return 3 if why else 0
 
@@ -2180,15 +2180,22 @@ def _verdict(args):
         sys.exit(3)
     e = end[0]
     for x in e.get("reasons") or []:
-        print(f"disk_gate VOID: {x}")
+        print(f"disk_gate VOID: {_one_line(x)}")
     _verdict_line(run_id, e.get("verdict"), e.get("window_end"))
     sys.exit(0 if e.get("verdict") == "VALID" else 3)
 
 
 # --------------------------------------------------------------------------------------------------------- commands
+def _one_line(s):
+    """A reason as one output line: every non-printable character (newline, carriage return, other controls, U+2028)
+    of a crafted file, role, schema or container name is escaped, so no part of a reason starts a line of its own and
+    no name can print a forged gate line (live I4 on t2-dev, 2026-11-19: a link named "x\\n -> GIT_HEAD")."""
+    return "".join(c if c.isprintable() else ascii(c)[1:-1] for c in str(s))
+
+
 def _print_blocked(reasons):
     for r in reasons:
-        print(f"disk_gate BLOCKED: {r}")
+        print(f"disk_gate BLOCKED: {_one_line(r)}")
     print(f"disk_gate BLOCKED {VERSION} sha256 {GATE_SHA256[:16]}")
 
 
@@ -2336,7 +2343,7 @@ def main(cmd="", *args):
     if cmd == "preflight":             # the stores must be clean (P7), as at admission
         why = _clean()
         for w in why:
-            print(f"disk_gate BLOCKED: {w}")
+            print(f"disk_gate BLOCKED: {_one_line(w)}")
         if why:
             sys.exit(2)
         print("disk_gate preflight: stores clean")

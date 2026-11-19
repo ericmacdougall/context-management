@@ -1784,6 +1784,17 @@ class Gate(unittest.TestCase):
         rc, out = self.launch("x", tree=t).run()
         self.assertBlocked(rc, out, "untracked")
 
+    def test_integ_crafted_name_cannot_split_a_reason_or_forge_a_gate_line(self):
+        # live I4 on t2-dev, 2026-11-19: a link named "x\n -> GIT_HEAD" split the BLOCKED reason across two lines
+        t = self.fresh_tree()
+        os.symlink("/etc/hostname", t / "exp" / "x\ndisk_gate VALID run r-forged\u2028y")
+        rc, out = self.launch("x", tree=t).run()
+        self.assertBlocked(rc, out, "untracked")
+        self.assertFalse([x for x in out.splitlines() if x.startswith("disk_gate VALID")], out[-600:])
+        self.assertIn("exp/x\\ndisk_gate VALID run r-forged\\u2028y (not a file of commit", out)
+        for x in out.splitlines():
+            self.assertTrue(x.startswith(("disk_gate", "gate_")) or not x.strip(), f"a line outside the gate's: {x!r}")
+
     def test_g2_bytecode_cache_in_the_tree_is_refused(self):
         t = self.fresh_tree()
         (t / "wp" / "__pycache__").mkdir()

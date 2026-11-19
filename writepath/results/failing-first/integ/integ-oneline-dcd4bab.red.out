@@ -1,0 +1,29 @@
+# failing-first receipt
+# date: 2026-11-19T01:05:47Z
+# file under test: dcd4bab:writepath/exp/disk_gate.py blob 9f6924aeb1b5a7c86436a7c7cf57e26b5a314871 sha256 1a573764fc5a5ba5344d7da183b223dce61a4ff16f4790abd130892cc6dc40dd
+# tree: writepath at dcd4bab (git archive); the current tests/ copied into it; run from it; nothing imported from the current tree
+# test file: tests/test_disk_gate.py from HEAD dcd4bab blob 1ec6ce3940b4f8911af75f025a0558d2b0ebd550
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<that file> python3 - <tests> < runner) with tests: tests.test_disk_gate.Gate.test_integ_crafted_name_cannot_split_a_reason_or_forge_a_gate_line
+test_integ_crafted_name_cannot_split_a_reason_or_forge_a_gate_line (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+FAIL: test_integ_crafted_name_cannot_split_a_reason_or_forge_a_gate_line (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.m4k7e16jQj/writepath/tests/test_disk_gate.py", line 1793, in test_integ_crafted_name_cannot_split_a_reason_or_forge_a_gate_line
+    self.assertFalse([x for x in out.splitlines() if x.startswith("disk_gate VALID")], out[-600:])
+AssertionError: ['disk_gate VALID run r-forged', 'disk_gate VALID run r-forged'] is not false : ts (WP_HOME conf, logs, svc, run), its capabilities, devices or environment, and one created within the last second before the end and removed before it can be missed; Elasticsearch index and component templates are inspected at admission only; write_refusals is not protected from a superuser or wp_owner.
+disk_gate BLOCKED: an untracked file in the pinned tree: exp/x
+disk_gate VALID run r-forged y (not a file of commit c0ffee100000)
+disk_gate BLOCKED: fixture exp/x
+disk_gate VALID run r-forged y is not registered in runkit/FIXTURES.sha256
+disk_gate BLOCKED disk_gate v6 sha256 1a573764fc5a5ba5
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.528s
+
+FAILED (failures=1)
+# loaded writepath modules (path in the extracted tree, sha256 prefix):
+#   tests.test_disk_gate tests/test_disk_gate.py 6dcd89a1a82f8188
+# exit status: 1
