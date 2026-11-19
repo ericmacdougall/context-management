@@ -1007,8 +1007,9 @@ create function wp_erasure_pg_residue(t text, s text) returns jsonb language sql
     'pg:identifier_proposals', (select count(*) from identifier_proposals where tenant_id = t and subject_id = s),
     'pg:quarantine_mentions', (select count(*) from quarantine where tenant_id = t and mentions @> array[s]),
     -- review J N1: quarantine rows scanned below the job's identifier-set version may name the subject (the rescan
-    -- never reads quarantine); the cascade removes them unless their speaker is held, so a held one waits like
-    -- 'withheld_by_hold' does
+    -- never reads quarantine); the cascade removes them unless their speaker is held. Review 42cfd11 R4: the count is
+    -- tenant-wide, so ONE held speaker's stale row keeps EVERY erasure job of the tenant at keys_destroyed under this
+    -- key (not under 'withheld_by_hold', which names the job's own subject) until the hold is released (fail-closed)
     'pg:quarantine_unscanned', (select count(*) from quarantine q where q.tenant_id = t
                                 and q.mention_scan_upto < (select coalesce(jb.ident_xmax, 0) from erasure_jobs jb
                                                            where jb.tenant_id = t and jb.subject_id = s order by jb.created_at desc limit 1)),
