@@ -1,0 +1,6 @@
+# G1 declared pass: tests.test_ident must run exactly RAN tests, skip SKIP, fail none, exit 0 (review 42cfd11 R3).
+# RAN is the loader count of tests.test_ident at this head (tests/test_live_chain_disk.py DR19 checks it).
+STEP G1
+DECLARED pass
+RAN 78
+SKIP 0

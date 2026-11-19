@@ -1,0 +1,6 @@
+# G3 declared pass: tests.test_schema_broker_pg must run exactly RAN tests, skip SKIP, fail none, exit 0 (review 42cfd11 R3).
+# RAN is the loader count of tests.test_schema_broker_pg at this head (tests/test_live_chain_disk.py DR19 checks it).
+STEP G3
+DECLARED pass
+RAN 3
+SKIP 0

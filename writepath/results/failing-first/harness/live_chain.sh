@@ -35,6 +35,21 @@ export WP_UCD_DIR=$HOME/emlab2-16096/wphard/ucd
 PY=$WP_HOME/venv/bin/python
 NEW=$1; SEAL0=$2; H0=$3; O=$4; STEPS=${5:-"EW G1 P0 G2 G3 PC P1 P2 RR RS RH SS SU D6 RP LS"}
 START_KIB=10485760; STOP_KIB=8388608     # amendment H6d (were 20971520 start, 15 GB floor)
+# review 42cfd11 R6: every step command runs under `timeout -k 120`: a step that ignores TERM (stopsig turns the first
+# into SystemExit and ignores later ones while it cleans up) is killed 120 s after its deadline or the watcher's TERM
+T="timeout -k 120"
+# review 42cfd11 R3: the step list is printed and checked before anything starts; an empty list or an unknown step is
+# refused (exit 3), so CHAIN OK always names what it covered. The judge (step_judge.py) runs under the host's python3.
+KNOWN=" EW G1 G2 G3 P0 P1 P2 PC RR RS RH RX XB SS SU M3 D6 RP LS "
+JPY=$(command -v python3)
+JUDGE="$NEW/results/failing-first/harness/step_judge.py"
+n_steps=0
+for st in $STEPS; do
+  case "$KNOWN" in *" $st "*) n_steps=$((n_steps + 1));; *) echo "CHAIN FAILED: unknown step $st (exit 3)"; exit 3;; esac
+done
+[ "$n_steps" -gt 0 ] || { echo "CHAIN FAILED: no steps (exit 3)"; exit 3; }
+[ -n "$JPY" ] && [ -f "$JUDGE" ] || { echo "CHAIN FAILED: no judge (python3 and $JUDGE needed; exit 3)"; exit 3; }
+echo "steps ($n_steps): $(echo $STEPS)"
 free_kib() { df -k --output=avail "$HOME" | tail -1 | tr -dc 0-9; }
 mkdir -p "$O"
 K=$(free_kib)
@@ -68,6 +83,15 @@ sum() { grep -E "^(Ran |OK|FAILED)" "$1" | tr '\n' ' '; echo; }
 say() { echo "$*" >> "$O/.sum"; }
 stopped() { [ -e "$O/STOP" ] || [ "$(free_kib)" -lt "$STOP_KIB" ]; }
 ESC=$(cat "$WP_HOME/conf/es_container" 2>/dev/null)
+PGC=$(cat "$WP_HOME/conf/pg_container" 2>/dev/null || echo emlab2-wphard-pg)
+CG=${CGROUP_ROOT:-/sys/fs/cgroup/system.slice}
+# review 42cfd11 R5: each store's cgroup oom_kill count, read before and after every step ("name=id:count" per store,
+# "unreadable" when it cannot be read); a kill during the step, or an unreadable count, fails the step (step_judge oom)
+oomk() { for c in "$PGC" "$ESC"; do
+    id=$(docker inspect -f '{{.Id}}' "$c" 2>/dev/null | head -1)
+    n=$(grep '^oom_kill ' "$CG/docker-$id.scope/memory.events" 2>/dev/null | cut -d' ' -f2)
+    [ -n "$id" ] && [ -n "$n" ] && printf '%s=%s:%s ' "$c" "$id" "$n" || printf '%s=unreadable ' "$c"
+  done; }
 # amendment 23a lines in the node's log since $1 (UTC); prints a count, or "unreadable"
 wm_lines() { docker logs --since "$1" "$ESC" > "$O/.eslog" 2>&1 || { echo unreadable; return; }
   grep -ciE "(high|flood.stage) disk watermark.*exceeded" "$O/.eslog"; }
@@ -78,93 +102,97 @@ wm_lines() { docker logs --since "$1" "$ESC" > "$O/.eslog" 2>&1 || { echo unread
 # red step without a signature file (RX has none yet). P1 and P2 are judged on their verdict line as well as their exit.
 expected() { case $1 in XB|RS|RH|RX) echo red;; *) echo pass;; esac; }
 ex0() { grep -q "^$1 exit=0 " "$O/.sum"; }
+exn() { grep -o "^$1 exit=[0-9]*" "$O/.sum" | head -1 | cut -d= -f2; }
+# review 42cfd11 R3: unittest steps are judged by step_judge.py against a pinned file: Ran count, skips, and (red) each
+# failing test's kind and assertion text, with any other FAIL or ERROR block (setUpClass, a module crash) as extra
+ujudge() { $JPY -I "$JUDGE" judge "results/failing-first/harness/expected-$2/$1.txt" "$O/$1.out" "${3:-$(exn "$1")}"; }
 observed() {
   case $1 in
-    EW|G1|G2|G3|PC|M3|SS|SU) ex0 "$1" && echo pass || echo "fail($(grep -o "^$1 exit=[0-9]*" "$O/.sum" | head -1))";;
+    G1|G2|G3) ujudge "$1" pass;;
+    EW|PC|M3|SS|SU) ex0 "$1" && echo pass || echo "fail($(grep -o "^$1 exit=[0-9]*" "$O/.sum" | head -1))";;
     # registry_marker and d4_store_mark exit 0 whatever their verdict: their verdict line is judged as well
     P1) if ! ex0 P1; then echo "fail($(grep -o "^P1 exit=[0-9]*" "$O/.sum" | head -1))"
         elif grep -q "^registry_marker PASS " "$O/P1.out"; then echo pass; else echo "fail(verdict not PASS)"; fi;;
     P2) if ! ex0 P2; then echo "fail($(grep -o "^P2 exit=[0-9]*" "$O/.sum" | head -1))"
         elif grep -q "^d4_store_mark {'pass': True," "$O/P2.out"; then echo pass; else echo "fail(verdict not pass)"; fi;;
     P0) grep -q "^setup ok" "$O/P0.out" 2>/dev/null && echo pass || echo "fail(no setup ok)";;
-    D6) grep -qx "exit=0" "$O/D6.out" 2>/dev/null && echo pass || echo "fail($(grep -E '^exit=' "$O/D6.out" 2>/dev/null | head -1))";;
+    # review 42cfd11 R3: D6 needs es_security enable to exit 0 and the licence "200 basic active" (amendment H6e)
+    D6) if ! grep -qx "enable exit=0" "$O/D6.out" 2>/dev/null; then echo "fail(enable $(grep -E '^enable exit=' "$O/D6.out" 2>/dev/null | head -1))"
+        elif ! grep -qx "licence 200 basic active" "$O/D6.out" 2>/dev/null; then echo "fail(licence)"
+        elif grep -qx "exit=0" "$O/D6.out" 2>/dev/null; then echo pass
+        else echo "fail($(grep -E '^exit=' "$O/D6.out" 2>/dev/null | head -1))"; fi;;
     RR) [ "$(tail -1 "$O/RR.$(basename "$NEW").out" 2>/dev/null)" = "unregistered []" ] && echo pass || echo "fail(head registry)";;
     RP) a=$(grep -E '^after |^\{' "$O/RP.out" 2>/dev/null | tail -1)
         case $a in *'"ids_changed": true'*'"valid_per_name": {"projector": 1, "eraser": 1, "verifier": 1, "admin": 1}'*'"old_ids_valid": 0'*)
           if [ -n "${ROT_OLD:-}" ] || grep -q '^before .*"ids_changed": false' "$O/RP.out"; then echo pass; else echo "fail(no before)"; fi;;
           *) echo "fail(rotation)";; esac;;
     LS) grep -qE "^LS .*files with a secret value: 0( |$)" "$O/.sum" && echo pass || echo "fail(leak scan)";;
-    XB|RS|RH|RX) sig=results/failing-first/harness/expected-red/$1.txt
-        if [ ! -s "$sig" ]; then echo "fail(no signature file)"
-        elif ex0 "$1"; then echo "green"
-        else # the failing set, "<KIND> <test>" sorted, must equal the signature exactly (kind pinned, nothing extra)
-          want=$(grep -E '^(FAIL|ERROR) test' "$sig" | sort)
-          got=$(grep -E '^(FAIL|ERROR): test' "$O/$1.out" | sed -E 's/^(FAIL|ERROR): ([^ ]+).*/\1 \2/' | sort)
-          if [ -n "$want" ] && [ "$want" = "$got" ]; then echo red
-          else echo "red-without-signature(missing $(printf '%s\n' "$want" | grep -cvxF -e "$got") extra $(printf '%s\n' "$got" | grep -cvxF -e "$want"))"
-          fi
-        fi;;
+    XB|RS|RH|RX) if [ ! -s "results/failing-first/harness/expected-red/$1.txt" ]; then echo "fail(no signature file)"
+        else ujudge "$1" red; fi;;
     *) echo "fail(unknown step)";;
   esac; }
 VERDICT=""; MISMATCH=0
 echo "lock taken $(date -u +%FT%TZ) head $(cat "$NEW/GIT_HEAD") seal0 $(cat "$SEAL0/GIT_HEAD") h0 $(cat "$H0/GIT_HEAD") free_kib $K"
+# review 42cfd11 R5: say where the stores live; seconds measured on tmpfs stores are not comparable with disk-backed runs
+echo "store_fs pg=$(docker exec "$PGC" stat -f -c %T /var/lib/postgresql/data 2>/dev/null) es=$(docker exec "$ESC" stat -f -c %T /usr/share/elasticsearch/data 2>/dev/null)" \
+  "(timings on tmpfs stores are not comparable with disk-backed receipts; correctness results are)"
 cd "$NEW" || exit 2
 for st in $STEPS; do
   stopped && { echo "STOPPED before $st: $(cat "$O/STOP" 2>/dev/null || echo "below stop line: $(free_kib) KiB")"; exit 6; }
-  t0=$(date +%s); ts=$(date -u +%FT%TZ); : > "$O/.sum"
+  t0=$(date +%s); ts=$(date -u +%FT%TZ); : > "$O/.sum"; oom0=$(oomk)
   case $st in
-    EW) timeout 600 $PY -m wp.es_security disable > "$O/EW.out" 2>&1
+    EW) $T 600 $PY -m wp.es_security disable > "$O/EW.out" 2>&1
         say "EW exit=$? $(docker inspect "$ESC" --format '{{range .Config.Env}}{{println .}}{{end}}' 2>&1 | grep -o 'watermark\.[a-z_]*=[0-9a-z]*' | tr '\n' ' ')";;
-    G1) timeout 900 $PY -m unittest -v tests.test_ident > "$O/G1.out" 2>&1; say "G1 exit=$? $(sum "$O/G1.out")";;
-    P0) timeout 600 $PY -m wp.setup --reset 2>&1 | grep -v '^seal key' > "$O/P0.out"; say "P0 $(tail -2 "$O/P0.out" | S | tr '\n' ' ')";;
-    G2) WP_PG_LIVE=1 timeout 2400 $PY -m unittest -v tests.test_d3_pg > "$O/G2.out" 2>&1; say "G2 exit=$? $(sum "$O/G2.out")";;
-    G3) WP_PG_LIVE=1 timeout 600 $PY -m unittest -v tests.test_schema_broker_pg > "$O/G3.out" 2>&1; say "G3 exit=$? $(sum "$O/G3.out")";;
-    P1) timeout 1800 $PY -m exp.registry_marker > "$O/P1.out" 2>&1; say "P1 exit=$? $(tail -4 "$O/P1.out" | S | cut -c1-400 | tr '\n' ' ')";;
-    P2) timeout 900 $PY -m exp.d4_store_mark 1 > "$O/P2.out" 2>&1; say "P2 exit=$? $(tail -4 "$O/P2.out" | S | cut -c1-400 | tr '\n' ' ')";;
+    G1) $T 900 $PY -m unittest -v tests.test_ident > "$O/G1.out" 2>&1; say "G1 exit=$? $(sum "$O/G1.out")";;
+    P0) $T 600 $PY -m wp.setup --reset 2>&1 | grep -v '^seal key' > "$O/P0.out"; say "P0 $(tail -2 "$O/P0.out" | S | tr '\n' ' ')";;
+    G2) WP_PG_LIVE=1 $T 2400 $PY -m unittest -v tests.test_d3_pg > "$O/G2.out" 2>&1; say "G2 exit=$? $(sum "$O/G2.out")";;
+    G3) WP_PG_LIVE=1 $T 600 $PY -m unittest -v tests.test_schema_broker_pg > "$O/G3.out" 2>&1; say "G3 exit=$? $(sum "$O/G3.out")";;
+    P1) $T 1800 $PY -m exp.registry_marker > "$O/P1.out" 2>&1; say "P1 exit=$? $(tail -4 "$O/P1.out" | S | cut -c1-400 | tr '\n' ' ')";;
+    P2) $T 900 $PY -m exp.d4_store_mark 1 > "$O/P2.out" 2>&1; say "P2 exit=$? $(tail -4 "$O/P2.out" | S | cut -c1-400 | tr '\n' ' ')";;
     RR) R=$O/rr-tree-$(date +%s); cp -R "$NEW" "$R"; cp "$SEAL0/wp/registry.py" "$R/wp/registry.py"   # kept in $O (small)
         for tr in "$R" "$NEW"; do
           stopped && break
-          timeout 300 env -C "$tr" $PY -c '
+          $T 300 env -C "$tr" $PY -c '
 from wp import db, config, registry
 from wp.es import ES
 vc, vk = db.verifier(), db.verifier(db=config.KEYS_DB)
 print("unregistered", registry.unregistered(vc, vk, ES()))' > "$O/RR.$(basename "$tr").out" 2>&1
           say "RR $(basename "$tr") $(tail -1 "$O/RR.$(basename "$tr").out" | S)"
         done;;
-    RS) WP_PG_LIVE=1 SCHEMA_UNDER_TEST=$SEAL0/wp/schema.sql timeout 2400 $PY -m unittest -v tests.test_d3_pg > "$O/RS.out" 2>&1; say "RS exit=$? $(sum "$O/RS.out")";;
-    RH) WP_PG_LIVE=1 SCHEMA_UNDER_TEST=$H0/wp/schema.sql timeout 2400 $PY -m unittest -v tests.test_d3_pg > "$O/RH.out" 2>&1; say "RH exit=$? $(sum "$O/RH.out")";;
+    RS) WP_PG_LIVE=1 SCHEMA_UNDER_TEST=$SEAL0/wp/schema.sql $T 2400 $PY -m unittest -v tests.test_d3_pg > "$O/RS.out" 2>&1; say "RS exit=$? $(sum "$O/RS.out")";;
+    RH) WP_PG_LIVE=1 SCHEMA_UNDER_TEST=$H0/wp/schema.sql $T 2400 $PY -m unittest -v tests.test_d3_pg > "$O/RH.out" 2>&1; say "RH exit=$? $(sum "$O/RH.out")";;
     RX) XT=${RX_TREE:?RX_TREE names the tree whose schema is the before}
-        WP_PG_LIVE=1 SCHEMA_UNDER_TEST=$XT/wp/schema.sql timeout 2400 $PY -m unittest -v tests.test_d3_pg > "$O/RX.out" 2>&1; say "RX exit=$? schema $(cat "$XT/GIT_HEAD") $(sum "$O/RX.out")";;
+        WP_PG_LIVE=1 SCHEMA_UNDER_TEST=$XT/wp/schema.sql $T 2400 $PY -m unittest -v tests.test_d3_pg > "$O/RX.out" 2>&1; say "RX exit=$? schema $(cat "$XT/GIT_HEAD") $(sum "$O/RX.out")";;
     XB) XT=${XB_TREE:?XB_TREE names the tree}
-        WP_PG_LIVE=1 timeout 2400 env -C "$XT" $PY -m unittest -v tests.test_d3_pg > "$O/XB.out" 2>&1; say "XB exit=$? tree $(cat "$XT/GIT_HEAD") $(sum "$O/XB.out")";;
+        WP_PG_LIVE=1 $T 2400 env -C "$XT" $PY -m unittest -v tests.test_d3_pg > "$O/XB.out" 2>&1; say "XB exit=$? tree $(cat "$XT/GIT_HEAD") $(sum "$O/XB.out")";;
     D6) { echo "tree $(cat "$NEW/GIT_HEAD") free_kib $(free_kib)"
-          stopped || timeout 600 $PY -m wp.es_security enable 2>&1 | tail -1
-          stopped || timeout 60 $PY -c '
+          stopped || { $T 600 $PY -m wp.es_security enable > "$O/D6.enable.out" 2>&1; echo "enable exit=$?"; tail -1 "$O/D6.enable.out"; }
+          stopped || $T 60 $PY -c '
 from wp.es import ES
 s, j = ES().req("GET", "/_license", ok=None)
 l = j.get("license", {}) if isinstance(j, dict) else {}
 print("licence", s, l.get("type"), l.get("status"))'
-          stopped || { timeout 3600 $PY -m exp.h_d6_broker 5; echo "exit=$?"; }; } > "$O/D6.out" 2>&1
-        say "D6 $(grep -E '^(licence|h_d6_broker|exit=)' "$O/D6.out" | S | tr '\n' ' ')";;
+          stopped || { $T 3600 $PY -m exp.h_d6_broker 5; echo "exit=$?"; }; } > "$O/D6.out" 2>&1
+        say "D6 $(grep -E '^(enable exit=|licence|h_d6_broker|exit=)' "$O/D6.out" | S | tr '\n' ' ')";;
     RP) if [ -n "${ROT_OLD:-}" ]; then
-          timeout 120 $PY -I results/failing-first/harness/rot_proof.py "$ROT_OLD" > "$O/RP.out" 2>&1
+          $T 120 $PY -I results/failing-first/harness/rot_proof.py "$ROT_OLD" > "$O/RP.out" 2>&1
           say "RP exit=$? $(tail -1 "$O/RP.out")"
         else
           # in-window rotation (the stores are on tmpfs: a recreated node holds no earlier window's keys): hash the ids
           # D6 minted (sha256 only, 0600), prove the proof sees them, rotate, prove again
-          { ( umask 077; timeout 60 $PY -c '
+          { ( umask 077; $T 60 $PY -c '
 import glob, hashlib, json, sys
 from wp import config
 for p in sorted(glob.glob(str(config.SECRETS / "es_api_key*.json"))):
     print(hashlib.sha256(json.load(open(p))["id"].encode()).hexdigest())' > "$O/rot-old.sha256" )
             echo "old ids hashed $(wc -l < "$O/rot-old.sha256")"
-            stopped || { printf 'before '; timeout 120 $PY -I results/failing-first/harness/rot_proof.py "$O/rot-old.sha256" | tail -1; }
-            stopped || timeout 300 $PY -m wp.es_keys create 2>&1 | tail -1
-            stopped || { printf 'after '; timeout 120 $PY -I results/failing-first/harness/rot_proof.py "$O/rot-old.sha256" | tail -1; }
+            stopped || { printf 'before '; $T 120 $PY -I results/failing-first/harness/rot_proof.py "$O/rot-old.sha256" | tail -1; }
+            stopped || $T 300 $PY -m wp.es_keys create 2>&1 | tail -1
+            stopped || { printf 'after '; $T 120 $PY -I results/failing-first/harness/rot_proof.py "$O/rot-old.sha256" | tail -1; }
           } > "$O/RP.out" 2>&1
           say "RP in-window $(grep -E '^(old ids|before|created|after)' "$O/RP.out" | S | tr '\n' ' ')"
         fi;;
-    PC) timeout 120 $PY -c '
+    PC) $T 120 $PY -c '
 from wp import db
 a = db.admin(db="emlab")
 a.execute("create table if not exists pc_marker(x text)")
@@ -180,9 +208,9 @@ for t, ext in (("pc_toast_c", False), ("pc_toast_x", True)):
     a.execute(f"insert into {t} values (%s)", ("zqtoastpc-" * 2000,))
 a.execute("checkpoint")
 print("PC seeded", a.execute("select count(*) from pc_marker").fetchone()[0])' > "$O/PC.out" 2>&1; say "PC exit=$? $(tail -1 "$O/PC.out")";;
-    M3) timeout 300 $PY results/failing-first/harness/m3_pad_log.py > "$O/M3.out" 2>&1; say "M3 exit=$? $(tail -1 "$O/M3.out" | S | cut -c1-700)";;
-    SS) timeout 600 $PY results/failing-first/harness/seal_socket_e2e.py > "$O/SS.out" 2>&1; say "SS exit=$? $(tail -1 "$O/SS.out" | S | cut -c1-600)";;
-    SU) timeout 1200 $PY results/failing-first/harness/seal_uids_e2e.py > "$O/SU.out" 2>&1; say "SU exit=$? $(tail -1 "$O/SU.out" | S | cut -c1-900)";;
+    M3) $T 300 $PY results/failing-first/harness/m3_pad_log.py > "$O/M3.out" 2>&1; say "M3 exit=$? $(tail -1 "$O/M3.out" | S | cut -c1-700)";;
+    SS) $T 600 $PY results/failing-first/harness/seal_socket_e2e.py > "$O/SS.out" 2>&1; say "SS exit=$? $(tail -1 "$O/SS.out" | S | cut -c1-600)";;
+    SU) $T 1200 $PY results/failing-first/harness/seal_uids_e2e.py > "$O/SU.out" 2>&1; say "SU exit=$? $(tail -1 "$O/SU.out" | S | cut -c1-900)";;
     LS) say "LS $($PY runkit/leak_scan.py "$WP_HOME" "$O" "$WP_HOME/results" "$WP_HOME/logs" "$WP_HOME/state" 2>&1 | S | tr '\n' ' ')";;
     *) say "$st unknown step";;
   esac
@@ -196,10 +224,12 @@ print("PC seeded", a.execute("select count(*) from pc_marker").fetchone()[0])' >
     echo "VOID $st: amendment 23a, ES log watermark lines since $ts: $n"; exit 7
   fi
   cat "$O/.sum"
-  e=$(expected "$st"); o=$(observed "$st")
+  oom1=$(oomk); oj=$($JPY -I "$JUDGE" oom "$oom0" "$oom1")
+  e=$(expected "$st")
+  if [ "$oj" = ok ]; then o=$(observed "$st"); else o="$oj"; fi
   [ "$e" = "$o" ] || MISMATCH=1
   VERDICT="$VERDICT $st:$e/$o"
-  echo "  $st seconds=$(( $(date +%s) - t0 )) watermark_lines 0 expected $e observed $o"
+  echo "  $st seconds=$(( $(date +%s) - t0 )) watermark_lines 0 oom_kill $oom1 expected $e observed $o"
 done
 # leaked throwaway databases of the live tests (ours only, by prefix)
 $PY -c '
