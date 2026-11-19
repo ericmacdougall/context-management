@@ -526,13 +526,16 @@ def once(arm, i):
     eb = _w_epoch(es, Bt)
     if arm == "fenced":
         _project(conn, ks, es, C, project=False)
+    from wp import families as F
+    # amendment H6h: the operator's witness that B's read alias exists (the child's 403 alone does not show it)
+    b_read_witness = _s(es, F.read_alias(Bt, "events"))
     args = json.dumps({"A": A, "B": Bt, "C": C, "eb": eb})
     extra = ["--rm", "-v", f"{config.SECRETS}:/operator/secrets:ro"] if arm == "fenced" else ["--rm"]
     cp = H2._docker(*H2._run_args("emlab2-wphard-app", UIDS["app"], "app", extra), "-m", "exp.h_d6_broker", "child", arm, args,
                     check=False, timeout=1800)
     res = _line(cp.stdout, "H6CHILD") or {"child_failed": cp.returncode, "stderr_tail": cp.stderr[-400:]}
     hashes = _line(cp.stdout, "H6CHILDHASH") or []
-    res.update(run=i, tenants=[A, Bt, C, D], eb=eb)
+    res.update(run=i, tenants=[A, Bt, C, D], eb=eb, C1_B_read_witness=b_read_witness)
     if arm == "fenced":
         res["C7_events_in_read_alias"] = es_count_live(es, C, "events", {"bool": {"must_not": [{"term": {"kind": "h6probe"}}]}})
         res["C8_descriptors"] = _descriptor_check(es, (res.get("C8") or {}).get("keys", []))
@@ -566,6 +569,8 @@ def judge(arm, x, wit):
         inv["own_write"] = f"own write {x.get('own_write')}: refusals would be vacuous"
     if _st((x.get("C1") or {}).get("B_read")) == 404:        # review 42cfd11 R8: no read alias, the refusal is vacuous
         inv["C1 B_read"] = f"B's read alias missing {(x.get('C1') or {}).get('B_read')}"
+    elif "B_read" in (x.get("C1") or {}) and _st(x.get("C1_B_read_witness")) != 200:   # amendment H6h
+        inv["C1 B_read"] = f"no operator witness that B's read alias exists {x.get('C1_B_read_witness')}"
     for c in ("C1", "C2", "C3", "C4"):
         for k, r in (x.get(c) or {}).items():
             if ok(r):
