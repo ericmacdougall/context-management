@@ -1,0 +1,1 @@
+{"scenario": "pc8", "n": 32, "line_limit": 2097152, "capped": false, "base_mib": 41.4, "peak_mib": 285.6, "replies": ["{\"error\": \"bad_request\"}"], "served": 32, "growth_mib": 244.2}

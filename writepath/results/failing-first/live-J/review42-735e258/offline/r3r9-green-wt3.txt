@@ -1,0 +1,16 @@
+# offline modules from a working-tree copy (r3r9-green-wt3), run 2026-11-19T04:00:00Z: python -m unittest tests.test_alias_generation tests.test_alias_states tests.test_broker tests.test_config_guard tests.test_d6_descriptors tests.test_d6_r8 tests.test_disk_gate tests.test_es_keys_output tests.test_es_verify tests.test_fence_es tests.test_h2_probe tests.test_h6e_judge tests.test_h_d2_helpers tests.test_ident tests.test_keysvc tests.test_live_chain_disk tests.test_m3_pad_log tests.test_m5m6_statics tests.test_races_verdict tests.test_schema_broker_pg tests.test_sealer tests.test_setup_roles tests.test_stopsig tests.test_store_tmpfs tests.test_transport_bounds
+........................................................................................................................h_d2_uids {'fenced_holds': '0/0', 'control_violated': '0/0', 'pass': True}
+....................................................................................................................................sss.......................................
+PC1 {"scenario": "pc1", "n": 1, "line_limit": 2097152, "capped": false, "base_mib": 41.4, "peak_mib": 95.5, "replies": ["{\"error\": \"bad_request\"}"], "served": 1, "growth_mib": 54.1}
+.
+PD {"scenario": "pd", "n": 8, "line_limit": 2097152, "capped": false, "base_mib": 41.4, "peak_mib": 102.9, "replies": ["{\"error\": \"bad_request\"}"], "served": 8, "growth_mib": 61.5}
+.
+PC8 {"scenario": "pc8", "n": 8, "line_limit": 2097152, "capped": false, "base_mib": 41.3, "peak_mib": 137.6, "replies": ["{\"error\": \"bad_request\"}"], "served": 8, "growth_mib": 96.3}
+.
+PC8 {"scenario": "pc8", "n": 32, "line_limit": 2097152, "capped": false, "base_mib": 41.4, "peak_mib": 285.1, "replies": ["{\"error\": \"bad_request\"}"], "served": 32, "growth_mib": 243.7}
+.
+----------------------------------------------------------------------
+Ran 298 tests in 311.959s
+
+OK (skipped=3)
+seal key seal-ac626c203bf10141

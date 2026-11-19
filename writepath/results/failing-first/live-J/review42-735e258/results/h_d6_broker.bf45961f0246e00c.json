@@ -1,0 +1,3910 @@
+{
+ "at": "2026-11-19T04:13:23Z",
+ "env": {
+  "argv": "~/emlab2-16096/wphard/wp/src-c6d3e85/exp/h_d6_broker.py 5",
+  "code_commit": "c6d3e85",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19570",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   6.5380859375,
+   8.16064453125,
+   8.36279296875
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "postgres_settings": {
+   "archive_mode": "off",
+   "autovacuum": "on",
+   "default_statistics_target": "100",
+   "effective_cache_size": "5242888kB",
+   "fsync": "on",
+   "idle_in_transaction_session_timeout": "5000ms",
+   "jit": "on",
+   "maintenance_work_mem": "65536kB",
+   "max_connections": "200",
+   "max_wal_size": "256MB",
+   "plan_cache_mode": "auto",
+   "random_page_cost": "4",
+   "shared_buffers": "163848kB",
+   "statement_timeout": "30000ms",
+   "synchronous_commit": "on",
+   "wal_keep_size": "0MB",
+   "wal_recycle": "off",
+   "work_mem": "4096kB"
+  },
+  "python": "3.12.3"
+ },
+ "name": "h_d6_broker",
+ "result": {
+  "R": 5,
+  "broker_user": "wp16096_broker",
+  "cleanup": "broker-minted keys are not invalidated by this experiment; they expire after 1 h",
+  "control": [
+   {
+    "C1": {
+     "B_read": [
+      403,
+      "security_exception"
+     ],
+     "B_w": [
+      201,
+      null
+     ],
+     "B_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C14_reported": {
+     "a": {
+      "B": [
+       201,
+       null
+      ],
+      "own": [
+       404,
+       "index_not_found_exception"
+      ],
+      "request": 200
+     },
+     "b": [
+      403,
+      "security_exception",
+      null
+     ],
+     "d": {
+      "B_mapping": [
+       200,
+       null
+      ],
+      "own_mapping": [
+       404,
+       "index_not_found_exception"
+      ]
+     }
+    },
+    "C2": {
+     "A_base": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C3": {
+     "A_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C4": {
+     "add_next": [
+      403,
+      "security_exception"
+     ],
+     "add_on_B": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C5": {
+     "E2": 3,
+     "readd_old": [
+      403,
+      "security_exception"
+     ],
+     "stale": [
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ]
+     ],
+     "stale_accepted": 0
+    },
+    "eb": 1,
+    "findings": {
+     "fence_A": "ProjectionError: alias CAS failed: ES 403 security_exception",
+     "fence_A_h2": "ProjectionError: alias CAS failed: ES 403 security_exception"
+    },
+    "invalid": {},
+    "invalid_request": {},
+    "own_write": [
+     404,
+     "index_not_found_exception"
+    ],
+    "run": 0,
+    "tenants": [
+     "h6a117adf",
+     "h6bcb6507",
+     "h6c3dd1c3",
+     "h6dd5d306"
+    ],
+    "uid": 20001,
+    "violated": true,
+    "why": []
+   },
+   {
+    "C1": {
+     "B_read": [
+      403,
+      "security_exception"
+     ],
+     "B_w": [
+      201,
+      null
+     ],
+     "B_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C14_reported": {
+     "a": {
+      "B": [
+       201,
+       null
+      ],
+      "own": [
+       404,
+       "index_not_found_exception"
+      ],
+      "request": 200
+     },
+     "b": [
+      403,
+      "security_exception",
+      null
+     ],
+     "d": {
+      "B_mapping": [
+       200,
+       null
+      ],
+      "own_mapping": [
+       404,
+       "index_not_found_exception"
+      ]
+     }
+    },
+    "C2": {
+     "A_base": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C3": {
+     "A_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C4": {
+     "add_next": [
+      403,
+      "security_exception"
+     ],
+     "add_on_B": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C5": {
+     "E2": 3,
+     "readd_old": [
+      403,
+      "security_exception"
+     ],
+     "stale": [
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ]
+     ],
+     "stale_accepted": 0
+    },
+    "eb": 1,
+    "findings": {
+     "fence_A": "ProjectionError: alias CAS failed: ES 403 security_exception",
+     "fence_A_h2": "ProjectionError: alias CAS failed: ES 403 security_exception"
+    },
+    "invalid": {},
+    "invalid_request": {},
+    "own_write": [
+     404,
+     "index_not_found_exception"
+    ],
+    "run": 1,
+    "tenants": [
+     "h6a84aee6",
+     "h6b81a342",
+     "h6c54ed62",
+     "h6d34438c"
+    ],
+    "uid": 20001,
+    "violated": true,
+    "why": []
+   },
+   {
+    "C1": {
+     "B_read": [
+      403,
+      "security_exception"
+     ],
+     "B_w": [
+      201,
+      null
+     ],
+     "B_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C14_reported": {
+     "a": {
+      "B": [
+       201,
+       null
+      ],
+      "own": [
+       404,
+       "index_not_found_exception"
+      ],
+      "request": 200
+     },
+     "b": [
+      403,
+      "security_exception",
+      null
+     ],
+     "d": {
+      "B_mapping": [
+       200,
+       null
+      ],
+      "own_mapping": [
+       404,
+       "index_not_found_exception"
+      ]
+     }
+    },
+    "C2": {
+     "A_base": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C3": {
+     "A_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C4": {
+     "add_next": [
+      403,
+      "security_exception"
+     ],
+     "add_on_B": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C5": {
+     "E2": 3,
+     "readd_old": [
+      403,
+      "security_exception"
+     ],
+     "stale": [
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ]
+     ],
+     "stale_accepted": 0
+    },
+    "eb": 1,
+    "findings": {
+     "fence_A": "ProjectionError: alias CAS failed: ES 403 security_exception",
+     "fence_A_h2": "ProjectionError: alias CAS failed: ES 403 security_exception"
+    },
+    "invalid": {},
+    "invalid_request": {},
+    "own_write": [
+     404,
+     "index_not_found_exception"
+    ],
+    "run": 2,
+    "tenants": [
+     "h6aa461ec",
+     "h6bfd0e5f",
+     "h6ce287cd",
+     "h6d5ebcac"
+    ],
+    "uid": 20001,
+    "violated": true,
+    "why": []
+   },
+   {
+    "C1": {
+     "B_read": [
+      403,
+      "security_exception"
+     ],
+     "B_w": [
+      201,
+      null
+     ],
+     "B_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C14_reported": {
+     "a": {
+      "B": [
+       201,
+       null
+      ],
+      "own": [
+       404,
+       "index_not_found_exception"
+      ],
+      "request": 200
+     },
+     "b": [
+      403,
+      "security_exception",
+      null
+     ],
+     "d": {
+      "B_mapping": [
+       200,
+       null
+      ],
+      "own_mapping": [
+       404,
+       "index_not_found_exception"
+      ]
+     }
+    },
+    "C2": {
+     "A_base": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C3": {
+     "A_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C4": {
+     "add_next": [
+      403,
+      "security_exception"
+     ],
+     "add_on_B": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C5": {
+     "E2": 3,
+     "readd_old": [
+      403,
+      "security_exception"
+     ],
+     "stale": [
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ]
+     ],
+     "stale_accepted": 0
+    },
+    "eb": 1,
+    "findings": {
+     "fence_A": "ProjectionError: alias CAS failed: ES 403 security_exception",
+     "fence_A_h2": "ProjectionError: alias CAS failed: ES 403 security_exception"
+    },
+    "invalid": {},
+    "invalid_request": {},
+    "own_write": [
+     404,
+     "index_not_found_exception"
+    ],
+    "run": 3,
+    "tenants": [
+     "h6a2abe16",
+     "h6bcc9204",
+     "h6cd2418b",
+     "h6d2bc209"
+    ],
+    "uid": 20001,
+    "violated": true,
+    "why": []
+   },
+   {
+    "C1": {
+     "B_read": [
+      403,
+      "security_exception"
+     ],
+     "B_w": [
+      201,
+      null
+     ],
+     "B_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C14_reported": {
+     "a": {
+      "B": [
+       201,
+       null
+      ],
+      "own": [
+       404,
+       "index_not_found_exception"
+      ],
+      "request": 200
+     },
+     "b": [
+      403,
+      "security_exception",
+      null
+     ],
+     "d": {
+      "B_mapping": [
+       200,
+       null
+      ],
+      "own_mapping": [
+       404,
+       "index_not_found_exception"
+      ]
+     }
+    },
+    "C2": {
+     "A_base": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C3": {
+     "A_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C4": {
+     "add_next": [
+      403,
+      "security_exception"
+     ],
+     "add_on_B": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C5": {
+     "E2": 3,
+     "readd_old": [
+      403,
+      "security_exception"
+     ],
+     "stale": [
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ]
+     ],
+     "stale_accepted": 0
+    },
+    "eb": 1,
+    "findings": {
+     "fence_A": "ProjectionError: alias CAS failed: ES 403 security_exception",
+     "fence_A_h2": "ProjectionError: alias CAS failed: ES 403 security_exception"
+    },
+    "invalid": {},
+    "invalid_request": {},
+    "own_write": [
+     404,
+     "index_not_found_exception"
+    ],
+    "run": 4,
+    "tenants": [
+     "h6a2527b4",
+     "h6b8ee265",
+     "h6c3931cb",
+     "h6d6542eb"
+    ],
+    "uid": 20001,
+    "violated": true,
+    "why": []
+   }
+  ],
+  "control_files": {
+   "app": [
+    "pgpass.wp_app",
+    "es_api_key.projector.json"
+   ],
+   "broker": [
+    "es_broker_password",
+    "pgpass.wp_broker"
+   ],
+   "keysvc": [
+    "pgpass.wp_kms"
+   ]
+  },
+  "control_witness": {},
+  "fenced": [
+   {
+    "C1": {
+     "B_read": [
+      403,
+      "security_exception"
+     ],
+     "B_w": [
+      403,
+      "security_exception"
+     ],
+     "B_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C10": {
+     "holder_fn": "callable",
+     "select_leases": "42501"
+    },
+    "C11": "ServiceError: peer_refused",
+    "C12": {
+     "a_window_write": [
+      201,
+      null
+     ],
+     "b_projector_start": "ConnectionRefusedError",
+     "before_stop": [
+      201,
+      null
+     ],
+     "c_h2_key_fp": "sha256:71d0f86d045f6b23",
+     "c_stale": [
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ]
+     ],
+     "c_stale_accepted": 0,
+     "docs_at_phase2": 2,
+     "invalid": {}
+    },
+    "C13": {
+     "key_hashes": 46,
+     "values_found": 0
+    },
+    "C14": {
+     "a": {
+      "B": [
+       403,
+       "security_exception"
+      ],
+      "own": [
+       201,
+       null
+      ],
+      "request": 200
+     },
+     "b": [
+      403,
+      "security_exception",
+      null
+     ],
+     "c": {
+      "accepted": 0,
+      "exists_after": false,
+      "key_valid": true,
+      "name": "wp16096-h6a3569de-events-w7",
+      "own_after": [
+       201,
+       null
+      ],
+      "writes": [
+       [
+        403,
+        "security_exception"
+       ],
+       [
+        403,
+        "security_exception"
+       ],
+       [
+        403,
+        "security_exception"
+       ],
+       [
+        403,
+        "security_exception"
+       ],
+       [
+        403,
+        "security_exception"
+       ]
+      ]
+     },
+     "c_after_cas_reported": {
+      "writes": [
+       [
+        401,
+        "security_exception"
+       ],
+       [
+        401,
+        "security_exception"
+       ],
+       [
+        401,
+        "security_exception"
+       ],
+       [
+        401,
+        "security_exception"
+       ],
+       [
+        401,
+        "security_exception"
+       ]
+      ]
+     },
+     "d": {
+      "B_mapping": [
+       403,
+       "security_exception"
+      ],
+      "own_mapping": [
+       200,
+       null
+      ]
+     }
+    },
+    "C2": {
+     "A_base": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C3": {
+     "A_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C4": {
+     "add_next": [
+      403,
+      "security_exception"
+     ],
+     "add_on_B": [
+      403,
+      "security_exception"
+     ],
+     "remove_own": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C5": {
+     "E2": 3,
+     "h2_write": [
+      201,
+      null
+     ],
+     "stale": [
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ]
+     ],
+     "stale_accepted": 0
+    },
+    "C6": {
+     "new_epoch_empty": "Refused: lease_not_current",
+     "new_epoch_h1": "Refused: lease_not_current",
+     "old_epoch_h1": "Refused: lease_not_current"
+    },
+    "C7": {
+     "p1_first_step": 2,
+     "p1_key_fp": "sha256:8664153ea7dc5e9f",
+     "p1_step_after_takeover": -1,
+     "p1_written_after": 2,
+     "p1_written_before": 2,
+     "p2_done": true,
+     "p2_key_fp": "sha256:dc125063d20d9610",
+     "p2_written": 3
+    },
+    "C7_events_in_read_alias": 5,
+    "C8": {
+     "errors": [],
+     "keys": [
+      [
+       "h6bfd163b",
+       2,
+       "sha256:c4bd429b19e47d41"
+      ],
+      [
+       "h6a3569de",
+       4,
+       "sha256:1e8d7cacae87e27a"
+      ],
+      [
+       "h6bfd163b",
+       2,
+       "sha256:a4ea1dca54511f4a"
+      ],
+      [
+       "h6a3569de",
+       4,
+       "sha256:521d0757b0d067a1"
+      ],
+      [
+       "h6bfd163b",
+       2,
+       "sha256:09355103f8318ea7"
+      ],
+      [
+       "h6a3569de",
+       4,
+       "sha256:9bca0a2376634108"
+      ],
+      [
+       "h6a3569de",
+       4,
+       "sha256:074bf0f7f6df35a4"
+      ],
+      [
+       "h6bfd163b",
+       2,
+       "sha256:2ad954d3bf7c3a02"
+      ],
+      [
+       "h6a3569de",
+       4,
+       "sha256:d4448a5d64597de4"
+      ],
+      [
+       "h6bfd163b",
+       2,
+       "sha256:1a2eff9ca0447ac4"
+      ],
+      [
+       "h6a3569de",
+       4,
+       "sha256:07237743702dbcfb"
+      ],
+      [
+       "h6bfd163b",
+       2,
+       "sha256:527851e984eaf76d"
+      ],
+      [
+       "h6a3569de",
+       4,
+       "sha256:e58c238d8672a659"
+      ],
+      [
+       "h6bfd163b",
+       2,
+       "sha256:9f2f59f017d2ba17"
+      ],
+      [
+       "h6bfd163b",
+       2,
+       "sha256:cba280092bb7dc8b"
+      ],
+      [
+       "h6a3569de",
+       4,
+       "sha256:379bcbc6f6076987"
+      ],
+      [
+       "h6a3569de",
+       4,
+       "sha256:1bbfefbb03d105e1"
+      ],
+      [
+       "h6bfd163b",
+       2,
+       "sha256:2064f5d319727fdf"
+      ],
+      [
+       "h6a3569de",
+       4,
+       "sha256:aa2d7c7f3ec8fb60"
+      ],
+      [
+       "h6bfd163b",
+       2,
+       "sha256:735ad25d4d2234cd"
+      ],
+      [
+       "h6a3569de",
+       4,
+       "sha256:ccb3a5bcde7b611d"
+      ],
+      [
+       "h6bfd163b",
+       2,
+       "sha256:8210f6680b03844d"
+      ],
+      [
+       "h6a3569de",
+       4,
+       "sha256:766afef285ec6819"
+      ],
+      [
+       "h6bfd163b",
+       2,
+       "sha256:764c7e5668deca39"
+      ],
+      [
+       "h6a3569de",
+       4,
+       "sha256:6876dd1038f636bb"
+      ],
+      [
+       "h6bfd163b",
+       2,
+       "sha256:0af9c116b68aa379"
+      ],
+      [
+       "h6bfd163b",
+       2,
+       "sha256:082942c744e7e1bc"
+      ],
+      [
+       "h6a3569de",
+       4,
+       "sha256:be49286c68cd89ec"
+      ],
+      [
+       "h6a3569de",
+       4,
+       "sha256:8a494c95daf6da4e"
+      ],
+      [
+       "h6bfd163b",
+       2,
+       "sha256:392ac1636f2565a8"
+      ],
+      [
+       "h6a3569de",
+       4,
+       "sha256:040fe7de9b0b9ce4"
+      ],
+      [
+       "h6bfd163b",
+       2,
+       "sha256:08f0952c24a6537d"
+      ],
+      [
+       "h6a3569de",
+       4,
+       "sha256:55ba197cc4aef392"
+      ],
+      [
+       "h6bfd163b",
+       2,
+       "sha256:cf8def8ebadd359f"
+      ],
+      [
+       "h6bfd163b",
+       2,
+       "sha256:837100d5c733f3c1"
+      ],
+      [
+       "h6a3569de",
+       4,
+       "sha256:891ae554e0bcfce3"
+      ],
+      [
+       "h6a3569de",
+       4,
+       "sha256:58f2ee8aa916c1df"
+      ],
+      [
+       "h6bfd163b",
+       2,
+       "sha256:b000ac6119aff298"
+      ],
+      [
+       "h6bfd163b",
+       2,
+       "sha256:51a232e2169b06fa"
+      ],
+      [
+       "h6a3569de",
+       4,
+       "sha256:196746982edf9afb"
+      ]
+     ],
+     "n_errors": 0
+    },
+    "C8_descriptors": {
+     "bad": [],
+     "checked": 40,
+     "n_bad": 0
+    },
+    "E": 2,
+    "eb": 1,
+    "files": {
+     "admin_es_key": "EACCES",
+     "admin_pgpass": "EACCES",
+     "broker_es_pw_file": "EACCES",
+     "broker_pgpass": "EACCES",
+     "elastic_pw_file": "EACCES",
+     "eraser_role_key": "EACCES",
+     "operator_broker_pw_file": "EACCES",
+     "projector_role_key": "EACCES",
+     "seal_key": "EACCES",
+     "verifier_role_key": "EACCES"
+    },
+    "holds": true,
+    "invalid": {},
+    "invalid_request": {},
+    "key_A_fp": "sha256:357fb87aaceefcf4",
+    "own_write": [
+     201,
+     null
+    ],
+    "run": 0,
+    "tenants": [
+     "h6a3569de",
+     "h6bfd163b",
+     "h6cf2b5b8",
+     "h6d32d28f"
+    ],
+    "uid": 20001,
+    "why": []
+   },
+   {
+    "C1": {
+     "B_read": [
+      403,
+      "security_exception"
+     ],
+     "B_w": [
+      403,
+      "security_exception"
+     ],
+     "B_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C10": {
+     "holder_fn": "callable",
+     "select_leases": "42501"
+    },
+    "C11": "ServiceError: peer_refused",
+    "C12": {
+     "a_window_write": [
+      201,
+      null
+     ],
+     "b_projector_start": "ConnectionRefusedError",
+     "before_stop": [
+      201,
+      null
+     ],
+     "c_h2_key_fp": "sha256:dcca6ee1f89d440d",
+     "c_stale": [
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ]
+     ],
+     "c_stale_accepted": 0,
+     "docs_at_phase2": 2,
+     "invalid": {}
+    },
+    "C13": {
+     "key_hashes": 46,
+     "values_found": 0
+    },
+    "C14": {
+     "a": {
+      "B": [
+       403,
+       "security_exception"
+      ],
+      "own": [
+       201,
+       null
+      ],
+      "request": 200
+     },
+     "b": [
+      403,
+      "security_exception",
+      null
+     ],
+     "c": {
+      "accepted": 0,
+      "exists_after": false,
+      "key_valid": true,
+      "name": "wp16096-h6a5ee902-events-w7",
+      "own_after": [
+       201,
+       null
+      ],
+      "writes": [
+       [
+        403,
+        "security_exception"
+       ],
+       [
+        403,
+        "security_exception"
+       ],
+       [
+        403,
+        "security_exception"
+       ],
+       [
+        403,
+        "security_exception"
+       ],
+       [
+        403,
+        "security_exception"
+       ]
+      ]
+     },
+     "c_after_cas_reported": {
+      "writes": [
+       [
+        401,
+        "security_exception"
+       ],
+       [
+        401,
+        "security_exception"
+       ],
+       [
+        401,
+        "security_exception"
+       ],
+       [
+        401,
+        "security_exception"
+       ],
+       [
+        401,
+        "security_exception"
+       ]
+      ]
+     },
+     "d": {
+      "B_mapping": [
+       403,
+       "security_exception"
+      ],
+      "own_mapping": [
+       200,
+       null
+      ]
+     }
+    },
+    "C2": {
+     "A_base": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C3": {
+     "A_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C4": {
+     "add_next": [
+      403,
+      "security_exception"
+     ],
+     "add_on_B": [
+      403,
+      "security_exception"
+     ],
+     "remove_own": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C5": {
+     "E2": 3,
+     "h2_write": [
+      201,
+      null
+     ],
+     "stale": [
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ]
+     ],
+     "stale_accepted": 0
+    },
+    "C6": {
+     "new_epoch_empty": "Refused: lease_not_current",
+     "new_epoch_h1": "Refused: lease_not_current",
+     "old_epoch_h1": "Refused: lease_not_current"
+    },
+    "C7": {
+     "p1_first_step": 2,
+     "p1_key_fp": "sha256:f5f3a49c461b4d1d",
+     "p1_step_after_takeover": -1,
+     "p1_written_after": 2,
+     "p1_written_before": 2,
+     "p2_done": true,
+     "p2_key_fp": "sha256:e4ed6c608e04c553",
+     "p2_written": 3
+    },
+    "C7_events_in_read_alias": 5,
+    "C8": {
+     "errors": [],
+     "keys": [
+      [
+       "h6bb5104b",
+       2,
+       "sha256:4c0b63af11c13315"
+      ],
+      [
+       "h6a5ee902",
+       4,
+       "sha256:fa85059abc20f395"
+      ],
+      [
+       "h6bb5104b",
+       2,
+       "sha256:acc29818c2125b42"
+      ],
+      [
+       "h6a5ee902",
+       4,
+       "sha256:cf3be31783ad3f0f"
+      ],
+      [
+       "h6bb5104b",
+       2,
+       "sha256:eaffab4b205d760f"
+      ],
+      [
+       "h6a5ee902",
+       4,
+       "sha256:904e75e45631e8bd"
+      ],
+      [
+       "h6a5ee902",
+       4,
+       "sha256:d5030cbfb0116a0f"
+      ],
+      [
+       "h6bb5104b",
+       2,
+       "sha256:81d6e6abacd7502e"
+      ],
+      [
+       "h6a5ee902",
+       4,
+       "sha256:2d081ec5df21201b"
+      ],
+      [
+       "h6bb5104b",
+       2,
+       "sha256:62252734275edacd"
+      ],
+      [
+       "h6bb5104b",
+       2,
+       "sha256:528edadbec5670aa"
+      ],
+      [
+       "h6a5ee902",
+       4,
+       "sha256:47e04b0411702836"
+      ],
+      [
+       "h6bb5104b",
+       2,
+       "sha256:73994e1c7d6267c2"
+      ],
+      [
+       "h6a5ee902",
+       4,
+       "sha256:796394060caddf2b"
+      ],
+      [
+       "h6a5ee902",
+       4,
+       "sha256:985b9012dfc60327"
+      ],
+      [
+       "h6bb5104b",
+       2,
+       "sha256:9924fb578d935032"
+      ],
+      [
+       "h6a5ee902",
+       4,
+       "sha256:4403e0685c104a97"
+      ],
+      [
+       "h6bb5104b",
+       2,
+       "sha256:6318e9a92fe8c004"
+      ],
+      [
+       "h6bb5104b",
+       2,
+       "sha256:423e15e7365f9d5b"
+      ],
+      [
+       "h6a5ee902",
+       4,
+       "sha256:0ffdb3a607d02495"
+      ],
+      [
+       "h6bb5104b",
+       2,
+       "sha256:d26ff1cf45e76d0d"
+      ],
+      [
+       "h6a5ee902",
+       4,
+       "sha256:ce2536a099179f6d"
+      ],
+      [
+       "h6a5ee902",
+       4,
+       "sha256:1aaaef664bfb22ad"
+      ],
+      [
+       "h6bb5104b",
+       2,
+       "sha256:34ab0fbc5d9bb094"
+      ],
+      [
+       "h6a5ee902",
+       4,
+       "sha256:5b9baf344c17c63f"
+      ],
+      [
+       "h6bb5104b",
+       2,
+       "sha256:e5b40d1fd18924a4"
+      ],
+      [
+       "h6a5ee902",
+       4,
+       "sha256:324b9ff4a193b450"
+      ],
+      [
+       "h6bb5104b",
+       2,
+       "sha256:6593a2ddaf82fc45"
+      ],
+      [
+       "h6bb5104b",
+       2,
+       "sha256:58a31963b64d8e64"
+      ],
+      [
+       "h6a5ee902",
+       4,
+       "sha256:ba8dd1870966cafa"
+      ],
+      [
+       "h6bb5104b",
+       2,
+       "sha256:ebe2b8f664bba447"
+      ],
+      [
+       "h6a5ee902",
+       4,
+       "sha256:4eabba9bcf57bd19"
+      ],
+      [
+       "h6a5ee902",
+       4,
+       "sha256:c9e53dbee152d36c"
+      ],
+      [
+       "h6bb5104b",
+       2,
+       "sha256:2bd8f7c06753c0a2"
+      ],
+      [
+       "h6bb5104b",
+       2,
+       "sha256:2a3a6c1a6bd33cfc"
+      ],
+      [
+       "h6a5ee902",
+       4,
+       "sha256:e143867e1fba63ee"
+      ],
+      [
+       "h6bb5104b",
+       2,
+       "sha256:83817c4e7d5f3041"
+      ],
+      [
+       "h6a5ee902",
+       4,
+       "sha256:30d74f2dfddbf7e6"
+      ],
+      [
+       "h6bb5104b",
+       2,
+       "sha256:525fb6e316f59d6e"
+      ],
+      [
+       "h6a5ee902",
+       4,
+       "sha256:427e7fb9a56af8f4"
+      ]
+     ],
+     "n_errors": 0
+    },
+    "C8_descriptors": {
+     "bad": [],
+     "checked": 40,
+     "n_bad": 0
+    },
+    "E": 2,
+    "eb": 1,
+    "files": {
+     "admin_es_key": "EACCES",
+     "admin_pgpass": "EACCES",
+     "broker_es_pw_file": "EACCES",
+     "broker_pgpass": "EACCES",
+     "elastic_pw_file": "EACCES",
+     "eraser_role_key": "EACCES",
+     "operator_broker_pw_file": "EACCES",
+     "projector_role_key": "EACCES",
+     "seal_key": "EACCES",
+     "verifier_role_key": "EACCES"
+    },
+    "holds": true,
+    "invalid": {},
+    "invalid_request": {},
+    "key_A_fp": "sha256:9aaa59773ee9d8d4",
+    "own_write": [
+     201,
+     null
+    ],
+    "run": 1,
+    "tenants": [
+     "h6a5ee902",
+     "h6bb5104b",
+     "h6c95619a",
+     "h6d70d244"
+    ],
+    "uid": 20001,
+    "why": []
+   },
+   {
+    "C1": {
+     "B_read": [
+      403,
+      "security_exception"
+     ],
+     "B_w": [
+      403,
+      "security_exception"
+     ],
+     "B_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C10": {
+     "holder_fn": "callable",
+     "select_leases": "42501"
+    },
+    "C11": "ServiceError: peer_refused",
+    "C12": {
+     "a_window_write": [
+      201,
+      null
+     ],
+     "b_projector_start": "ConnectionRefusedError",
+     "before_stop": [
+      201,
+      null
+     ],
+     "c_h2_key_fp": "sha256:866a73e512510e71",
+     "c_stale": [
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ]
+     ],
+     "c_stale_accepted": 0,
+     "docs_at_phase2": 2,
+     "invalid": {}
+    },
+    "C13": {
+     "key_hashes": 46,
+     "values_found": 0
+    },
+    "C14": {
+     "a": {
+      "B": [
+       403,
+       "security_exception"
+      ],
+      "own": [
+       201,
+       null
+      ],
+      "request": 200
+     },
+     "b": [
+      403,
+      "security_exception",
+      null
+     ],
+     "c": {
+      "accepted": 0,
+      "exists_after": false,
+      "key_valid": true,
+      "name": "wp16096-h6a2ec924-events-w7",
+      "own_after": [
+       201,
+       null
+      ],
+      "writes": [
+       [
+        403,
+        "security_exception"
+       ],
+       [
+        403,
+        "security_exception"
+       ],
+       [
+        403,
+        "security_exception"
+       ],
+       [
+        403,
+        "security_exception"
+       ],
+       [
+        403,
+        "security_exception"
+       ]
+      ]
+     },
+     "c_after_cas_reported": {
+      "writes": [
+       [
+        401,
+        "security_exception"
+       ],
+       [
+        401,
+        "security_exception"
+       ],
+       [
+        401,
+        "security_exception"
+       ],
+       [
+        401,
+        "security_exception"
+       ],
+       [
+        401,
+        "security_exception"
+       ]
+      ]
+     },
+     "d": {
+      "B_mapping": [
+       403,
+       "security_exception"
+      ],
+      "own_mapping": [
+       200,
+       null
+      ]
+     }
+    },
+    "C2": {
+     "A_base": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C3": {
+     "A_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C4": {
+     "add_next": [
+      403,
+      "security_exception"
+     ],
+     "add_on_B": [
+      403,
+      "security_exception"
+     ],
+     "remove_own": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C5": {
+     "E2": 3,
+     "h2_write": [
+      201,
+      null
+     ],
+     "stale": [
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ]
+     ],
+     "stale_accepted": 0
+    },
+    "C6": {
+     "new_epoch_empty": "Refused: lease_not_current",
+     "new_epoch_h1": "Refused: lease_not_current",
+     "old_epoch_h1": "Refused: lease_not_current"
+    },
+    "C7": {
+     "p1_first_step": 2,
+     "p1_key_fp": "sha256:954c5dcbff14ca9b",
+     "p1_step_after_takeover": -1,
+     "p1_written_after": 2,
+     "p1_written_before": 2,
+     "p2_done": true,
+     "p2_key_fp": "sha256:b40718dc30ec4ab3",
+     "p2_written": 3
+    },
+    "C7_events_in_read_alias": 5,
+    "C8": {
+     "errors": [],
+     "keys": [
+      [
+       "h6bfdb88e",
+       2,
+       "sha256:5707e2db17a0fa38"
+      ],
+      [
+       "h6a2ec924",
+       4,
+       "sha256:f00d424e1e5a28d0"
+      ],
+      [
+       "h6a2ec924",
+       4,
+       "sha256:7fac31670948c2cc"
+      ],
+      [
+       "h6bfdb88e",
+       2,
+       "sha256:42a4630e592fe769"
+      ],
+      [
+       "h6bfdb88e",
+       2,
+       "sha256:671b3a5e84425797"
+      ],
+      [
+       "h6a2ec924",
+       4,
+       "sha256:82b6d1054dee4cf1"
+      ],
+      [
+       "h6a2ec924",
+       4,
+       "sha256:cfc713d16e970018"
+      ],
+      [
+       "h6bfdb88e",
+       2,
+       "sha256:b28d9690bce487d5"
+      ],
+      [
+       "h6bfdb88e",
+       2,
+       "sha256:f40454487222e79f"
+      ],
+      [
+       "h6a2ec924",
+       4,
+       "sha256:79dd03f2eb753bcf"
+      ],
+      [
+       "h6a2ec924",
+       4,
+       "sha256:170fcb42a9b0bd25"
+      ],
+      [
+       "h6bfdb88e",
+       2,
+       "sha256:b41929ea4644b0a1"
+      ],
+      [
+       "h6bfdb88e",
+       2,
+       "sha256:74cdd263aa35ceab"
+      ],
+      [
+       "h6a2ec924",
+       4,
+       "sha256:ba5a3325e2bde5fc"
+      ],
+      [
+       "h6a2ec924",
+       4,
+       "sha256:bcd76aa68c1e59ca"
+      ],
+      [
+       "h6bfdb88e",
+       2,
+       "sha256:9247e06c201754dc"
+      ],
+      [
+       "h6a2ec924",
+       4,
+       "sha256:f2a630f13792fbe7"
+      ],
+      [
+       "h6bfdb88e",
+       2,
+       "sha256:4bd335e3497c1474"
+      ],
+      [
+       "h6bfdb88e",
+       2,
+       "sha256:7f6cffa94b006317"
+      ],
+      [
+       "h6a2ec924",
+       4,
+       "sha256:7e2ab2cad080a0ec"
+      ],
+      [
+       "h6a2ec924",
+       4,
+       "sha256:2f7ec2f3693d561b"
+      ],
+      [
+       "h6bfdb88e",
+       2,
+       "sha256:64afb321bfb87a4e"
+      ],
+      [
+       "h6a2ec924",
+       4,
+       "sha256:5ee2e973b86d72d3"
+      ],
+      [
+       "h6bfdb88e",
+       2,
+       "sha256:dd42452876453dda"
+      ],
+      [
+       "h6a2ec924",
+       4,
+       "sha256:3126284db6c5180c"
+      ],
+      [
+       "h6bfdb88e",
+       2,
+       "sha256:384b9cd61b997f08"
+      ],
+      [
+       "h6a2ec924",
+       4,
+       "sha256:ac792893bdabe56b"
+      ],
+      [
+       "h6bfdb88e",
+       2,
+       "sha256:80224e0a5334a7aa"
+      ],
+      [
+       "h6bfdb88e",
+       2,
+       "sha256:c36e7bbcd3cc50a8"
+      ],
+      [
+       "h6a2ec924",
+       4,
+       "sha256:2aaf97f3cc3b2417"
+      ],
+      [
+       "h6a2ec924",
+       4,
+       "sha256:c42731355317ba69"
+      ],
+      [
+       "h6bfdb88e",
+       2,
+       "sha256:922aaab64a133441"
+      ],
+      [
+       "h6a2ec924",
+       4,
+       "sha256:6db08fcae32728b5"
+      ],
+      [
+       "h6bfdb88e",
+       2,
+       "sha256:8b419078c23ada38"
+      ],
+      [
+       "h6bfdb88e",
+       2,
+       "sha256:26faf2d5ffcbbb14"
+      ],
+      [
+       "h6a2ec924",
+       4,
+       "sha256:023e7cef98156f2f"
+      ],
+      [
+       "h6a2ec924",
+       4,
+       "sha256:1e5a5d18e1aba954"
+      ],
+      [
+       "h6bfdb88e",
+       2,
+       "sha256:b1b1b7301977c0e5"
+      ],
+      [
+       "h6bfdb88e",
+       2,
+       "sha256:905229387c6c5653"
+      ],
+      [
+       "h6a2ec924",
+       4,
+       "sha256:f6c4867050984f7b"
+      ]
+     ],
+     "n_errors": 0
+    },
+    "C8_descriptors": {
+     "bad": [],
+     "checked": 40,
+     "n_bad": 0
+    },
+    "E": 2,
+    "eb": 1,
+    "files": {
+     "admin_es_key": "EACCES",
+     "admin_pgpass": "EACCES",
+     "broker_es_pw_file": "EACCES",
+     "broker_pgpass": "EACCES",
+     "elastic_pw_file": "EACCES",
+     "eraser_role_key": "EACCES",
+     "operator_broker_pw_file": "EACCES",
+     "projector_role_key": "EACCES",
+     "seal_key": "EACCES",
+     "verifier_role_key": "EACCES"
+    },
+    "holds": true,
+    "invalid": {},
+    "invalid_request": {},
+    "key_A_fp": "sha256:6ef104127dbf80ae",
+    "own_write": [
+     201,
+     null
+    ],
+    "run": 2,
+    "tenants": [
+     "h6a2ec924",
+     "h6bfdb88e",
+     "h6cc7cbc4",
+     "h6d6a93e1"
+    ],
+    "uid": 20001,
+    "why": []
+   },
+   {
+    "C1": {
+     "B_read": [
+      403,
+      "security_exception"
+     ],
+     "B_w": [
+      403,
+      "security_exception"
+     ],
+     "B_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C10": {
+     "holder_fn": "callable",
+     "select_leases": "42501"
+    },
+    "C11": "ServiceError: peer_refused",
+    "C12": {
+     "a_window_write": [
+      201,
+      null
+     ],
+     "b_projector_start": "ConnectionRefusedError",
+     "before_stop": [
+      201,
+      null
+     ],
+     "c_h2_key_fp": "sha256:c96cb29fc5ef0413",
+     "c_stale": [
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ]
+     ],
+     "c_stale_accepted": 0,
+     "docs_at_phase2": 2,
+     "invalid": {}
+    },
+    "C13": {
+     "key_hashes": 46,
+     "values_found": 0
+    },
+    "C14": {
+     "a": {
+      "B": [
+       403,
+       "security_exception"
+      ],
+      "own": [
+       201,
+       null
+      ],
+      "request": 200
+     },
+     "b": [
+      403,
+      "security_exception",
+      null
+     ],
+     "c": {
+      "accepted": 0,
+      "exists_after": false,
+      "key_valid": true,
+      "name": "wp16096-h6a34481e-events-w7",
+      "own_after": [
+       201,
+       null
+      ],
+      "writes": [
+       [
+        403,
+        "security_exception"
+       ],
+       [
+        403,
+        "security_exception"
+       ],
+       [
+        403,
+        "security_exception"
+       ],
+       [
+        403,
+        "security_exception"
+       ],
+       [
+        403,
+        "security_exception"
+       ]
+      ]
+     },
+     "c_after_cas_reported": {
+      "writes": [
+       [
+        401,
+        "security_exception"
+       ],
+       [
+        401,
+        "security_exception"
+       ],
+       [
+        401,
+        "security_exception"
+       ],
+       [
+        401,
+        "security_exception"
+       ],
+       [
+        401,
+        "security_exception"
+       ]
+      ]
+     },
+     "d": {
+      "B_mapping": [
+       403,
+       "security_exception"
+      ],
+      "own_mapping": [
+       200,
+       null
+      ]
+     }
+    },
+    "C2": {
+     "A_base": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C3": {
+     "A_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C4": {
+     "add_next": [
+      403,
+      "security_exception"
+     ],
+     "add_on_B": [
+      403,
+      "security_exception"
+     ],
+     "remove_own": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C5": {
+     "E2": 3,
+     "h2_write": [
+      201,
+      null
+     ],
+     "stale": [
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ]
+     ],
+     "stale_accepted": 0
+    },
+    "C6": {
+     "new_epoch_empty": "Refused: lease_not_current",
+     "new_epoch_h1": "Refused: lease_not_current",
+     "old_epoch_h1": "Refused: lease_not_current"
+    },
+    "C7": {
+     "p1_first_step": 2,
+     "p1_key_fp": "sha256:c521ca6d4bed1b7c",
+     "p1_step_after_takeover": -1,
+     "p1_written_after": 2,
+     "p1_written_before": 2,
+     "p2_done": true,
+     "p2_key_fp": "sha256:aacfe5af4bb81c7a",
+     "p2_written": 3
+    },
+    "C7_events_in_read_alias": 5,
+    "C8": {
+     "errors": [],
+     "keys": [
+      [
+       "h6bbddd9a",
+       2,
+       "sha256:d06d2d3f542fadb1"
+      ],
+      [
+       "h6a34481e",
+       4,
+       "sha256:624a13f67185f611"
+      ],
+      [
+       "h6a34481e",
+       4,
+       "sha256:3b57e0b943648cd5"
+      ],
+      [
+       "h6bbddd9a",
+       2,
+       "sha256:6100d042e2613230"
+      ],
+      [
+       "h6bbddd9a",
+       2,
+       "sha256:35ab9aa7cc99ffdc"
+      ],
+      [
+       "h6a34481e",
+       4,
+       "sha256:9451a0911441d592"
+      ],
+      [
+       "h6a34481e",
+       4,
+       "sha256:1795ffda3d2205a3"
+      ],
+      [
+       "h6bbddd9a",
+       2,
+       "sha256:ca877e13ed7d254b"
+      ],
+      [
+       "h6bbddd9a",
+       2,
+       "sha256:43de827d7a68acb5"
+      ],
+      [
+       "h6a34481e",
+       4,
+       "sha256:bd035d1c911fc283"
+      ],
+      [
+       "h6a34481e",
+       4,
+       "sha256:9d29af2441748957"
+      ],
+      [
+       "h6bbddd9a",
+       2,
+       "sha256:4966da3d2d9feab7"
+      ],
+      [
+       "h6bbddd9a",
+       2,
+       "sha256:f4132b27ffa6b000"
+      ],
+      [
+       "h6a34481e",
+       4,
+       "sha256:16b87aaa4ca1bee3"
+      ],
+      [
+       "h6bbddd9a",
+       2,
+       "sha256:1dab82cf88c7dec6"
+      ],
+      [
+       "h6a34481e",
+       4,
+       "sha256:c39f9fdab5abbf33"
+      ],
+      [
+       "h6bbddd9a",
+       2,
+       "sha256:85a836fc161e0af9"
+      ],
+      [
+       "h6a34481e",
+       4,
+       "sha256:d97f90829ef9a922"
+      ],
+      [
+       "h6bbddd9a",
+       2,
+       "sha256:a16c2aaeaa2fff4a"
+      ],
+      [
+       "h6a34481e",
+       4,
+       "sha256:b51dc2b22d331106"
+      ],
+      [
+       "h6bbddd9a",
+       2,
+       "sha256:132ea42b79ed170c"
+      ],
+      [
+       "h6a34481e",
+       4,
+       "sha256:b476fb95531a9911"
+      ],
+      [
+       "h6bbddd9a",
+       2,
+       "sha256:3db5917a1eaf7649"
+      ],
+      [
+       "h6a34481e",
+       4,
+       "sha256:d860631ae556c8f0"
+      ],
+      [
+       "h6bbddd9a",
+       2,
+       "sha256:94670c73227af577"
+      ],
+      [
+       "h6a34481e",
+       4,
+       "sha256:91e4214c6d54c206"
+      ],
+      [
+       "h6bbddd9a",
+       2,
+       "sha256:6cb48fa5169202e2"
+      ],
+      [
+       "h6a34481e",
+       4,
+       "sha256:646a982aa272d770"
+      ],
+      [
+       "h6a34481e",
+       4,
+       "sha256:3cedcc8e00be4e14"
+      ],
+      [
+       "h6bbddd9a",
+       2,
+       "sha256:ea159dad872581a8"
+      ],
+      [
+       "h6bbddd9a",
+       2,
+       "sha256:ed1f3908dd0ab6cb"
+      ],
+      [
+       "h6a34481e",
+       4,
+       "sha256:3bd5dd88fd624789"
+      ],
+      [
+       "h6a34481e",
+       4,
+       "sha256:c013496bb488dc6f"
+      ],
+      [
+       "h6bbddd9a",
+       2,
+       "sha256:187e11220031b25b"
+      ],
+      [
+       "h6a34481e",
+       4,
+       "sha256:1f66052febde9e2b"
+      ],
+      [
+       "h6bbddd9a",
+       2,
+       "sha256:7e8a5a2a51255d27"
+      ],
+      [
+       "h6a34481e",
+       4,
+       "sha256:0abaaf219075d618"
+      ],
+      [
+       "h6bbddd9a",
+       2,
+       "sha256:c23f94f8a8596cc6"
+      ],
+      [
+       "h6bbddd9a",
+       2,
+       "sha256:9c114cead1bb3659"
+      ],
+      [
+       "h6a34481e",
+       4,
+       "sha256:f7d3a0d6792ffb98"
+      ]
+     ],
+     "n_errors": 0
+    },
+    "C8_descriptors": {
+     "bad": [],
+     "checked": 40,
+     "n_bad": 0
+    },
+    "E": 2,
+    "eb": 1,
+    "files": {
+     "admin_es_key": "EACCES",
+     "admin_pgpass": "EACCES",
+     "broker_es_pw_file": "EACCES",
+     "broker_pgpass": "EACCES",
+     "elastic_pw_file": "EACCES",
+     "eraser_role_key": "EACCES",
+     "operator_broker_pw_file": "EACCES",
+     "projector_role_key": "EACCES",
+     "seal_key": "EACCES",
+     "verifier_role_key": "EACCES"
+    },
+    "holds": true,
+    "invalid": {},
+    "invalid_request": {},
+    "key_A_fp": "sha256:6f6110bd4f7e1ce4",
+    "own_write": [
+     201,
+     null
+    ],
+    "run": 3,
+    "tenants": [
+     "h6a34481e",
+     "h6bbddd9a",
+     "h6c1bb981",
+     "h6dc7b064"
+    ],
+    "uid": 20001,
+    "why": []
+   },
+   {
+    "C1": {
+     "B_read": [
+      403,
+      "security_exception"
+     ],
+     "B_w": [
+      403,
+      "security_exception"
+     ],
+     "B_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C10": {
+     "holder_fn": "callable",
+     "select_leases": "42501"
+    },
+    "C11": "ServiceError: peer_refused",
+    "C12": {
+     "a_window_write": [
+      201,
+      null
+     ],
+     "b_projector_start": "ConnectionRefusedError",
+     "before_stop": [
+      201,
+      null
+     ],
+     "c_h2_key_fp": "sha256:b3efc3fad9ef5412",
+     "c_stale": [
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ]
+     ],
+     "c_stale_accepted": 0,
+     "docs_at_phase2": 2,
+     "invalid": {}
+    },
+    "C13": {
+     "key_hashes": 46,
+     "values_found": 0
+    },
+    "C14": {
+     "a": {
+      "B": [
+       403,
+       "security_exception"
+      ],
+      "own": [
+       201,
+       null
+      ],
+      "request": 200
+     },
+     "b": [
+      403,
+      "security_exception",
+      null
+     ],
+     "c": {
+      "accepted": 0,
+      "exists_after": false,
+      "key_valid": true,
+      "name": "wp16096-h6a385040-events-w7",
+      "own_after": [
+       201,
+       null
+      ],
+      "writes": [
+       [
+        403,
+        "security_exception"
+       ],
+       [
+        403,
+        "security_exception"
+       ],
+       [
+        403,
+        "security_exception"
+       ],
+       [
+        403,
+        "security_exception"
+       ],
+       [
+        403,
+        "security_exception"
+       ]
+      ]
+     },
+     "c_after_cas_reported": {
+      "writes": [
+       [
+        401,
+        "security_exception"
+       ],
+       [
+        401,
+        "security_exception"
+       ],
+       [
+        401,
+        "security_exception"
+       ],
+       [
+        401,
+        "security_exception"
+       ],
+       [
+        401,
+        "security_exception"
+       ]
+      ]
+     },
+     "d": {
+      "B_mapping": [
+       403,
+       "security_exception"
+      ],
+      "own_mapping": [
+       200,
+       null
+      ]
+     }
+    },
+    "C2": {
+     "A_base": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C3": {
+     "A_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C4": {
+     "add_next": [
+      403,
+      "security_exception"
+     ],
+     "add_on_B": [
+      403,
+      "security_exception"
+     ],
+     "remove_own": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C5": {
+     "E2": 3,
+     "h2_write": [
+      201,
+      null
+     ],
+     "stale": [
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ]
+     ],
+     "stale_accepted": 0
+    },
+    "C6": {
+     "new_epoch_empty": "Refused: lease_not_current",
+     "new_epoch_h1": "Refused: lease_not_current",
+     "old_epoch_h1": "Refused: lease_not_current"
+    },
+    "C7": {
+     "p1_first_step": 2,
+     "p1_key_fp": "sha256:4d1cb250d4488ab3",
+     "p1_step_after_takeover": -1,
+     "p1_written_after": 2,
+     "p1_written_before": 2,
+     "p2_done": true,
+     "p2_key_fp": "sha256:7fd05b791eeea67f",
+     "p2_written": 3
+    },
+    "C7_events_in_read_alias": 5,
+    "C8": {
+     "errors": [],
+     "keys": [
+      [
+       "h6b34c477",
+       2,
+       "sha256:d0b641e58daacae6"
+      ],
+      [
+       "h6a385040",
+       4,
+       "sha256:1d73c062ece5b37e"
+      ],
+      [
+       "h6b34c477",
+       2,
+       "sha256:6614f7ca3cb052a1"
+      ],
+      [
+       "h6a385040",
+       4,
+       "sha256:2f24c2b1a24b434b"
+      ],
+      [
+       "h6b34c477",
+       2,
+       "sha256:f4cf8c405d570027"
+      ],
+      [
+       "h6a385040",
+       4,
+       "sha256:8d6371013269e260"
+      ],
+      [
+       "h6a385040",
+       4,
+       "sha256:0388bf8cb69d71a2"
+      ],
+      [
+       "h6b34c477",
+       2,
+       "sha256:28ec289e9fafe34a"
+      ],
+      [
+       "h6b34c477",
+       2,
+       "sha256:b7ac7cf11f741f49"
+      ],
+      [
+       "h6a385040",
+       4,
+       "sha256:2252065bccf166e2"
+      ],
+      [
+       "h6b34c477",
+       2,
+       "sha256:cf6cd2528f16f127"
+      ],
+      [
+       "h6a385040",
+       4,
+       "sha256:5f5a5ae4edf48455"
+      ],
+      [
+       "h6b34c477",
+       2,
+       "sha256:f3fb522c35ff1e88"
+      ],
+      [
+       "h6a385040",
+       4,
+       "sha256:c1acb87b41835c64"
+      ],
+      [
+       "h6a385040",
+       4,
+       "sha256:9f8a929a06370774"
+      ],
+      [
+       "h6b34c477",
+       2,
+       "sha256:a58c79c66df5ed59"
+      ],
+      [
+       "h6b34c477",
+       2,
+       "sha256:25d79b13fabfb83b"
+      ],
+      [
+       "h6a385040",
+       4,
+       "sha256:dfb2ab23b70137cf"
+      ],
+      [
+       "h6a385040",
+       4,
+       "sha256:dc2ceb104d67161d"
+      ],
+      [
+       "h6b34c477",
+       2,
+       "sha256:4325719558e4b1d5"
+      ],
+      [
+       "h6a385040",
+       4,
+       "sha256:35b0c84d965846ea"
+      ],
+      [
+       "h6b34c477",
+       2,
+       "sha256:fd7d34fbecd6f5d7"
+      ],
+      [
+       "h6b34c477",
+       2,
+       "sha256:243bdfa488804f64"
+      ],
+      [
+       "h6a385040",
+       4,
+       "sha256:f7e0e6bb625821eb"
+      ],
+      [
+       "h6b34c477",
+       2,
+       "sha256:7af7edc046db3137"
+      ],
+      [
+       "h6a385040",
+       4,
+       "sha256:b5bda65626eab4f2"
+      ],
+      [
+       "h6a385040",
+       4,
+       "sha256:6e1fbf7d17d28c8e"
+      ],
+      [
+       "h6b34c477",
+       2,
+       "sha256:91ab2d08792e3a17"
+      ],
+      [
+       "h6b34c477",
+       2,
+       "sha256:63300458798ce146"
+      ],
+      [
+       "h6a385040",
+       4,
+       "sha256:b39d4418fb5b1ea3"
+      ],
+      [
+       "h6a385040",
+       4,
+       "sha256:d9e446d4baddba5b"
+      ],
+      [
+       "h6b34c477",
+       2,
+       "sha256:da7f53f1c4f36ef8"
+      ],
+      [
+       "h6b34c477",
+       2,
+       "sha256:81887182aedbc947"
+      ],
+      [
+       "h6a385040",
+       4,
+       "sha256:5d282001d88d0644"
+      ],
+      [
+       "h6b34c477",
+       2,
+       "sha256:d4ac542590c6d463"
+      ],
+      [
+       "h6a385040",
+       4,
+       "sha256:1a8adcc0830ebb47"
+      ],
+      [
+       "h6a385040",
+       4,
+       "sha256:ac32ec6fb5a3a1fd"
+      ],
+      [
+       "h6b34c477",
+       2,
+       "sha256:21a4b24fb6863286"
+      ],
+      [
+       "h6b34c477",
+       2,
+       "sha256:9c580c7a13f238ed"
+      ],
+      [
+       "h6a385040",
+       4,
+       "sha256:2ab889e0e8dc423e"
+      ]
+     ],
+     "n_errors": 0
+    },
+    "C8_descriptors": {
+     "bad": [],
+     "checked": 40,
+     "n_bad": 0
+    },
+    "E": 2,
+    "eb": 1,
+    "files": {
+     "admin_es_key": "EACCES",
+     "admin_pgpass": "EACCES",
+     "broker_es_pw_file": "EACCES",
+     "broker_pgpass": "EACCES",
+     "elastic_pw_file": "EACCES",
+     "eraser_role_key": "EACCES",
+     "operator_broker_pw_file": "EACCES",
+     "projector_role_key": "EACCES",
+     "seal_key": "EACCES",
+     "verifier_role_key": "EACCES"
+    },
+    "holds": true,
+    "invalid": {},
+    "invalid_request": {},
+    "key_A_fp": "sha256:f056a7ff171dd9bf",
+    "own_write": [
+     201,
+     null
+    ],
+    "run": 4,
+    "tenants": [
+     "h6a385040",
+     "h6b34c477",
+     "h6cdeb4b3",
+     "h6d66056a"
+    ],
+    "uid": 20001,
+    "why": []
+   }
+  ],
+  "fenced_files": {
+   "app": [
+    "pgpass.wp_app"
+   ],
+   "broker": [
+    "es_broker_password",
+    "pgpass.wp_broker"
+   ],
+   "keysvc": [
+    "pgpass.wp_kms"
+   ]
+  },
+  "fenced_witness": {
+   "admin_es_key": "yes",
+   "admin_pgpass": "yes",
+   "broker_es_pw_file": "yes",
+   "broker_pgpass": "yes",
+   "elastic_pw_file": "yes",
+   "eraser_role_key": "yes",
+   "operator_broker_pw_file": "yes",
+   "projector_role_key": "yes",
+   "seal_key": "yes",
+   "verifier_role_key": "yes"
+  },
+  "limits": [
+   "one Elasticsearch node",
+   "docker access on the host is root-equivalent: separation of service identities on one host, not host isolation",
+   "the broker trusts every allowed peer uid for every tenant (tenant authority: design path item 2)",
+   "holder strings are trusted within one service identity",
+   "a key already issued writes until the next CAS or its 1 h expiry (C12 a)",
+   "the operator directory is mounted into the app container for this test only",
+   "H6e, H6g: the default role-key mode (WP_BROKER unset) has no tenant isolation: the projector role key writes through any tenant's existing write alias (control C1 B_w), reads any tenant (C1 B_read) and updates another tenant's mapping (C14_reported d); alias add and re-point were REFUSED (403, control C4 and the fence CAS), so re-pointing is not demonstrated; only broker-minted keys are tenant- and epoch-scoped; a broker-mode deployment must not mint or place the role keys where the application runs",
+   "H6g C14c: a write without require_alias to an unused name of A's family, key still valid; the same writes after the CAS (key invalid, 401) are reported only (C14.c_after_cas_reported)",
+   "H6e C14d: whether a writer key can update its own tenant's mapping is observed, not assumed (see C14.d.own_mapping); tenant-local, reported, not judged"
+  ],
+  "n_pairs": 20,
+  "n_stale": 20,
+  "uids": {
+   "app": 20001,
+   "broker": 20004,
+   "keysvc": 20003,
+   "verifier": 20002
+  },
+  "verdict": {
+   "control_violated": "5/5",
+   "feasible": true,
+   "fenced_holds": "5/5",
+   "invalid_request_cases": [],
+   "void": false
+  }
+ }
+}

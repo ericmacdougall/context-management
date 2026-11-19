@@ -1,0 +1,8 @@
+test_p1_lease_check_callable (tests.test_schema_broker_pg.BrokerSchemaFromScratch.test_p1_lease_check_callable) ... ok
+test_p2_no_direct_table_access (tests.test_schema_broker_pg.BrokerSchemaFromScratch.test_p2_no_direct_table_access) ... ok
+test_p3_exact_tuple_only (tests.test_schema_broker_pg.BrokerSchemaFromScratch.test_p3_exact_tuple_only) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.251s
+
+OK

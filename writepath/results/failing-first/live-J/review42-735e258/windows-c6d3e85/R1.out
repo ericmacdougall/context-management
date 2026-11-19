@@ -1,0 +1,10 @@
+steps (1): XB
+lock taken 2026-11-19T04:13:31Z head c6d3e85 seal0 179412e h0 6ddeca3 free_kib 44584084
+store_fs pg=tmpfs es=tmpfs (timings on tmpfs stores are not comparable with disk-backed receipts; correctness results are)
+XB exit=1 tree 42cfd11+tests/test_d3_pg.py@6f7d93f Ran 47 tests in 12.552s FAILED (failures=3) 
+  XB seconds=13 watermark_lines 0 oom_kill emlab2-wphard-pg=25d8d5f9be76c30efd82e9f17409ee68d7575eff32dd1d47a8854e0f5d0a5f86:0 emlab2-wphard-es=3b98aabfd6133259f76ba5f72e861f0536bc0406078d54dfe348946117db722a:0  expected red observed fail(Ran 47, expected 42)
+dropped leaked test databases 0
+free_kib_end 44544492 chain done 2026-11-19T04:13:44Z
+steps expected/observed: XB:red/fail(Ran 47, expected 42)
+CHAIN FAILED: a step's outcome differs from its declared one (exit 3)
+lock released 2026-11-19T04:13:44Z

@@ -1,0 +1,1 @@
+seal_socket_e2e {"E1": {"accepted": 1, "row_attested": [true, true]}, "E2": {"raised": "SealUnavailable", "stored": 0}, "E3": {"raised": "SealUnavailable", "stored": 0}, "same_uid_limit": true} PASS

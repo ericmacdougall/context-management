@@ -1,0 +1,6 @@
+r2_container tree c6d3e85 start 2026-11-19T04:13:45Z free_kib 44524744
+scenario pc1 1 rc=0 oom_killed=false exit=0 {"scenario": "pc1", "n": 1, "line_limit": 2097152, "capped": false, "base_mib": 41.5, "peak_mib": 95.5, "replies": ["{\"error\": \"bad_request\"}"], "served": 1, "growth_mib": 54.0}
+scenario pd 8 rc=0 oom_killed=false exit=0 {"scenario": "pd", "n": 8, "line_limit": 2097152, "capped": false, "base_mib": 41.4, "peak_mib": 102.9, "replies": ["{\"error\": \"bad_request\"}"], "served": 8, "growth_mib": 61.5}
+scenario pc8 8 rc=0 oom_killed=false exit=0 {"scenario": "pc8", "n": 8, "line_limit": 2097152, "capped": false, "base_mib": 41.5, "peak_mib": 137.5, "replies": ["{\"error\": \"bad_request\"}"], "served": 8, "growth_mib": 96.0}
+scenario pc8 32 rc=0 oom_killed=false exit=0 {"scenario": "pc8", "n": 32, "line_limit": 2097152, "capped": false, "base_mib": 41.4, "peak_mib": 285.6, "replies": ["{\"error\": \"bad_request\"}"], "served": 32, "growth_mib": 244.2}
+r2_container done 2026-11-19T04:14:18Z
