@@ -1176,6 +1176,34 @@ class D3Store(unittest.TestCase):
         self.assertFalse(done.get("done"), "the erasure was reported done while an unscanned quarantine row remained")
         self.assertEqual(done.get("verify", {}).get("pg:quarantine_unscanned"), 1, done)
 
+    def test_n1c2_released_hold_lets_the_blocked_erasure_finish(self):
+        """Review 42cfd11 R4: the n1c erasure, blocked by a held speaker's stale quarantine row, is re-driven after the
+        hold is released (rescan, cascade, completion, as the job's own steps; not the sweep's ES path) and ends done,
+        with the held row removed. Also: a SECOND subject's erasure in the same tenant is blocked by that row too
+        (the blast radius stated in DESIGN-NOTES), and finishes after the release."""
+        from wp import erasure
+        t = "d3n1c2"
+        self.tenant(t)
+        self.app.execute("select wp_subjects_ensure(%s::tenant_t, array['N9H'])", (t,))
+        base = dict(tenant_id=t, session_id="n1c2", presented_epoch=1, reason="stale_epoch", kind="message", content_enc=b"opaque", mentions=[])
+        self.assertEqual(self.owner_quarantine(dict(base, subject_id="N9H", event_id="n1c2-held", mention_scan_upto=0)), "ok")
+        lg = self.legal("wp-n1c2-legal")
+        try:
+            erasure.place_hold(lg, t, "N9H", "h-n1c2", "test")
+            j1, d1 = self.erase_to_done(t, "N9X", NAME)
+            j2, d2 = self.erase_to_done(t, "N9Y", "Zora Quill")
+            self.assertEqual((d1.get("done"), d2.get("done")), (False, False), (d1, d2))
+            self.assertEqual((d1["verify"].get("pg:quarantine_unscanned"), d2["verify"].get("pg:quarantine_unscanned")), (1, 1))
+            lg.execute("select wp_hold_release(%s)", ("h-n1c2",))
+        finally:
+            lg.close()
+        for j in (j1, j2):
+            erasure.rescan(self.app, FixedKS(), j)
+            self.cascade(j)
+            res = self.complete(j)
+            self.assertTrue(res.get("done"), f"the erasure did not finish after the hold was released: {res}")
+        self.assertEqual(self.one("select count(*) from quarantine where tenant_id=%s and event_id='n1c2-held'", (t,)), (0,))
+
     # ------------------------------------------------------------------ R1 (review 42cfd11): the REAL writer, log.append
     def writer(self, t, sid, speaker, content, hook):
         """log.append through the in-process authority (test key) with a real lease; `hook` runs at the writer's own
