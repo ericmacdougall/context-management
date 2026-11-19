@@ -102,16 +102,26 @@ def _send_nowait(sock, data):
         pass
 
 
+class _Idle(Exception):
+    pass
+
+
 class _Handler(socketserver.BaseRequestHandler):
     """One connection (review J N2). Requests are read from the raw socket with a bound on the line (server.line_limit
-    bytes including the newline) and a deadline from a request's first byte to its newline (server.request_timeout_s);
-    an idle connection between requests has no deadline. A reply is sent under the same deadline. Over the bound or past
-    the deadline: one error line, then the connection is closed. self.client_address is the peer uid that
-    Server.process_request admitted."""
+    bytes including the newline) and a deadline from a request's first byte to its newline (server.request_timeout_s).
+    Waiting for a request's first byte is bounded by server.idle_timeout_s when set (review 42cfd11 R2: the seal
+    authority sets it; the key service and broker keep long-lived clients and do not), past which the connection is
+    closed without a reply. A reply is sent under the request deadline. Over the bound or past the deadline: one error
+    line, then the connection is closed. Parse, dispatch and reply encoding run in _serve under the server's work
+    slots (when set), and nothing of a served request stays referenced while the connection waits for the next one
+    (review 42cfd11 R2a). self.client_address is the peer uid that Server.process_request admitted."""
+
+    store = None
 
     def _line(self, buf):
         srv, sock = self.server, self.request
         deadline = None
+        idle = getattr(srv, "idle_timeout_s", None)
         while True:
             i = buf.find(b"\n")
             if i >= 0:
@@ -123,7 +133,7 @@ class _Handler(socketserver.BaseRequestHandler):
             if buf and deadline is None:
                 deadline = time.monotonic() + srv.request_timeout_s
             if deadline is None:
-                sock.settimeout(None)
+                sock.settimeout(idle)
             else:
                 left = deadline - time.monotonic()
                 if left <= 0:
@@ -132,18 +142,58 @@ class _Handler(socketserver.BaseRequestHandler):
             try:
                 chunk = sock.recv(min(1 << 16, srv.line_limit - len(buf)))
             except socket.timeout:
-                raise _Slow() from None
+                raise (_Slow() if deadline is not None else _Idle()) from None
             if not chunk:
                 return None, buf
             buf += chunk
 
-    def _reply(self, rep):
+    def _send(self, data):
         self.request.settimeout(self.server.request_timeout_s)
-        self.request.sendall((json.dumps(rep) + "\n").encode())
+        self.request.sendall(data)
+
+    def _reply(self, rep):
+        self._send((json.dumps(rep) + "\n").encode())
+
+    def _serve(self, line):
+        """One request line -> (reply bytes, log label, outcome). Everything parsed or produced is local to this call,
+        so it is released before the connection waits again; under the server's work slots (when set) only that many
+        requests are parsed, dispatched and encoded at once, and a request that cannot get a slot within
+        server.queue_wait_s is answered busy (review 42cfd11 R2a)."""
+        sem = self.server.work_semaphore()
+        if sem is not None and not sem.acquire(timeout=getattr(self.server, "queue_wait_s", None) or 60.0):
+            return b'{"error": "busy"}\n', "bad_request", "busy"
+        try:
+            label = "bad_request"       # review B3: the log names only a RECOGNIZED op, never caller bytes
+            try:
+                try:
+                    req = json.loads(line)
+                except ValueError:
+                    req = None                  # unparseable: answered bad_request below, connection kept
+                del line                        # this frame's reference; the caller drops its own before waiting
+                is_obj = isinstance(req, dict)
+                op = req.get("op") if is_obj else None
+                args = req.get("args") if is_obj else None
+                req = None
+                if not isinstance(op, str) or op not in self.server.ops:
+                    label = "unknown_op" if is_obj else "bad_request"
+                    rep = {"error": label}
+                elif args is not None and not isinstance(args, dict):
+                    label, rep = op, {"error": "bad_request"}
+                else:
+                    label = op
+                    self.store = self.store or self.server.make_store()
+                    rep = self.server.dispatch(self.store, op, args or {})
+                args = None
+            except Exception as e:  # noqa: BLE001  (a failed request never kills the connection's peer handling)
+                rep = {"error": type(e).__name__, "sqlstate": getattr(e, "sqlstate", None)}
+            outcome = "ok" if "ok" in rep else rep.get("error")
+            return (json.dumps(rep) + "\n").encode(), label, outcome
+        finally:
+            if sem is not None:
+                sem.release()
 
     def handle(self):
         uid = self.client_address
-        ks = None
         buf = bytearray()
         try:
             while True:
@@ -154,32 +204,20 @@ class _Handler(socketserver.BaseRequestHandler):
                     self.server.note(f"uid={uid} op=bad_request {err}")
                     self._reply({"error": err})
                     return
+                except _Idle:
+                    self.server.note(f"uid={uid} idle_timeout")
+                    return
                 if line is None:
                     return
-                label = "bad_request"       # review B3: the log names only a RECOGNIZED op, never caller bytes
-                try:
-                    try:
-                        req = json.loads(line)
-                    except ValueError:
-                        req = None                  # unparseable: answered bad_request below, connection kept
-                    op = req.get("op") if isinstance(req, dict) else None
-                    args = req.get("args") if isinstance(req, dict) else None
-                    if not isinstance(op, str) or op not in self.server.ops:
-                        label = "unknown_op" if isinstance(req, dict) else "bad_request"
-                        rep = {"error": label}
-                    elif args is not None and not isinstance(args, dict):
-                        label, rep = op, {"error": "bad_request"}
-                    else:
-                        label = op
-                        ks = ks or self.server.make_store()
-                        rep = self.server.dispatch(ks, op, args or {})
-                except Exception as e:  # noqa: BLE001  (a failed request never kills the connection's peer handling)
-                    rep = {"error": type(e).__name__, "sqlstate": getattr(e, "sqlstate", None)}
-                self.server.note(f"uid={uid} op={label} {'ok' if 'ok' in rep else rep.get('error')}")
-                self._reply(rep)
+                data, label, outcome = self._serve(line)
+                line = None
+                self.server.note(f"uid={uid} op={label} {outcome}")
+                self._send(data)
+                data = None
         except OSError:
             return                          # peer gone, or a reply not taken within the deadline: connection dropped
         finally:
+            ks = self.store
             if ks is not None:
                 if hasattr(ks, "close"):
                     ks.close()                  # the seal authority: its store connection and its key-service client
@@ -193,12 +231,18 @@ class Server(socketserver.ThreadingMixIn, socketserver.UnixStreamServer):
       request_timeout_s   from a request's first byte to its newline; also the send of one reply
       max_per_uid         live connections of one peer uid
       max_conn            live connections in all
+      idle_timeout_s      longest wait for a request's first byte (None: no bound; review 42cfd11 R2)
+      work_slots          requests parsed, dispatched and encoded at once (None: no bound; review 42cfd11 R2a)
+      queue_wait_s        longest wait for a work slot, then busy (default 60 s)
     A peer over a connection cap gets {"error": "busy"} and is closed in the accept loop, before a thread is started; a
-    refused uid likewise gets peer_refused. Memory held by request buffers is at most max_conn x line_limit."""
+    refused uid likewise gets peer_refused. Raw bytes held: at most max_conn x line_limit in requests being read plus,
+    per connection, one encoded reply being sent. Parsed requests: one per work slot (review 42cfd11 R2a: a JSON line
+    of empty objects costs about 28 times its size once parsed, so the slots, not the line limit, bound that)."""
     daemon_threads = True
 
     def __init__(self, path, allow, make_store=None, uid_of=peer_uid, log=None, ops=OPS, dispatch_fn=None,
-                 line_limit=LINE_LIMIT, request_timeout_s=REQUEST_TIMEOUT_S, max_per_uid=MAX_CONN_PER_UID, max_conn=MAX_CONN):
+                 line_limit=LINE_LIMIT, request_timeout_s=REQUEST_TIMEOUT_S, max_per_uid=MAX_CONN_PER_UID, max_conn=MAX_CONN,
+                 idle_timeout_s=None, work_slots=None, queue_wait_s=60.0):
         """ops / dispatch_fn: the service's operations (default: the key service's); the broker (wp/broker.py) reuses
         this transport and its kernel-uid check with its own."""
         if os.path.exists(path):
@@ -213,7 +257,20 @@ class Server(socketserver.ThreadingMixIn, socketserver.UnixStreamServer):
         self.ops, self.dispatch = frozenset(ops), dispatch_fn or dispatch
         self.line_limit, self.request_timeout_s = int(line_limit), float(request_timeout_s)
         self.max_per_uid, self.max_conn = int(max_per_uid), int(max_conn)
+        self.idle_timeout_s = None if idle_timeout_s is None else float(idle_timeout_s)
+        self.work_slots = None if work_slots is None else int(work_slots)
+        self.queue_wait_s = float(queue_wait_s)
         self._lock, self._live, self._per_uid = threading.Lock(), 0, {}
+        self._work = None
+
+    def work_semaphore(self):
+        """The work slots as a semaphore, made on first use (so a bound set on the instance after construction holds)."""
+        if not self.work_slots:
+            return None
+        with self._lock:
+            if self._work is None:
+                self._work = threading.BoundedSemaphore(self.work_slots)
+            return self._work
 
     def process_request(self, request, client_address):
         try:

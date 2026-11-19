@@ -37,6 +37,12 @@ import time
 UIDS = {"app": 20001, "verifier": 20002, "keysvc": 20003}
 IMAGE = "ubuntu:24.04"
 LABEL = "emlab2.stream=wphard"
+# Service containers (review 42cfd11 R2a). 512 MiB, sized from the measured bound: the seal authority's transport peaked
+# at 285 MiB with all 32 connections sending a 2 MiB line of empty objects at once (tests/test_transport_bounds.py TB9d),
+# plus under 40 MB for the worst admitted call (DESIGN-NOTES H10). No restart policy, deliberately: a service that dies
+# fails closed (SealUnavailable or ServiceError, nothing stored) and the run must see it (the chain judges each step's
+# oom_kill count), not have it masked by a silent restart.
+CONTAINER_MEMORY = "512m"
 SOCK = "/run/wphard/keysvc.sock"
 PROBE_FILES = {"verifier_pgpass": "/svc/{verifier}/pgpass.wp_verifier", "kms_pgpass": "/svc/{keysvc}/pgpass.wp_kms",
                "admin_pgpass": "/operator/secrets/pgpass", "elastic_pw_file": "/operator/secrets/es_elastic_password",
@@ -186,7 +192,7 @@ def witness(arm):
 def _run_args(name, uid, secrets_dir, extra=()):
     from wp import config
     src = pathlib.Path(__file__).resolve().parents[1]
-    return ["run", "--label", LABEL, "--network", "host", "-m", "512m", "--user", f"{uid}:{uid}",
+    return ["run", "--label", LABEL, "--network", "host", "-m", CONTAINER_MEMORY, "--user", f"{uid}:{uid}",
             "-v", "/usr:/usr:ro", "-v", f"{config.HOME / 'venv'}:/venv:ro", "-v", f"{src}:/src:ro",
             "-v", f"{config.HOME / 'conf'}:/wp/conf:ro", "-v", f"{config.HOME / 'logs'}:/wp/logs:ro",
             "-v", f"{config.HOME / 'svc'}:/svc:ro", "-v", f"{config.HOME / 'run'}:/run/wphard",

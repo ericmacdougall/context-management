@@ -24,6 +24,7 @@ lease epoch, batch id, index in batch, batch size. The store holds the key's HMA
 computes sha256(opad || sha256(ipad || M)) itself (RFC 2104). The log names counts, a refusal code and seconds, plus
 short hashes of the tenant and batch (caller bytes never reach the log); never content, ciphertext, keys, MACs,
 identifiers, subject ids or event ids."""
+import base64
 import hashlib
 import hmac
 import json
@@ -42,16 +43,29 @@ OPS = ("seal",)
 BLOCK = 64                                   # SHA-256 block size (RFC 2104 B)
 KEY_FILE = "seal_key"
 _REFUSALS = {c.code: c for c in (M.ContentTooLarge, M.MatcherBudgetExceeded, M.CallBudgetExceeded)}
-# Transport bounds of the authority (review J N2; wp/keysvc.py Server enforces them). One request line holds a whole
-# call: at most call_bytes of content, which JSON escaping can grow 6-fold (a control character is \u0001), plus per
-# event envelope and ids (EVENT_ENVELOPE bytes assumed; an event id is a 32-hex uuid). A line over LINE_LIMIT is refused
-# by the client before sending (CallBudgetExceeded) and by the server (request_too_large, connection closed).
-EVENT_ENVELOPE = 1024
-LINE_LIMIT = 8 * 2**20
-assert LINE_LIMIT >= 6 * M.BUDGET.call_bytes + M.BUDGET.call_events * EVENT_ENVELOPE + 4096
+# Transport bounds of the authority (review J N2, review 42cfd11 R2a; wp/keysvc.py Server enforces them). One request
+# line holds a whole call. Content travels base64-encoded (content_b64), so a call's content costs exactly
+# 4 * ceil(call_bytes / 3) bytes on the line whatever it holds (as JSON text, control characters cost 6 bytes each and
+# forced an 8 MiB line). Per event, EVENT_ENVELOPE bytes for the keys, the 32-hex event id and a subject id of up to
+# about 160 bytes; MENTIONS_ALLOWANCE for a WPS17 retry's prior mentions over the whole call (review 42cfd11 R1). The
+# sum is 1,920,344 bytes, so LINE_LIMIT is 2 MiB. A line over it is refused by the client before sending
+# (CallBudgetExceeded: nothing stored) and by the server (request_too_large, connection closed).
+EVENT_ENVELOPE = 256
+MENTIONS_ALLOWANCE = 256 * 1024
+LINE_LIMIT = 2 * 2**20
+assert LINE_LIMIT >= 4 * -(-M.BUDGET.call_bytes // 3) + M.BUDGET.call_events * EVENT_ENVELOPE + MENTIONS_ALLOWANCE + 4096
 REQUEST_TIMEOUT_S = 30.0
-MAX_CONN_PER_UID = 8           # buffers held at most MAX_CONN x LINE_LIMIT = 256 MiB
+MAX_CONN_PER_UID = 8
 MAX_CONN = 32
+# Review 42cfd11 R2a. WORK_SLOTS: requests parsed, dispatched and encoded at once. The authority is one GIL-bound
+# process, so serialising costs little throughput; it bounds parsed memory to one request (a line of empty JSON objects
+# costs about 28 times its size once parsed). A request waits at most QUEUE_WAIT_S for the slot, then gets busy
+# (QUEUE_WAIT_S plus the worst admitted call, about 32 s, stays under the clients' 120 s). IDLE_TIMEOUT_S: the longest
+# wait for a request's first byte, then the connection is closed (an append opens its own connection and closes it).
+# The memory this leaves, measured in DESIGN-NOTES "Review 42cfd11 R2", is what the authority's container is sized to.
+WORK_SLOTS = 1
+QUEUE_WAIT_S = 60.0
+IDLE_TIMEOUT_S = 60.0
 CLIENT_TIMEOUT_S = 120.0       # review J M11: worst admitted call measured about 32 s (DESIGN-NOTES H10)
 
 
@@ -220,11 +234,22 @@ class Authority:
 
 
 def dispatch(auth, op, a):
-    """One request against an Authority (the key service transport's dispatch_fn). Ciphertext travels as hex."""
+    """One request against an Authority (the key service transport's dispatch_fn). Content arrives as content_b64
+    (base64 of UTF-8, strict); ciphertext leaves as hex."""
     if op != "seal":
         return {"error": "unknown_op"}
     try:
-        rows = auth.seal(a.get("tenant"), a.get("lease_scope"), a.get("lease_epoch"), a.get("batch_id"), a.get("events"),
+        evs = a.get("events")
+        if not isinstance(evs, list):
+            raise ValueError("events")
+        events = []
+        for e in evs:
+            if not (isinstance(e, dict) and isinstance(e.get("content_b64"), str)):
+                raise ValueError("an event carries content_b64")
+            events.append({"event_id": e.get("event_id"), "subject_id": e.get("subject_id"),
+                           "content": base64.b64decode(e["content_b64"], validate=True).decode("utf-8")})
+        evs = None
+        rows = auth.seal(a.get("tenant"), a.get("lease_scope"), a.get("lease_epoch"), a.get("batch_id"), events,
                          a.get("purpose", "events"), a.get("prior_mentions"))
     except M.WriteRefused as ex:
         return {"error": "WriteRefused", "code": ex.code, "index": getattr(ex, "index", None)}
@@ -237,6 +262,16 @@ def dispatch(auth, op, a):
     except (TypeError, ValueError):
         return {"error": "bad_request"}
     return {"ok": [dict(r, content_enc=r["content_enc"].hex()) for r in rows]}
+
+
+def request_line(tenant, lease_scope, lease_epoch, batch_id, events, purpose="events", prior_mentions=None):
+    """The one request line Client.seal sends (bytes, newline included); content as base64 of its UTF-8."""
+    req = {"op": "seal", "args": {"tenant": tenant, "lease_scope": lease_scope, "lease_epoch": lease_epoch, "batch_id": batch_id,
+                                  "purpose": purpose, "prior_mentions": prior_mentions,
+                                  "events": [{"event_id": e["event_id"], "subject_id": e["subject_id"],
+                                              "content_b64": base64.b64encode(e["content"].encode("utf-8")).decode("ascii")}
+                                             for e in events]}}
+    return (json.dumps(req) + "\n").encode()
 
 
 class Client:
@@ -256,11 +291,7 @@ class Client:
         self.f = self.sock.makefile("rwb")
 
     def seal(self, tenant, lease_scope, lease_epoch, batch_id, events, purpose="events", prior_mentions=None):
-        req = {"op": "seal", "args": {"tenant": tenant, "lease_scope": lease_scope, "lease_epoch": lease_epoch, "batch_id": batch_id,
-                                      "purpose": purpose, "prior_mentions": prior_mentions,
-                                      "events": [{"event_id": e["event_id"], "subject_id": e["subject_id"], "content": e["content"]}
-                                                 for e in events]}}
-        data = (json.dumps(req) + "\n").encode()
+        data = request_line(tenant, lease_scope, lease_epoch, batch_id, events, purpose, prior_mentions)
         if len(data) > LINE_LIMIT:
             raise M.CallBudgetExceeded("call over the seal authority's request line limit", None)
         try:
@@ -329,7 +360,8 @@ def serve(path):
         return Authority(db.connect(application_name="wp-sealer", role=db.SEALER), keysvc.key_store(), kid, key, log=log,
                          owns=True)
     srv = keysvc.Server(path, allow, make_store=make, log=log, ops=OPS, dispatch_fn=dispatch, line_limit=LINE_LIMIT,
-                        request_timeout_s=REQUEST_TIMEOUT_S, max_per_uid=MAX_CONN_PER_UID, max_conn=MAX_CONN)
+                        request_timeout_s=REQUEST_TIMEOUT_S, max_per_uid=MAX_CONN_PER_UID, max_conn=MAX_CONN,
+                        idle_timeout_s=IDLE_TIMEOUT_S, work_slots=WORK_SLOTS, queue_wait_s=QUEUE_WAIT_S)
     print(f"sealer serving uids={sorted(allow)} key_id={kid}", flush=True)
     srv.serve_forever()
 
