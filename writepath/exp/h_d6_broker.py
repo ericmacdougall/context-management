@@ -409,20 +409,23 @@ def _line(out, tag):
 
 
 def _descriptor_check(es, keys):
-    """C8: each key's role descriptors (read by the operator) name only its tenant and epoch."""
-    from wp import families as F
+    """C8: each key's role descriptors (read by the operator) name only its tenant and epoch. keys: [tenant, epoch,
+    key-id fingerprint] (the child records fingerprints only, review J M8): the operator lists the broker user's keys
+    and matches them by fingerprint, so no key id leaves the child or reaches a result."""
+    from wp import broker as BR, es_keys, families as F
+    s, j = es.req("GET", "/_security/api_key", ok=None, username=BR.BROKER_USER)
+    by_fp = {es_keys.fingerprint(k["id"]): k for k in (j.get("api_keys", []) if s == 200 else [])}
     bad, n = [], 0
-    for t, e, kid in keys:
-        s, j = es.req("GET", "/_security/api_key", ok=None, id=kid)
-        ks = j.get("api_keys", []) if s == 200 else []
-        if not ks:
-            bad.append(f"{kid}: not readable ({s})")
+    for t, e, fp in keys:
+        k = by_fp.get(fp)
+        if k is None:
+            bad.append(f"{fp}: not readable ({s})")
             continue
         n += 1
-        names = [nm for rd in (ks[0].get("role_descriptors") or {}).values() for ip in rd.get("indices", []) for nm in ip["names"]]
+        names = [nm for rd in (k.get("role_descriptors") or {}).values() for ip in rd.get("indices", []) for nm in ip["names"]]
         want = {F.write_alias(t, f, e) for f in F.FAMILIES} | {F.read_alias(t, f) for f in F.FAMILIES}
         if set(names) != want:
-            bad.append(f"{kid}: names differ from its tenant and epoch")
+            bad.append(f"{fp}: names differ from its tenant and epoch")
     return {"checked": n, "bad": bad[:5], "n_bad": len(bad)}
 
 
