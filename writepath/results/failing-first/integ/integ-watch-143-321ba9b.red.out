@@ -1,0 +1,25 @@
+# failing-first receipt
+# date: 2026-11-19T00:37:00Z
+# file under test: 321ba9b:writepath/exp/disk_gate.py blob a0aa97ed3b3a1da32c95a8050deec9e719597004 sha256 65a575145666759e7c0a45fa356a71f919c436de8734a17771f5b0bb8153e295
+# tree: writepath at 321ba9b (git archive); the current tests/ copied into it; run from it; nothing imported from the current tree
+# test file: tests/test_disk_gate.py from HEAD da13a59 blob 0b6bb53b1bb1b9b1f779cbf2d6d0aa541bd24441
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<that file> python3 - <tests> < runner) with tests: tests.test_disk_gate.Gate.test_integ_event_stream_exiting_143_on_the_gates_sigterm_is_valid
+test_integ_event_stream_exiting_143_on_the_gates_sigterm_is_valid (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+FAIL: test_integ_event_stream_exiting_143_on_the_gates_sigterm_is_valid (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.Dwmn6zcnDD/writepath/tests/test_disk_gate.py", line 2723, in test_integ_event_stream_exiting_143_on_the_gates_sigterm_is_valid
+    self.assertValid(*self.call("end"))
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.Dwmn6zcnDD/writepath/tests/test_disk_gate.py", line 1105, in assertValid
+    self.assertEqual(rc, 0, f"expected a valid run (exit 0), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 3 != 0 : expected a valid run (exit 0), got 3: e, user, memory limit, network, privileged flag, the mount list), not by the files in its mounts (WP_HOME conf, logs, svc, run), its capabilities, devices or environment, and one created within the last second before the end and removed before it can be missed; Elasticsearch index and component templates are inspected at admission only; write_refusals is not protected from a superuser or wp_owner.
+
+----------------------------------------------------------------------
+Ran 1 test in 3.722s
+
+FAILED (failures=1)
+# loaded writepath modules (path in the extracted tree, sha256 prefix):
+#   tests.test_disk_gate tests/test_disk_gate.py 46667db8540c12db
+# exit status: 1

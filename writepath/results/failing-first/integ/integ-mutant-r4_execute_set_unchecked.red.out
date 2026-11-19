@@ -1,0 +1,39 @@
+# failing-first receipt (new module)
+# date: 2026-11-19T00:37:11Z
+# tree: writepath at da13a59 (git archive); the current tests/ copied into it; run from it
+# module under test: results/failing-first/variants/disk_gate.integ-mutant-r4_execute_set_unchecked.py sha256 77aea10614d5ee8f8087c031aa079d29cbc9475a4cde25119940aec7beb43487, copied into the tree
+# its difference from exp/disk_gate.py at HEAD da13a59:
+# diff: 1514c1514
+# diff: <         if ex != set(spec["execute"]):
+# diff: ---
+# diff: >         if False:
+# test file: tests/test_disk_gate.py from HEAD da13a59 blob 0b6bb53b1bb1b9b1f779cbf2d6d0aa541bd24441
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<tree>/writepath/results/failing-first/variants/disk_gate.integ-mutant-r4_execute_set_unchecked.py python3 -m unittest -v tests.test_disk_gate.Gate.test_integ_refusals_execute_by_another_role_blocks tests.test_disk_gate.Gate.test_integ_refusals_execute_missing_for_the_app_blocks)
+test_integ_refusals_execute_by_another_role_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_refusals_execute_missing_for_the_app_blocks (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+FAIL: test_integ_refusals_execute_by_another_role_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.RgYZ6kCk80/writepath/tests/test_disk_gate.py", line 2794, in test_integ_refusals_execute_by_another_role_blocks
+    self.assertExactly(*self.call("start"), 2, "R4: EXECUTE on its writer wp_write_refused is held by "
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.RgYZ6kCk80/writepath/tests/test_disk_gate.py", line 2451, in assertExactly
+    self.assertTrue(any(w in x for x in lines), f"no {kind} reason names {w!r}: {lines}")
+AssertionError: False is not true : no BLOCKED reason names "R4: EXECUTE on its writer wp_write_refused is held by ['wp_app', 'wp_broker']": ['role wp_broker may execute public.wp_write_refused (not committed)']
+
+======================================================================
+FAIL: test_integ_refusals_execute_missing_for_the_app_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.RgYZ6kCk80/writepath/tests/test_disk_gate.py", line 2799, in test_integ_refusals_execute_missing_for_the_app_blocks
+    self.assertExactly(*self.call("start"), 2, "R4: EXECUTE on its writer wp_write_refused is held by []",
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.RgYZ6kCk80/writepath/tests/test_disk_gate.py", line 2451, in assertExactly
+    self.assertTrue(any(w in x for x in lines), f"no {kind} reason names {w!r}: {lines}")
+AssertionError: False is not true : no BLOCKED reason names 'R4: EXECUTE on its writer wp_write_refused is held by []': ['committed EXECUTE of wp_app on public.wp_write_refused is missing']
+
+----------------------------------------------------------------------
+Ran 2 tests in 1.993s
+
+FAILED (failures=2)
+# exit status: 1

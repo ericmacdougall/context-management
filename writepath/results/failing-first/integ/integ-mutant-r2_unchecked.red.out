@@ -1,0 +1,30 @@
+# failing-first receipt (new module)
+# date: 2026-11-19T00:37:09Z
+# tree: writepath at da13a59 (git archive); the current tests/ copied into it; run from it
+# module under test: results/failing-first/variants/disk_gate.integ-mutant-r2_unchecked.py sha256 2221e23145a5b960ed05566f98fed4a62b04d98db6f2ac1ff801353d3a7d5123, copied into the tree
+# its difference from exp/disk_gate.py at HEAD da13a59:
+# diff: 1502c1502
+# diff: <         if f[2] != GP.EVENTS_OWNER or f[3] != "True":
+# diff: ---
+# diff: >         if False:
+# test file: tests/test_disk_gate.py from HEAD da13a59 blob 0b6bb53b1bb1b9b1f779cbf2d6d0aa541bd24441
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<tree>/writepath/results/failing-first/variants/disk_gate.integ-mutant-r2_unchecked.py python3 -m unittest -v tests.test_disk_gate.Gate.test_integ_refusals_writer_owned_by_another_role_blocks)
+test_integ_refusals_writer_owned_by_another_role_blocks (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+FAIL: test_integ_refusals_writer_owned_by_another_role_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.d2Gm7gx2jZ/writepath/tests/test_disk_gate.py", line 2769, in test_integ_refusals_writer_owned_by_another_role_blocks
+    self.assertExactly(*self.call("start"), 2, "R2: its writer wp_write_refused is not a SECURITY DEFINER function "
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.d2Gm7gx2jZ/writepath/tests/test_disk_gate.py", line 2447, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.d2Gm7gx2jZ/writepath/tests/test_disk_gate.py", line 2081, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 2 : expected BLOCKED (exit 2), got 0: disk_gate start run r-36ef957002543603d0301817ce78aeaa
+
+----------------------------------------------------------------------
+Ran 1 test in 1.794s
+
+FAILED (failures=1)
+# exit status: 1
